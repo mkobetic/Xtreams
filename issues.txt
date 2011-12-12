@@ -1,0 +1,3 @@
+* pool variable references behave unreliably
+* the CR value in strings is LF ?
+* class side class extensions don't file out (package fileout)
