@@ -1,6 +1,8 @@
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:00 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:25:10 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/support' }"
+
+"{ NameSpace: Xtreams }"
 
 LibraryDefinition subclass:#stx_goodies_xtreams_support
 	instanceVariableNames:''
@@ -123,31 +125,7 @@ svnRevisionNr
 version_SVN
     ^ '$Id: stx_goodies_xtreams_support.st 16 2011-11-21 06:02:29Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:00 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/support' }"
-
-SharedPool subclass:#XtreamsPool
-	instanceVariableNames:''
-	classVariableNames:'DefaultBufferSize'
-	poolDictionaries:''
-	category:'Xtreams-Support'
-!
-
-
-!XtreamsPool methodsFor:'initialization'!
-
-initialize
-
-    DefaultBufferSize := 32768
-! !
-
-!XtreamsPool class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:00 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:25:10 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/support' }"
 
@@ -221,7 +199,35 @@ streamingAsEncoder
 version_SVN
     ^ '$Id: Xtreams__Encoder.st 7 2011-08-22 15:51:21Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:00 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:25:11 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/support' }"
+
+SharedPool subclass:#XtreamsPool
+	instanceVariableNames:''
+	classVariableNames:'DefaultBufferSize LF CR'
+	poolDictionaries:''
+	category:'Xtreams-Support'
+!
+
+
+!XtreamsPool class methodsFor:'initialization'!
+
+initialize
+
+    DefaultBufferSize := 32768.
+    LF := Character value: 10.
+    CR := Character value: 13.
+! !
+
+!XtreamsPool class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id$'
+! !
+
+XtreamsPool initialize!
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:25:11 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/support' }"
 
@@ -347,11 +353,25 @@ version_SVN
 ! !
 
 RecyclingCenter initialize!
-!Block methodsFor:'converting'!
+!Symbol methodsFor:'xtreams'!
+
+cull: anObject
+
+    ^anObject perform: self
+! !
+
+!Block methodsFor:'xtreams'!
 
 cull: value
 
     ^self numArgs = 1 ifTrue: [ self value: value ] ifFalse: [ self value ]
+! !
+
+!Block methodsFor:'xtreams'!
+
+cull: value1 cull: value2
+
+    ^self numArgs < 2 ifTrue: [ self cull: value1 ] ifFalse: [ self value: value1 value: value2 ]
 ! !
 
 !SequenceableCollection methodsFor:'xtreams'!

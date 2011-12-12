@@ -1,10 +1,10 @@
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:39:58 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
 "{ NameSpace: Xtreams }"
 
-FiniteReadingWritingTests subclass:#SocketReadingWritingTest
+FiniteReadingWritingTests subclass:#PipeReadingWritingTest
 	instanceVariableNames:''
 	classVariableNames:''
 	poolDictionaries:'XtreamsPool'
@@ -12,18 +12,22 @@ FiniteReadingWritingTests subclass:#SocketReadingWritingTest
 !
 
 
-!SocketReadingWritingTest methodsFor:'initialize-release'!
+!PipeReadingWritingTest methodsFor:'initialize-release'!
 
 setUp
+	| pipe |
+	(OSHandle currentOS = #win32) ifTrue: [self error: 'Does not work on Windows' ].
+	pipe := OSSystemSupport concreteClass pipeAccessorClass openPair.
+	input := pipe first reading.
+	output := pipe last writing.
+!
 
-	| pair |
-	"Use #phonyPair to make sure we're testing TCP sockets on Unix."
-	pair := SocketAccessor phonyPair.
-	input := pair first reading.
-	output := pair last writing.
+tearDown
+	input close.
+	output close.
 ! !
 
-!SocketReadingWritingTest methodsFor:'utilities'!
+!PipeReadingWritingTest methodsFor:'utilities'!
 
 timeout: timeoutDuration server: serverBlock client: clientBlock
 	"For tests that must be able to write and read at the same time, where they may block on each.
@@ -56,80 +60,81 @@ timeout: timeoutDuration server: serverBlock client: clientBlock
 	self deny: timeout
 ! !
 
-!SocketReadingWritingTest class methodsFor:'documentation'!
+!PipeReadingWritingTest class methodsFor:'documentation'!
 
 version_SVN
     ^ '$Id$'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:39:58 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
 "{ NameSpace: Xtreams }"
 
-TestCase subclass:#PointerWriteStreamTest
-	instanceVariableNames:'stream'
+InfiniteReadingWritingTests subclass:#SharedQueueReadingWritingTest
+	instanceVariableNames:'queue'
 	classVariableNames:''
-	poolDictionaries:'XtreamsPool'
+	poolDictionaries:''
 	category:'Xtreams-Terminals-Tests'
 !
 
 
-!PointerWriteStreamTest methodsFor:'initialize-release'!
+!SharedQueueReadingWritingTest methodsFor:'initialize-release'!
 
-prepareChars
+setUp
 
-	| pointer |
-	pointer := CIntegerType char malloc: 50.
-	stream := pointer writing length: 50; yourself.
-!
-
-prepareFloats
-
-	| pointer |
-	pointer := CLimitedPrecisionRealType float malloc: 50.
-	stream := pointer writing length: 50; yourself.
-!
-
-tearDown
-
-	stream ifNotNil: [ stream terminal free. stream := nil ]
-!
-
-testWritingChars
-
-	| string result |
-	self prepareChars.
-	stream put: Character tab.
-	self assert: (stream terminal at: 0) = Character tab asInteger.
-	string := 'Hello World!!'.
-	stream write: string.
-	result := ByteString new: string size.
-	stream terminal copyAt: 1 to: result size: string size startingAt: 1. 
-	self assert: string = result.
-	stream close.
-	self assert: stream length = (string size + 1).
-!
-
-testWritingFloats
-
-	| values |
-	self prepareFloats.
-	stream put: Float pi.
-	self assert: (stream terminal at: 0) = Float pi.
-	values := (1 to: 10) collect: [ :i | i reciprocal asFloat ].
-	stream write: values.
-	self assert: (stream terminal at: 10) = 10 reciprocal asFloat.
-	stream close.
-	self assert: stream length = 11.
+	queue := SharedQueue new.
+	(input := queue reading) contentsSpecies: ByteArray.
+	(output := queue writing) contentsSpecies: ByteArray
 ! !
 
-!PointerWriteStreamTest class methodsFor:'documentation'!
+!SharedQueueReadingWritingTest class methodsFor:'documentation'!
 
 version_SVN
     ^ '$Id$'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:39:58 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+TestCase subclass:#BufferedWriteStreamTest
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals-Tests'
+!
+
+
+!BufferedWriteStreamTest methodsFor:'tests'!
+
+testBuffered
+	| writing |
+	writing := ByteArray new writing buffering: 10.
+	writing write: #[ 1 2 3 4 5 ].
+	self deny: (writing terminal first: 5) = #[ 1 2 3 4 5 ].
+	writing write: #[ 6 7 8 9 ].
+	self deny: (writing terminal first: 9) = #[ 1 2 3 4 5 6 7 8 9 ].
+	writing put: 0.
+	self deny: (writing terminal first: 10) = #[ 1 2 3 4 5 6 7 8 9 0 ].
+	writing write: #[ 11 12 ].
+	self assert: (writing terminal first: 10) = #[ 1 2 3 4 5 6 7 8 9 0 ].
+	self deny: (writing terminal first: 12) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 ].
+	writing flush.
+	self assert: (writing terminal first: 12) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 ].
+	writing write: #[ 13 14 ].
+	self deny: (writing terminal first: 14) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 13 14 ].
+	writing close.
+	self assert: (writing terminal first: 14) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 13 14 ].
+! !
+
+!BufferedWriteStreamTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id$'
+! !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:39:58 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
@@ -157,210 +162,56 @@ testOneArgumentReading
 version_SVN
     ^ '$Id$'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:39:58 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
 "{ NameSpace: Xtreams }"
 
-FiniteReadingWritingTests subclass:#CollectionReadingWritingTest
-	instanceVariableNames:''
+FiniteReadingWritingTests subclass:#FileReadingWritingTest
+	instanceVariableNames:'file'
 	classVariableNames:''
-	poolDictionaries:''
+	poolDictionaries:'XtreamsPool'
 	category:'Xtreams-Terminals-Tests'
 !
 
 
-!CollectionReadingWritingTest methodsFor:'initialize-release'!
+!FileReadingWritingTest methodsFor:'initialize-release'!
 
-input
+setUp
 
-	^input ifNil: [ input := (self output close; terminal) reading ]
+	file := '<1s>-<2s>' expandMacrosWith: self class name with: testSelector.
+	file :=
+		(OSHandle currentOS = #unix and: [ '/dev/shm' asFilename exists ])
+			ifTrue: [ ('/dev/shm/', file) asFilename ]
+			ifFalse: [ file asFilename ].
+	output := file writing.
+	input := file reading.
 !
 
-output
+tearDown
 
-	^output ifNil: [ output := ByteArray new writing ]
+	input close.
+	output close.
+	file delete
 ! !
 
-!CollectionReadingWritingTest methodsFor:'tests - core'!
+!FileReadingWritingTest methodsFor:'tests - core'!
 
 testInsert
-	self output write: #[ 1 2 3 4 7 8 9 0 ].
-	self output -- 4.
-	self output insert: #[ 5 6 ].
-	self output -= 0. "Have to seek to the end otherwise output gets truncated when we close it"
-	self assert: (self input read: 10) = #[ 1 2 3 4 5 6 7 8 9 0 ]
-!
-
-testReadWriteLargeAmount
-        | data |
-    1 to: 10 do: [:each | 
-        output := input := nil.
-        self output put: 1. self assert: self input get = 1].
-       #( 64 1024 2048 4096 8192 ) do: [:dataSize |
-                output := input := nil.
-                data := ByteArray new: dataSize.
-                1 to: data size do: [:i | data at: i put: (i - 1) \\ 256].
-                self    timeout:        1000 milliseconds
-                        server:         [1 to: 10 do: [:each | self output write: data]. true]
-                        client:         [(1 to: 10) inject: true into: [:pass :each | pass and: [(self input read: data size) = data]]]]
-!
-
-testWriteFromCollectionAt
-
-	| data |
-	data := #[1 2 3 4 5 6 7].
-	self assert: (self output write: 4 from: data at: 1) = 4.
-	self assert: (self output write: 3 from: data at: 5) = 3.
-	self assert: (self input read: 4) = (data first: 4).
-	self assert: (self input read: 3) = (data last: 3)
-!
-
-testWriteFromStream
-	| data |
-	data := #[ 1 2 3 4 ] reading.
-	self assert: (self output write: 3 from: data) = 3.
-	self assert: (self output write: 1 from: data) = 1.
-	self assert: (self input read: 3) = #[ 1 2 3 ].
-	self assert: self input get = 4.
-	self assert: (
-		[	self output write: 2 from: data. false
-		] on: Incomplete do: [ :eos |
-			eos count = 0 ])
+	"Do nothing, since files are not expected to implement insert:* "
 ! !
 
-!CollectionReadingWritingTest methodsFor:'tests - transforming'!
-
-testReadRejecting
-        self output write: #[ 1 2 3 4 5 6 7 8 9 ].
-        self assert: ((self input rejecting: [ :e | e even ]) read: 5) = #[ 1 3 5 7 9 ]
-!
-
-testReadSelecting
-        self output write: #[ 1 2 3 4 5 6 7 8 9 ].
-        self assert: ((self input selecting: [ :e | e even ]) read: 4) = #[ 2 4 6 8 ]
-!
-
-testWriteRejecting
-        (self output rejecting: [ :e | e even ] ) write: #[ 1 2 3 4 5 6 7 8 9 ]; close.
-        self assert: (self input read: 5) = #[ 1 3 5 7 9 ]
-!
-
-testWriteSelecting
-        (self output selecting: [ :e | e even]) write: #[ 1 2 3 4 5 6 7 8 9 ]; close.
-        self assert: (self input read: 4) = #[ 2 4 6 8 ]
-!
-
-testWriteTransformHexToByte
-	| hex2Byte decoder result |
-	decoder := [ :char | ('0123456789ABCDEF' indexOf: char asUppercase) - 1 ].
-	hex2Byte := 
-		self output transforming: [ :in :out |
-			out put: (((decoder value: in get) bitShift: 4) + (decoder value: in get)) ].
-	hex2Byte buffer: (ElasticBuffer on: (ByteString new: 16)).
-	hex2Byte write: 'ab'.
-	hex2Byte write: 'cdef'.
-	hex2Byte close.
-	self assert: self input get = 16rAB.
-	result := self input read: 2.
-	self assert: result = #[16rcd 16ref].
-! !
-
-!CollectionReadingWritingTest class methodsFor:'documentation'!
+!FileReadingWritingTest class methodsFor:'documentation'!
 
 version_SVN
     ^ '$Id$'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:39:59 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
 "{ NameSpace: Xtreams }"
-
-FiniteReadingWritingTests subclass:#BufferReadingWritingTest
-	instanceVariableNames:'buffer'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals-Tests'
-!
-
-
-!BufferReadingWritingTest methodsFor:'initialize-release'!
-
-setUp
-
-	buffer := Buffer on: ByteArray new.
-	input := buffer reading.
-	output := buffer writing.
-! !
-
-!BufferReadingWritingTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-FiniteReadingWritingTests subclass:#BlockClosureReadingWritingTest
-	instanceVariableNames:'collection'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals-Tests'
-!
-
-
-!BlockClosureReadingWritingTest methodsFor:'initialize-release'!
-
-setUp
-
-	collection := OrderedCollection new.
-	input := [ collection isEmpty ifTrue: [ Incomplete zero raise ]. collection removeFirst ] reading.
-	input contentsSpecies: ByteArray.
-	output := [ :x | collection addLast: x ] writing.
-	output contentsSpecies: ByteArray.
-! !
-
-!BlockClosureReadingWritingTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-FiniteReadingWritingTests subclass:#ElasticBufferReadingWritingTest
-	instanceVariableNames:'buffer'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals-Tests'
-!
-
-
-!ElasticBufferReadingWritingTest methodsFor:'initialize-release'!
-
-setUp
-
-	buffer := ElasticBuffer on: ByteArray new.
-	input := buffer reading.
-	output := buffer writing.
-! !
-
-!ElasticBufferReadingWritingTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
 LibraryDefinition subclass:#stx_goodies_xtreams_terminals_tests
 	instanceVariableNames:''
@@ -488,253 +339,7 @@ svnRevisionNr
 version_SVN
     ^ '$Id: stx_goodies_xtreams_terminals_tests.st 18 2011-11-21 06:03:36Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-TestCase subclass:#PointerReadStreamTest
-	instanceVariableNames:'pointer values'
-	classVariableNames:''
-	poolDictionaries:'XtreamsPool'
-	category:'Xtreams-Terminals-Tests'
-!
-
-
-!PointerReadStreamTest methodsFor:'initialize-release'!
-
-prepareChars
-
-	values := 'Hello World!!'.
-	pointer := CIntegerType char malloc: values size.
-	pointer copyAt: 0 from: values size: values size startingAt: 1
-!
-
-prepareFloats
-
-	values := (1 to: 50) collect: [ :i | i reciprocal asFloat ].
-	pointer := CLimitedPrecisionRealType float malloc: values size.
-	1 to: values size do: [ :i | pointer at: i - 1 put: i reciprocal asFloat ].
-!
-
-tearDown
-
-	pointer ifNotNil: [ pointer free ]
-!
-
-testPositioningFloats
-
-	| stream |
-	self prepareFloats.
-	stream := pointer reading.
-	stream length: values size.
-	stream ++ 10.
-	self assert: stream position = 10.
-	stream -- 5.
-	self assert: stream position = 5.
-	stream += 10.
-	self assert: stream position = 10.
-	stream -= 10.
-	self assert: stream position = (values size - 10).
-	self assert: ([ stream ++ 20. false ] on: Incomplete do: [ :ex | ex count = 10 ])
-!
-
-testReadingChars
-
-	| stream |
-	self prepareFloats.
-	stream := pointer reading.
-	stream length: values size.
-	self assert: stream rest = values.
-	self should: [ stream get ] raise: Incomplete.
-!
-
-testReadingFloats
-
-	| stream |
-	self prepareFloats.
-	stream := pointer reading.
-	stream length: values size.
-	self assert: stream rest = values.
-	self should: [ stream get ] raise: Incomplete.
-! !
-
-!PointerReadStreamTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-InfiniteReadingWritingTests subclass:#PointerReadingWritingTest
-	instanceVariableNames:'pointer'
-	classVariableNames:''
-	poolDictionaries:'XtreamsPool'
-	category:'Xtreams-Terminals-Tests'
-!
-
-
-!PointerReadingWritingTest methodsFor:'initialize-release'!
-
-setUp
-
-	pointer := CIntegerType unsignedChar malloc: 1.
-	(input := pointer reading) contentsSpecies: ByteArray.
-	(output := pointer writing) contentsSpecies: ByteArray
-!
-
-tearDown
-
-	pointer free
-! !
-
-!PointerReadingWritingTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-TestCase subclass:#BufferedWriteStreamTest
-	instanceVariableNames:''
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals-Tests'
-!
-
-
-!BufferedWriteStreamTest methodsFor:'tests'!
-
-testBuffered
-	| writing |
-	writing := ByteArray new writing buffering: 10.
-	writing write: #[ 1 2 3 4 5 ].
-	self deny: (writing terminal first: 5) = #[ 1 2 3 4 5 ].
-	writing write: #[ 6 7 8 9 ].
-	self deny: (writing terminal first: 9) = #[ 1 2 3 4 5 6 7 8 9 ].
-	writing put: 0.
-	self deny: (writing terminal first: 10) = #[ 1 2 3 4 5 6 7 8 9 0 ].
-	writing write: #[ 11 12 ].
-	self assert: (writing terminal first: 10) = #[ 1 2 3 4 5 6 7 8 9 0 ].
-	self deny: (writing terminal first: 12) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 ].
-	writing flush.
-	self assert: (writing terminal first: 12) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 ].
-	writing write: #[ 13 14 ].
-	self deny: (writing terminal first: 14) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 13 14 ].
-	writing close.
-	self assert: (writing terminal first: 14) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 13 14 ].
-! !
-
-!BufferedWriteStreamTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-InfiniteReadingWritingTests subclass:#SharedQueueReadingWritingTest
-	instanceVariableNames:'queue'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals-Tests'
-!
-
-
-!SharedQueueReadingWritingTest methodsFor:'initialize-release'!
-
-setUp
-
-	queue := SharedQueue new.
-	(input := queue reading) contentsSpecies: ByteArray.
-	(output := queue writing) contentsSpecies: ByteArray
-! !
-
-!SharedQueueReadingWritingTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-FiniteReadingWritingTests subclass:#PipeReadingWritingTest
-	instanceVariableNames:''
-	classVariableNames:''
-	poolDictionaries:'XtreamsPool'
-	category:'Xtreams-Terminals-Tests'
-!
-
-
-!PipeReadingWritingTest methodsFor:'initialize-release'!
-
-setUp
-	| pipe |
-	(OSHandle currentOS = #win32) ifTrue: [self error: 'Does not work on Windows' ].
-	pipe := OSSystemSupport concreteClass pipeAccessorClass openPair.
-	input := pipe first reading.
-	output := pipe last writing.
-!
-
-tearDown
-	input close.
-	output close.
-! !
-
-!PipeReadingWritingTest methodsFor:'utilities'!
-
-timeout: timeoutDuration server: serverBlock client: clientBlock
-	"For tests that must be able to write and read at the same time, where they may block on each.
-	 Sockets, Pipes have an operating system buffer which dictates its bandwidth."
-
-	|	timeout
-		serverSuccess serverProcess serverLock
-		clientSuccess clientProcess clientLock|
-
-	timeout := false.
-	serverLock := Semaphore new.
-	clientLock := Semaphore new.
-	serverSuccess := clientSuccess := false.
-	serverProcess := [serverSuccess := serverBlock value. serverLock signal] fork.
-	clientProcess := [clientSuccess := clientBlock value. clientLock signal] fork.
-
-	Core.Timer after: timeoutDuration do:
-		[serverProcess terminate.
-		output ifNotNil: [ output close ].
-		clientProcess terminate.
-		input ifNotNil: [ input close ].
-		timeout := true.
-		serverLock signal.
-		clientLock signal].
-	serverLock wait.
-	clientLock wait.
-
-	self assert: serverSuccess.
-	self assert: clientSuccess.
-	self deny: timeout
-! !
-
-!PipeReadingWritingTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:39:59 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
@@ -776,47 +381,266 @@ testWriteCollectingMultipleBufferSize
 version_SVN
     ^ '$Id$'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:39 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:39:59 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
 "{ NameSpace: Xtreams }"
 
-FiniteReadingWritingTests subclass:#FileReadingWritingTest
-	instanceVariableNames:'file'
+FiniteReadingWritingTests subclass:#ElasticBufferReadingWritingTest
+	instanceVariableNames:'buffer'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals-Tests'
+!
+
+
+!ElasticBufferReadingWritingTest methodsFor:'initialize-release'!
+
+setUp
+
+	buffer := ElasticBuffer on: ByteArray new.
+	input := buffer reading.
+	output := buffer writing.
+! !
+
+!ElasticBufferReadingWritingTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id$'
+! !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:39:59 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+FiniteReadingWritingTests subclass:#BlockClosureReadingWritingTest
+	instanceVariableNames:'collection'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals-Tests'
+!
+
+
+!BlockClosureReadingWritingTest methodsFor:'initialize-release'!
+
+setUp
+
+	collection := OrderedCollection new.
+	input := [ collection isEmpty ifTrue: [ Incomplete zero raise ]. collection removeFirst ] reading.
+	input contentsSpecies: ByteArray.
+	output := [ :x | collection addLast: x ] writing.
+	output contentsSpecies: ByteArray.
+! !
+
+!BlockClosureReadingWritingTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id$'
+! !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:39:59 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+FiniteReadingWritingTests subclass:#BufferReadingWritingTest
+	instanceVariableNames:'buffer'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals-Tests'
+!
+
+
+!BufferReadingWritingTest methodsFor:'initialize-release'!
+
+setUp
+
+	buffer := Buffer on: ByteArray new.
+	input := buffer reading.
+	output := buffer writing.
+! !
+
+!BufferReadingWritingTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id$'
+! !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:39:59 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+FiniteReadingWritingTests subclass:#SocketReadingWritingTest
+	instanceVariableNames:''
 	classVariableNames:''
 	poolDictionaries:'XtreamsPool'
 	category:'Xtreams-Terminals-Tests'
 !
 
 
-!FileReadingWritingTest methodsFor:'initialize-release'!
+!SocketReadingWritingTest methodsFor:'initialize-release'!
 
 setUp
 
-	file := '<1s>-<2s>' expandMacrosWith: self class name with: testSelector.
-	file :=
-		(OSHandle currentOS = #unix and: [ '/dev/shm' asFilename exists ])
-			ifTrue: [ ('/dev/shm/', file) asFilename ]
-			ifFalse: [ file asFilename ].
-	output := file writing.
-	input := file reading.
+	| pair |
+	"Use #phonyPair to make sure we're testing TCP sockets on Unix."
+	pair := SocketAccessor phonyPair.
+	input := pair first reading.
+	output := pair last writing.
+! !
+
+!SocketReadingWritingTest methodsFor:'utilities'!
+
+timeout: timeoutDuration server: serverBlock client: clientBlock
+	"For tests that must be able to write and read at the same time, where they may block on each.
+	 Sockets, Pipes have an operating system buffer which dictates its bandwidth."
+
+	|	timeout
+		serverSuccess serverProcess serverLock
+		clientSuccess clientProcess clientLock|
+
+	timeout := false.
+	serverLock := Semaphore new.
+	clientLock := Semaphore new.
+	serverSuccess := clientSuccess := false.
+	serverProcess := [serverSuccess := serverBlock value. serverLock signal] fork.
+	clientProcess := [clientSuccess := clientBlock value. clientLock signal] fork.
+
+	Core.Timer after: timeoutDuration do:
+		[serverProcess terminate.
+		output ifNotNil: [ output close ].
+		clientProcess terminate.
+		input ifNotNil: [ input close ].
+		timeout := true.
+		serverLock signal.
+		clientLock signal].
+	serverLock wait.
+	clientLock wait.
+
+	self assert: serverSuccess.
+	self assert: clientSuccess.
+	self deny: timeout
+! !
+
+!SocketReadingWritingTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id$'
+! !
+'From Smalltalk/X, Version:6.2.1 on 12-12-2011 at 01:39:59 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+FiniteReadingWritingTests subclass:#CollectionReadingWritingTest
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals-Tests'
 !
 
-tearDown
 
-	input close.
-	output close.
-	file delete
+!CollectionReadingWritingTest methodsFor:'initialize-release'!
+
+input
+
+	^input ifNil: [ input := (self output close; terminal) reading ]
+!
+
+output
+
+	^output ifNil: [ output := ByteArray new writing ]
 ! !
 
-!FileReadingWritingTest methodsFor:'tests - core'!
+!CollectionReadingWritingTest methodsFor:'tests - core'!
 
 testInsert
-	"Do nothing, since files are not expected to implement insert:* "
+	self output write: #[ 1 2 3 4 7 8 9 0 ].
+	self output -- 4.
+	self output insert: #[ 5 6 ].
+	self output -= 0. "Have to seek to the end otherwise output gets truncated when we close it"
+	self assert: (self input read: 10) = #[ 1 2 3 4 5 6 7 8 9 0 ]
+!
+
+testReadWriteLargeAmount
+        | data |
+    1 to: 10 do: [:each | 
+        output := input := nil.
+        self output put: 1. self assert: self input get = 1].
+       #( 64 1024 2048 4096 8192 ) do: [:dataSize |
+                output := input := nil.
+                data := ByteArray new: dataSize.
+                1 to: data size do: [:i | data at: i put: (i - 1) \\ 256].
+                self    timeout:        1000 milliseconds
+                        server:         [1 to: 10 do: [:each | self output write: data]. true]
+                        client:         [(1 to: 10) inject: true into: [:pass :each | pass and: [(self input read: data size) = data]]]]
+!
+
+testWriteFromCollectionAt
+
+	| data |
+	data := #[1 2 3 4 5 6 7].
+	self assert: (self output write: 4 from: data at: 1) = 4.
+	self assert: (self output write: 3 from: data at: 5) = 3.
+	self assert: (self input read: 4) = (data first: 4).
+	self assert: (self input read: 3) = (data last: 3)
+!
+
+testWriteFromStream
+	| data |
+	data := #[ 1 2 3 4 ] reading.
+	self assert: (self output write: 3 from: data) = 3.
+	self assert: (self output write: 1 from: data) = 1.
+	self assert: (self input read: 3) = #[ 1 2 3 ].
+	self assert: self input get = 4.
+	self assert: (
+		[	self output write: 2 from: data. false
+		] on: Incomplete do: [ :eos |
+			eos count = 0 ])
 ! !
 
-!FileReadingWritingTest class methodsFor:'documentation'!
+!CollectionReadingWritingTest methodsFor:'tests - transforming'!
+
+testReadRejecting
+        self output write: #[ 1 2 3 4 5 6 7 8 9 ].
+        self assert: ((self input rejecting: [ :e | e even ]) read: 5) = #[ 1 3 5 7 9 ]
+!
+
+testReadSelecting
+        self output write: #[ 1 2 3 4 5 6 7 8 9 ].
+        self assert: ((self input selecting: [ :e | e even ]) read: 4) = #[ 2 4 6 8 ]
+!
+
+testWriteRejecting
+        (self output rejecting: [ :e | e even ] ) write: #[ 1 2 3 4 5 6 7 8 9 ]; close.
+        self assert: (self input read: 5) = #[ 1 3 5 7 9 ]
+!
+
+testWriteSelecting
+        (self output selecting: [ :e | e even]) write: #[ 1 2 3 4 5 6 7 8 9 ]; close.
+        self assert: (self input read: 4) = #[ 2 4 6 8 ]
+!
+
+testWriteTransformHexToByte
+	| hex2Byte decoder result |
+	decoder := [ :char | ('0123456789ABCDEF' indexOf: char asUppercase) - 1 ].
+	hex2Byte := 
+		self output transforming: [ :in :out |
+			out put: (((decoder value: in get) bitShift: 4) + (decoder value: in get)) ].
+	hex2Byte buffer: (ElasticBuffer on: (ByteString new: 16)).
+	hex2Byte write: 'ab'.
+	hex2Byte write: 'cdef'.
+	hex2Byte close.
+	self assert: self input get = 16rAB.
+	result := self input read: 2.
+	self assert: result = #[16rcd 16ref].
+! !
+
+!CollectionReadingWritingTest class methodsFor:'documentation'!
 
 version_SVN
     ^ '$Id$'
