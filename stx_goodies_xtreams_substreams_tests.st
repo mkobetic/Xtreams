@@ -1,4 +1,4 @@
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:34:54 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:17 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/substreams/tests' }"
 
@@ -35,7 +35,7 @@ preRequisites
 
     ^ #(
         #'stx:goodies/sunit'    "TestCase - superclass of Xtreams::StitchingTest "
-        #'stx:goodies/xtreams/core'    "Xtreams::Incomplete - referenced by Xtreams::FiniteReadingWritingTests>>testWriteEndingCollectionTail "
+        #'stx:goodies/xtreams/core'    "Xtreams::RingBuffer - referenced by Xtreams::FiniteReadingWritingTests>>testWriteStitchingChunks "
         #'stx:goodies/xtreams/core/tests'    "Xtreams::ReadingWritingTest - superclass of extended Xtreams::FiniteReadingWritingTests "
         #'stx:goodies/xtreams/substreams'
         #'stx:libbasic'    "ProjectDefinition - superclass of stx_goodies_xtreams_substreams_tests "
@@ -146,7 +146,7 @@ svnRevisionNr
 version_SVN
     ^ '$Id: stx_goodies_xtreams_substreams_tests.st 15 2011-11-21 06:02:13Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:34:54 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:17 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/substreams/tests' }"
 
@@ -402,37 +402,6 @@ testReadLimitingPositioning
 	self should: [limiter get] raise: Incomplete
 ! !
 
-!FiniteReadingWritingTests methodsFor:'tests - substream stitching'!
-
-testReadStitchLimiting
-"Note that a plain [ self input limiting: 3 ] reading stitching stream would never end because it keeps generating empty limiting: streams at the end of the input.
-That's why additional measure is necessary to make sure the slice source eventually generates Incomplete.
-" 
-	| limiter wasEmpty |
-	self output write: #[ 1 1 1 2 2 2 ]; close.
-	wasEmpty := false.
-	limiter := [
-			wasEmpty ifTrue: [ Incomplete zero raise ]. wasEmpty := true.
-			(self input doing: [ :e | wasEmpty := false ]) limiting: 3
-		] reading stitching.
-
-	self assert: limiter rest = #[ 1 1 1 2 2 2].
-	self should: [limiter get] raise: Incomplete
-! !
-
-!FiniteReadingWritingTests methodsFor:'tests - substream stitching'!
-
-testReadStitchingChunks
-"Chunks are prefixed with size in the first byte. Below we have 3 chunks of size 1, 3 and 7, and terminating 0 chunk."
-
-	| chunks contents stitched |
-	chunks := (ByteArray withAll: (1 to: 14)), #[0].
-	self output write: chunks; close.
-	stitched := [ self input limiting: self input get ] reading stitching.
-	contents := stitched rest.
-	self assert: contents = #[2 4 5 6 8 9 10 11 12 13 14]
-! !
-
 !FiniteReadingWritingTests methodsFor:'tests - substream slicing'!
 
 testWriteClosing
@@ -609,6 +578,37 @@ testWriteLimitingPositioning
 
 	limiting close.
 	self assert: (self input read: 6) = #[ 1 1 1 2 2 2 ]
+! !
+
+!FiniteReadingWritingTests methodsFor:'tests - substream stitching'!
+
+testReadStitchLimiting
+"Note that a plain [ self input limiting: 3 ] reading stitching stream would never end because it keeps generating empty limiting: streams at the end of the input.
+That's why additional measure is necessary to make sure the slice source eventually generates Incomplete.
+" 
+	| limiter wasEmpty |
+	self output write: #[ 1 1 1 2 2 2 ]; close.
+	wasEmpty := false.
+	limiter := [
+			wasEmpty ifTrue: [ Incomplete zero raise ]. wasEmpty := true.
+			(self input doing: [ :e | wasEmpty := false ]) limiting: 3
+		] reading stitching.
+
+	self assert: limiter rest = #[ 1 1 1 2 2 2].
+	self should: [limiter get] raise: Incomplete
+! !
+
+!FiniteReadingWritingTests methodsFor:'tests - substream stitching'!
+
+testReadStitchingChunks
+"Chunks are prefixed with size in the first byte. Below we have 3 chunks of size 1, 3 and 7, and terminating 0 chunk."
+
+	| chunks contents stitched |
+	chunks := (ByteArray withAll: (1 to: 14)), #[0].
+	self output write: chunks; close.
+	stitched := [ self input limiting: self input get ] reading stitching.
+	contents := stitched rest.
+	self assert: contents = #[2 4 5 6 8 9 10 11 12 13 14]
 ! !
 
 !FiniteReadingWritingTests methodsFor:'tests - substream stitching'!

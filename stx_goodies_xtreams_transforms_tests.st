@@ -1,4 +1,4 @@
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:48 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:35 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/transforms/tests' }"
 
@@ -114,187 +114,7 @@ testUnsignedShort
 version_SVN
     ^ '$Id$'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:48 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-TestCase subclass:#DuplicateTest
-	instanceVariableNames:''
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Transforms-Tests'
-!
-
-
-!DuplicateTest methodsFor:'tests'!
-
-testDuplicateReading
-	| copy |
-	copy := Array new writing.
-	self assert: ((0 to: 255) reading duplicating: copy) rest = copy conclusion
-!
-
-testDuplicateReadingIncomplete
-	| original copy |
-	copy := ByteArray new writing.
-	[(#[0 1 2 3 4 5 6 7 8 9] reading duplicating: copy) read: 20] on: Incomplete do: [:incomplete | original := incomplete contents].
-	copy := copy conclusion.
-	self assert: original = #[0 1 2 3 4 5 6 7 8 9].
-	self assert: copy = #[0 1 2 3 4 5 6 7 8 9]
-!
-
-testDuplicateWriting
-	| original copy |
-	original := ByteArray new writing.
-	copy := ByteArray new writing.
-	(original duplicating: copy) write: (0 to: 255).
-	self assert: original conclusion = copy conclusion
-!
-
-testDuplicateWritingIncomplete
-	| original copy |
-	original := ByteArray new writing.
-	copy := ByteArray new writing.
-	[((original limiting: 10) duplicating: copy) write: (0 to: 255)] on: Incomplete do: [:incomplete | ].
-	original := original conclusion.
-	copy := copy conclusion.
-	self assert: original = #[0 1 2 3 4 5 6 7 8 9].
-	self assert: copy = #[0 1 2 3 4 5 6 7 8 9]
-! !
-
-!DuplicateTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:48 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-TestCase subclass:#MessagePackMarshalerTest
-	instanceVariableNames:'stream marshaling log bytes marshaler'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Transforms-Tests'
-!
-
-
-!MessagePackMarshalerTest methodsFor:'initialize-release'!
-
-setUp
-	marshaler := MessagePackMarshaler new.
-	stream := ByteArray new writing.
-	marshaling := stream marshaling: marshaler.
-	bytes := nil.
-	log := nil
-! !
-
-!MessagePackMarshalerTest methodsFor:'private'!
-
-analyse
-	"Run an analysis on the stream contents to ensure it has integrity"
-	bytes := stream conclusion.
-	log := String new writing.
-	(ObjectAnalyseStream on: bytes reading marshaler: marshaler class new) do: [:each | log write: each].
-	log := log conclusion.
-	marshaling := bytes reading marshaling: marshaler class new
-! !
-
-!MessagePackMarshalerTest methodsFor:'tests'!
-
-testArray
-	| fixed small big |
-	big := Array new: 65537 withAll: 1.
-	small := (1 to: 255) asArray.
-	fixed := Array with: small with: big.
-	marshaling put: fixed.
-	marshaling put: small.
-	marshaling put: big.
-	self analyse.
-	self assert: marshaling get = fixed.
-	self assert: marshaling get = small.
-	self assert: marshaling get = big
-!
-
-testDictionary
-	| fixed small big |
-	big := Dictionary new: 65537.
-	1 to: 65537 do: [:i | big at: i put: 1].
-	small := Dictionary new: 255.
-	1 to: 255 do: [:i | small at: i put: i].
-	fixed := Dictionary new
-		at: 1 put: big;
-		at: 2 put: small;
-		yourself.
-	marshaling put: fixed.
-	marshaling put: small.
-	marshaling put: big.
-	self analyse.
-	self assert: marshaling get = fixed.
-	self assert: marshaling get = small.
-	self assert: marshaling get = big
-!
-
-testFloatDouble
-	marshaling write: #(3.14 3.14159 3.141592653589793).
-	self analyse.
-	self assert: marshaling rest = #(3.14 3.14159 3.141592653589793)
-!
-
-testIntegers
-	| inrange outofrange |
-	outofrange := #(18446744073709551616 -9223372036854775809).
-	inrange := #(
-		0 1 126 127 128 255 256
-		32767 32768 32769
-		65535 65536 65537
-		4294967294 4294967295 4294967296
-		18446744073709551614 18446744073709551615
-		-1 -2 -32 -33
-		-127 -128 -255 -256
-		-32767 -32768 -32769
-		-65535 -65536 -65537
-		-2147483647 -2147483648 -2147483649
-		-9223372036854775807 -9223372036854775808).
-
-	marshaling write: inrange.
-	outofrange do: [:each | self should: [marshaling put: each] raise: Error].
-	self analyse.
-	self assert: marshaling rest = inrange
-!
-
-testRaw
-	| big |
-	big := ByteArray new: 100000 withAll: 1.
-	marshaling put: #[10 255 0].
-	marshaling put: (ByteArray withAll: (1 to: 255)).
-	marshaling put: big.
-	self analyse.
-	self assert: marshaling get = #[10 255 0].
-	self assert: marshaling get = (ByteArray withAll: (1 to: 255)).
-	self assert: marshaling get = big
-!
-
-testSingletons
-	marshaling put: nil.
-	marshaling put: true.
-	marshaling put: false.
-	self analyse.
-	self assert: marshaling get = nil.
-	self assert: marshaling get = true.
-	self assert: marshaling get = false
-! !
-
-!MessagePackMarshalerTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:48 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:35 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/transforms/tests' }"
 
@@ -525,9 +345,136 @@ testTranscript
 version_SVN
     ^ '$Id$'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:35:48 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:35 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/transforms/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+TestCase subclass:#MessagePackMarshalerTest
+	instanceVariableNames:'stream marshaling log bytes marshaler'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Transforms-Tests'
+!
+
+
+!MessagePackMarshalerTest methodsFor:'initialize-release'!
+
+setUp
+	marshaler := MessagePackMarshaler new.
+	stream := ByteArray new writing.
+	marshaling := stream marshaling: marshaler.
+	bytes := nil.
+	log := nil
+! !
+
+!MessagePackMarshalerTest methodsFor:'private'!
+
+analyse
+	"Run an analysis on the stream contents to ensure it has integrity"
+	bytes := stream conclusion.
+	log := String new writing.
+	(ObjectAnalyseStream on: bytes reading marshaler: marshaler class new) do: [:each | log write: each].
+	log := log conclusion.
+	marshaling := bytes reading marshaling: marshaler class new
+! !
+
+!MessagePackMarshalerTest methodsFor:'tests'!
+
+testArray
+	| fixed small big |
+	big := Array new: 65537 withAll: 1.
+	small := (1 to: 255) asArray.
+	fixed := Array with: small with: big.
+	marshaling put: fixed.
+	marshaling put: small.
+	marshaling put: big.
+	self analyse.
+	self assert: marshaling get = fixed.
+	self assert: marshaling get = small.
+	self assert: marshaling get = big
+!
+
+testDictionary
+	| fixed small big |
+	big := Dictionary new: 65537.
+	1 to: 65537 do: [:i | big at: i put: 1].
+	small := Dictionary new: 255.
+	1 to: 255 do: [:i | small at: i put: i].
+	fixed := Dictionary new
+		at: 1 put: big;
+		at: 2 put: small;
+		yourself.
+	marshaling put: fixed.
+	marshaling put: small.
+	marshaling put: big.
+	self analyse.
+	self assert: marshaling get = fixed.
+	self assert: marshaling get = small.
+	self assert: marshaling get = big
+!
+
+testFloatDouble
+	marshaling write: #(3.14 3.14159 3.141592653589793).
+	self analyse.
+	self assert: marshaling rest = #(3.14 3.14159 3.141592653589793)
+!
+
+testIntegers
+	| inrange outofrange |
+	outofrange := #(18446744073709551616 -9223372036854775809).
+	inrange := #(
+		0 1 126 127 128 255 256
+		32767 32768 32769
+		65535 65536 65537
+		4294967294 4294967295 4294967296
+		18446744073709551614 18446744073709551615
+		-1 -2 -32 -33
+		-127 -128 -255 -256
+		-32767 -32768 -32769
+		-65535 -65536 -65537
+		-2147483647 -2147483648 -2147483649
+		-9223372036854775807 -9223372036854775808).
+
+	marshaling write: inrange.
+	outofrange do: [:each | self should: [marshaling put: each] raise: Error].
+	self analyse.
+	self assert: marshaling rest = inrange
+!
+
+testRaw
+	| big |
+	big := ByteArray new: 100000 withAll: 1.
+	marshaling put: #[10 255 0].
+	marshaling put: (ByteArray withAll: (1 to: 255)).
+	marshaling put: big.
+	self analyse.
+	self assert: marshaling get = #[10 255 0].
+	self assert: marshaling get = (ByteArray withAll: (1 to: 255)).
+	self assert: marshaling get = big
+!
+
+testSingletons
+	marshaling put: nil.
+	marshaling put: true.
+	marshaling put: false.
+	self analyse.
+	self assert: marshaling get = nil.
+	self assert: marshaling get = true.
+	self assert: marshaling get = false
+! !
+
+!MessagePackMarshalerTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id$'
+! !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:35 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms/tests' }"
+
+"{ NameSpace: Xtreams }"
 
 LibraryDefinition subclass:#stx_goodies_xtreams_transforms_tests
 	instanceVariableNames:''
@@ -563,10 +510,10 @@ preRequisites
     ^ #(
         #'stx:goodies/sunit'    "TestAsserter - superclass of Xtreams::MessagePackMarshalerTest "
         #'stx:goodies/xtreams/core'    "Xtreams::Incomplete - referenced by Xtreams::ReadingWritingTest>>testReadTransformingPastEnd "
-        #'stx:goodies/xtreams/core/tests'    "Xtreams::FiniteReadingWritingTests - superclass of extended Xtreams::CollectionReadingWritingTest "
+        #'stx:goodies/xtreams/core/tests'    "Xtreams::ReadingWritingTest - superclass of extended Xtreams::CollectionReadingWritingTest "
         #'stx:goodies/xtreams/terminals/tests'    "Xtreams::CollectionReadingWritingTest - extended "
-        #'stx:goodies/xtreams/transforms'    "Xtreams::ObjectAnalyseStream - referenced by Xtreams::ObjectMarshalerTest>>analyse "
-        #'stx:libbasic'    "Object - superclass of Xtreams::MessagePackMarshalerTest "
+        #'stx:goodies/xtreams/transforms'    "Xtreams::ObjectMarshaler - referenced by Xtreams::ObjectMarshalerTest>>setUp "
+        #'stx:libbasic'    "Object - superclass of Xtreams::stx_goodies_xtreams_transforms_tests "
         #'stx:libbasic2'    "Random - referenced by Xtreams::ReadingWritingTest>>testInterpretingPoints "
         #'stx:libcompat'    "IOAccessor - referenced by Xtreams::ReadingWritingTest>>testWriteEncodingCRLF "
     )
@@ -586,7 +533,7 @@ classNamesAndAttributes
         (#'Xtreams::InterpretingStreamTest' autoload)
         (#'Xtreams::MessagePackMarshalerTest' autoload)
         (#'Xtreams::ObjectMarshalerTest' autoload)
-        #'stx_goodies_xtreams_transforms_tests'
+        #'Xtreams::stx_goodies_xtreams_transforms_tests'
     )
 !
 
@@ -595,11 +542,14 @@ extensionMethodNames
      Entries are 2-element array literals, consisting of class-name and selector."
 
     ^ #(
+        #'Xtreams::CollectionReadingWritingTest' testReadRejecting
+        #'Xtreams::CollectionReadingWritingTest' testReadSelecting
+        #'Xtreams::CollectionReadingWritingTest' testWriteRejecting
+        #'Xtreams::CollectionReadingWritingTest' testWriteSelecting
         #'Xtreams::CollectionReadingWritingTest' testWriteTransformHexToByte
         #'Xtreams::FiniteReadingWritingTests' testInterpretingDoubles
         #'Xtreams::FiniteReadingWritingTests' testWriteTransformingOverLimitingPastEnd
         #'Xtreams::FiniteReadingWritingTests' testWriteTransformingPastEnd
-        #'Xtreams::ReadingWritingTest' testCharacters
         #'Xtreams::ReadingWritingTest' testDoing
         #'Xtreams::ReadingWritingTest' testInterpretingPoints
         #'Xtreams::ReadingWritingTest' testMarshaling
@@ -634,10 +584,6 @@ extensionMethodNames
         #'Xtreams::ReadingWritingTest' testWriteTransforming1into2
         #'Xtreams::ReadingWritingTest' testWriteTransforming2into1
         #'Xtreams::ReadingWritingTest' testWriteUnsignedShortEndianness
-        #'Xtreams::CollectionReadingWritingTest' testReadRejecting
-        #'Xtreams::CollectionReadingWritingTest' testReadSelecting
-        #'Xtreams::CollectionReadingWritingTest' testWriteRejecting
-        #'Xtreams::CollectionReadingWritingTest' testWriteSelecting
     )
 ! !
 
@@ -695,6 +641,61 @@ svnRevisionNr
 
 version_SVN
     ^ '$Id: stx_goodies_xtreams_transforms_tests.st 20 2011-11-21 06:04:22Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:35 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+TestCase subclass:#DuplicateTest
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Transforms-Tests'
+!
+
+
+!DuplicateTest methodsFor:'tests'!
+
+testDuplicateReading
+	| copy |
+	copy := Array new writing.
+	self assert: ((0 to: 255) reading duplicating: copy) rest = copy conclusion
+!
+
+testDuplicateReadingIncomplete
+	| original copy |
+	copy := ByteArray new writing.
+	[(#[0 1 2 3 4 5 6 7 8 9] reading duplicating: copy) read: 20] on: Incomplete do: [:incomplete | original := incomplete contents].
+	copy := copy conclusion.
+	self assert: original = #[0 1 2 3 4 5 6 7 8 9].
+	self assert: copy = #[0 1 2 3 4 5 6 7 8 9]
+!
+
+testDuplicateWriting
+	| original copy |
+	original := ByteArray new writing.
+	copy := ByteArray new writing.
+	(original duplicating: copy) write: (0 to: 255).
+	self assert: original conclusion = copy conclusion
+!
+
+testDuplicateWritingIncomplete
+	| original copy |
+	original := ByteArray new writing.
+	copy := ByteArray new writing.
+	[((original limiting: 10) duplicating: copy) write: (0 to: 255)] on: Incomplete do: [:incomplete | ].
+	original := original conclusion.
+	copy := copy conclusion.
+	self assert: original = #[0 1 2 3 4 5 6 7 8 9].
+	self assert: copy = #[0 1 2 3 4 5 6 7 8 9]
+! !
+
+!DuplicateTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id$'
 ! !
 !CollectionReadingWritingTest methodsFor:'tests - transforming'!
 
@@ -784,68 +785,6 @@ testWriteTransformingPastEnd
 	self should: [self input get] raise: Incomplete
 ! !
 
-!ReadingWritingTest methodsFor:'tests - transforming'!
-
-testDoing
-	| outing inning |
-	outing := ByteArray new writing.
-	(self output doing: [:each | outing put: each]) write: #[ 1 2 3 4 5 ].
-	self assert: outing contents = #[ 1 2 3 4 5 ].
-
-	inning := ByteArray new writing.
-	self assert: ((self input doing: [:each | inning put: each]) read: 5) = #[ 1 2 3 4 5 ].
-	self assert: inning contents = #[ 1 2 3 4 5 ]
-! !
-
-!ReadingWritingTest methodsFor:'tests - interpreting'!
-
-testInterpretingPoints
-
-	| points result |
-	points := (Random new reading transforming: [ :in :out | out put: in get @ in get ]) read: 5.
-	(self output interpreting: [ :b :i :o | b doubleAt: i put: o x. b doubleAt: i + 8 put: o y ] size: 16 )
-		write: points;
-		close.
-	result := (self input interpreting: [ :b :i | (b doubleAt: i) @ (b doubleAt: i + 8) ] size: 16 cacheSize: 5) read: points size.
-	self assert: points = result
-! !
-
-!ReadingWritingTest methodsFor:'tests - interpreting'!
-
-testMarshaling
-	| object result in out |
-	object := Object new.
-	out := self output marshaling.
-	in := self input marshaling.
-	2 timesRepeat: 
-		[out put: ((1 to: 11) collect: [:each | (1 to: 11) collect: [:ea | object]]).
-		result := in get.
-		self assert: result size = 11.
-		self assert: (result allSatisfy: [:each | each allSatisfy: [:ea | ea == result first first]])]
-! !
-
-!ReadingWritingTest methodsFor:'tests - transforming'!
-
-testReadCollecting
-	| data |
-	data := #[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 ].
-	self output write: data.
-	self assert: ((self input collecting: [:e | e * e]) read: data size) = (ByteArray withAll: (data collect: [:e | e * e]))
-! !
-
-!ReadingWritingTest methodsFor:'tests - transforming'!
-
-testReadCollectingContentsSpeciesChanged
-	| data result |
-	data := ByteArray withAll: ((1 to: 16) collect: [:index | 65]).
-	self output write: data.
-	result :=
-		(self input collecting: [:e | Character codePoint: e])
-			contentsSpecies: String;
-			read: data size.
-	self assert: result = (String withAll: (data asArray collect: [:e | Character codePoint: e]))
-! !
-
 !ReadingWritingTest methodsFor:'tests - encoding'!
 
 testReadDecodingBase64
@@ -902,6 +841,150 @@ testReadDecodingUTF8
 	self output write: bytes; close.
 	result := (self input encoding: #utf8) read: text size.
 	self assert: result = text
+! !
+
+!ReadingWritingTest methodsFor:'tests - encoding'!
+
+testWriteEncodingBase64
+	((self output encoding: #ascii) encodingBase64 encoding: #ascii)
+		write: 'Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.';
+		close.
+	self assert: ((self input encoding: #ascii) read: 360) = 'TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4='
+! !
+
+!ReadingWritingTest methodsFor:'tests - encoding'!
+
+testWriteEncodingCRLF
+
+	| result isCRLF |
+	(self output encoding: #ascii)
+		write: 'hello\world\\\' withCRs;
+		close.
+	isCRLF := IOAccessor defaultClass = PCIOAccessor.
+	result := self input read: (isCRLF ifTrue: [18] ifFalse: [14]).
+	
+	self assert: result = (isCRLF
+		ifTrue: [#[104 101 108 108 111 13 10 119 111 114 108 100 13 10 13 10 13 10 ] ]
+		ifFalse: [#[104 101 108 108 111 10 119 111 114 108 100 10 10 10 ] ])
+! !
+
+!ReadingWritingTest methodsFor:'tests - encoding'!
+
+testWriteEncodingTransparent
+
+	| data result bytes |
+	bytes := #[104 101 108 108 111 13 10 119 111 114 108 100 13 10 13 10 13 10 ].
+	data := String withAll: (bytes asArray collect: #asCharacter).
+	(self output encoding: #ascii)
+		setLineEndTransparent;
+		write: data;
+		close.
+	result := self input read: data size.
+	self assert: result = bytes
+! !
+
+!ReadingWritingTest methodsFor:'tests - encoding'!
+
+testWriteEncodingUTF16
+
+	| result bytes |
+	bytes := #[0 72 0 101 0 108 0 108 0 111 0 32 0 87 0 111 0 114 0 108 0 100 0 33].
+	(self output encoding: #utf16) write: 'Hello World!!'; close.
+	result := self input read: 24.
+	self assert: result = bytes
+! !
+
+!ReadingWritingTest methodsFor:'tests - encoding'!
+
+testWriteEncodingUTF8
+
+	| result bytes text |
+	text := 'Příliš žluťoučký kůň úpěl ďábelské ódy'.
+	bytes := #[80 197 153 195 173 108 105 197 161 32 197 190 108 117 197 165 111 117 196 141 107 195 189 32 107 197 175 197 136 32 195 186 112 196 155 108 32 196 143 195 161 98 101 108 115 107 195 169 32 195 179 100 121].
+	(self output encoding: #utf8) write: text; close.
+	result := self input read: bytes size.
+	self assert: result = bytes
+! !
+
+!ReadingWritingTest methodsFor:'tests - interpreting'!
+
+testInterpretingPoints
+
+	| points result |
+	points := (Random new reading transforming: [ :in :out | out put: in get @ in get ]) read: 5.
+	(self output interpreting: [ :b :i :o | b doubleAt: i put: o x. b doubleAt: i + 8 put: o y ] size: 16 )
+		write: points;
+		close.
+	result := (self input interpreting: [ :b :i | (b doubleAt: i) @ (b doubleAt: i + 8) ] size: 16 cacheSize: 5) read: points size.
+	self assert: points = result
+! !
+
+!ReadingWritingTest methodsFor:'tests - interpreting'!
+
+testMarshaling
+	| object result in out |
+	object := Object new.
+	out := self output marshaling.
+	in := self input marshaling.
+	2 timesRepeat: 
+		[out put: ((1 to: 11) collect: [:each | (1 to: 11) collect: [:ea | object]]).
+		result := in get.
+		self assert: result size = 11.
+		self assert: (result allSatisfy: [:each | each allSatisfy: [:ea | ea == result first first]])]
+! !
+
+!ReadingWritingTest methodsFor:'tests - interpreting'!
+
+testReadUnsignedShortEndianness
+
+	self output write: #[ 16rFF 16r00 16rFF 00]; close.
+	self assert: (self input interpreting: #unsignedShort_le) get = 16rFF.
+	self assert: (self input interpreting: #unsignedShort_be) get = 16rFF00.
+! !
+
+!ReadingWritingTest methodsFor:'tests - interpreting'!
+
+testWriteUnsignedShortEndianness
+
+	(self output interpreting: #unsignedShort_le) put: 16rFF.
+	(self output interpreting: #unsignedShort_be) put: 16rFF00.
+	self output close.
+	self assert: (self input read: 4) = #[ 16rFF 16r00 16rFF 00]
+! !
+
+!ReadingWritingTest methodsFor:'tests - transforming'!
+
+testDoing
+	| outing inning |
+	outing := ByteArray new writing.
+	(self output doing: [:each | outing put: each]) write: #[ 1 2 3 4 5 ].
+	self assert: outing contents = #[ 1 2 3 4 5 ].
+
+	inning := ByteArray new writing.
+	self assert: ((self input doing: [:each | inning put: each]) read: 5) = #[ 1 2 3 4 5 ].
+	self assert: inning contents = #[ 1 2 3 4 5 ]
+! !
+
+!ReadingWritingTest methodsFor:'tests - transforming'!
+
+testReadCollecting
+	| data |
+	data := #[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 ].
+	self output write: data.
+	self assert: ((self input collecting: [:e | e * e]) read: data size) = (ByteArray withAll: (data collect: [:e | e * e]))
+! !
+
+!ReadingWritingTest methodsFor:'tests - transforming'!
+
+testReadCollectingContentsSpeciesChanged
+	| data result |
+	data := ByteArray withAll: ((1 to: 16) collect: [:index | 65]).
+	self output write: data.
+	result :=
+		(self input collecting: [:e | Character codePoint: e])
+			contentsSpecies: String;
+			read: data size.
+	self assert: result = (String withAll: (data asArray collect: [:e | Character codePoint: e]))
 ! !
 
 !ReadingWritingTest methodsFor:'tests - transforming'!
@@ -973,15 +1056,6 @@ testReadTransformingPastEnd
 	self should: [transformed get] raise: Incomplete
 ! !
 
-!ReadingWritingTest methodsFor:'tests - interpreting'!
-
-testReadUnsignedShortEndianness
-
-	self output write: #[ 16rFF 16r00 16rFF 00]; close.
-	self assert: (self input interpreting: #unsignedShort_le) get = 16rFF.
-	self assert: (self input interpreting: #unsignedShort_be) get = 16rFF00.
-! !
-
 !ReadingWritingTest methodsFor:'tests - transforming'!
 
 testWriteCollecting
@@ -1025,69 +1099,6 @@ testWriteDuplicating
 	(original duplicating: copy) write: contents.
 	self assert: original conclusion = contents.
 	self assert: copy conclusion = contents
-! !
-
-!ReadingWritingTest methodsFor:'tests - encoding'!
-
-testWriteEncodingBase64
-	((self output encoding: #ascii) encodingBase64 encoding: #ascii)
-		write: 'Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.';
-		close.
-	self assert: ((self input encoding: #ascii) read: 360) = 'TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4='
-! !
-
-!ReadingWritingTest methodsFor:'tests - encoding'!
-
-testWriteEncodingCRLF
-
-	| result isCRLF |
-	(self output encoding: #ascii)
-		write: 'hello\world\\\' withCRs;
-		close.
-	isCRLF := IOAccessor defaultClass = PCIOAccessor.
-	result := self input read: (isCRLF ifTrue: [18] ifFalse: [14]).
-	
-	self assert: result = (isCRLF
-		ifTrue: [#[104 101 108 108 111 13 10 119 111 114 108 100 13 10 13 10 13 10 ] ]
-		ifFalse: [#[104 101 108 108 111 10 119 111 114 108 100 10 10 10 ] ])
-! !
-
-!ReadingWritingTest methodsFor:'tests - encoding'!
-
-testWriteEncodingTransparent
-
-	| data result bytes |
-	bytes := #[104 101 108 108 111 13 10 119 111 114 108 100 13 10 13 10 13 10 ].
-	data := String withAll: (bytes asArray collect: #asCharacter).
-	(self output encoding: #ascii)
-		setLineEndTransparent;
-		write: data;
-		close.
-	result := self input read: data size.
-	self assert: result = bytes
-! !
-
-!ReadingWritingTest methodsFor:'tests - encoding'!
-
-testWriteEncodingUTF16
-
-	| result bytes |
-	bytes := #[0 72 0 101 0 108 0 108 0 111 0 32 0 87 0 111 0 114 0 108 0 100 0 33].
-	(self output encoding: #utf16) write: 'Hello World!!'; close.
-	result := self input read: 24.
-	self assert: result = bytes
-! !
-
-!ReadingWritingTest methodsFor:'tests - encoding'!
-
-testWriteEncodingUTF8
-
-	| result bytes text |
-	text := 'Příliš žluťoučký kůň úpěl ďábelské ódy'.
-	bytes := #[80 197 153 195 173 108 105 197 161 32 197 190 108 117 197 165 111 117 196 141 107 195 189 32 107 197 175 197 136 32 195 186 112 196 155 108 32 196 143 195 161 98 101 108 115 107 195 169 32 195 179 100 121].
-	(self output encoding: #utf8) write: text; close.
-	result := self input read: bytes size.
-	self assert: result = bytes
 ! !
 
 !ReadingWritingTest methodsFor:'tests - transforming'!
@@ -1149,15 +1160,5 @@ testWriteTransforming2into1
 		close.
 	result := self input read: 2.
 	self assert: result = #[ 2 4 ]
-! !
-
-!ReadingWritingTest methodsFor:'tests - interpreting'!
-
-testWriteUnsignedShortEndianness
-
-	(self output interpreting: #unsignedShort_le) put: 16rFF.
-	(self output interpreting: #unsignedShort_be) put: 16rFF00.
-	self output close.
-	self assert: (self input read: 4) = #[ 16rFF 16r00 16rFF 00]
 ! !
 

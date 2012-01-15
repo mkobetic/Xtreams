@@ -1,43 +1,4 @@
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:34:41 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/core/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-TestCase subclass:#PositionReadStreamTest
-	instanceVariableNames:''
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Core-Tests'
-!
-
-
-!PositionReadStreamTest methodsFor:'tests'!
-
-testIncompleteCounts
-
-	| x oneToTen |
-	oneToTen := [ (x := x + 1) > 10 ifTrue: [ Incomplete zero raise ]. x ].
-	x := 0.
-	self assert: ([ oneToTen reading positioning read: 5; -- 8 ] on: Incomplete do: [:ex | ex count]) = 5.
-	x := 0.
-	self assert: ([ oneToTen reading positioning read: 5; ++ 8 ] on: Incomplete do: [:ex | ex count]) = 5.
-	x := 0.
-	self assert: ([ oneToTen reading positioning -= 12 ] on: Incomplete do: [:ex | ex count]) = 10.
-	x := 0.
-	self assert: ([ oneToTen reading positioning += 12 ] on: Incomplete do: [:ex | ex count]) = 10.
-	self assert: ([ (1 to: 10) reading positioning read: 5; -- 8 ] on: Incomplete do: [:ex | ex count]) = 5.
-	self assert: ([ (1 to: 10) reading positioning read: 5; ++ 8 ] on: Incomplete do: [:ex | ex count]) = 5.
-	self assert: ([ (1 to: 10) reading positioning -= 12 ] on: Incomplete do: [:ex | ex count]) = 10.
-	self assert: ([ (1 to: 10) reading positioning += 12 ] on: Incomplete do: [:ex | ex count]) = 10.
-! !
-
-!PositionReadStreamTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__PositionReadStreamTest.st 4 2011-08-22 15:45:26Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:34:41 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:10 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/core/tests' }"
 
@@ -532,13 +493,13 @@ timeout: timeoutDuration server: serverBlock client: clientBlock
 version_SVN
     ^ '$Id: Xtreams__ReadingWritingTest.st 4 2011-08-22 15:45:26Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:34:41 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:10 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/core/tests' }"
 
 "{ NameSpace: Xtreams }"
 
-TestCase subclass:#PositionWriteStreamTest
+TestCase subclass:#PositionReadStreamTest
 	instanceVariableNames:''
 	classVariableNames:''
 	poolDictionaries:''
@@ -546,68 +507,36 @@ TestCase subclass:#PositionWriteStreamTest
 !
 
 
-!PositionWriteStreamTest methodsFor:'tests'!
+!PositionReadStreamTest methodsFor:'tests'!
 
 testIncompleteCounts
 
-	self assert: ([ ([ :x | ] writing limiting: 10) positioning write: (1 to: 5); -- 8 ] on: Incomplete do: [:ex | ex count]) = 5.
-	self assert: ([ ([ :x | ] writing limiting: 10) positioning write: (1 to: 5); ++ 8 ] on: Incomplete do: [:ex | ex count]) = 0.
-	self assert: ([ ([ :x | ] writing limiting: 10) positioning write: (1 to: 5); -= 12 ] on: Incomplete do: [:ex | ex count]) = 5.
-	self assert: ([ ([ :x | ] writing limiting: 10) positioning write: (1 to: 5); += 12 ] on: Incomplete do: [:ex | ex count]) = 5.
-	self assert: ([ (Array new: 10) writing positioning write: (1 to: 5); -- 8 ] on: Incomplete do: [:ex | ex count]) = 5.
-	self assert: ([ (Array new: 10) writing positioning write: (1 to: 5); ++ 8 ] on: Incomplete do: [:ex | ex count]) = 0.
-	self assert: ([ (Array new: 10) writing positioning write: (1 to: 5); -= 12 ] on: Incomplete do: [:ex | ex count]) = 5.
-	self assert: ([ (Array new: 10) writing positioning write: (1 to: 5); += 12 ] on: Incomplete do: [:ex | ex count]) = 5.
+	| x oneToTen |
+	oneToTen := [ (x := x + 1) > 10 ifTrue: [ Incomplete zero raise ]. x ].
+	x := 0.
+	self assert: ([ oneToTen reading positioning read: 5; -- 8 ] on: Incomplete do: [:ex | ex count]) = 5.
+	x := 0.
+	self assert: ([ oneToTen reading positioning read: 5; ++ 8 ] on: Incomplete do: [:ex | ex count]) = 5.
+	x := 0.
+	self assert: ([ oneToTen reading positioning -= 12 ] on: Incomplete do: [:ex | ex count]) = 10.
+	x := 0.
+	self assert: ([ oneToTen reading positioning += 12 ] on: Incomplete do: [:ex | ex count]) = 10.
+	self assert: ([ (1 to: 10) reading positioning read: 5; -- 8 ] on: Incomplete do: [:ex | ex count]) = 5.
+	self assert: ([ (1 to: 10) reading positioning read: 5; ++ 8 ] on: Incomplete do: [:ex | ex count]) = 5.
+	self assert: ([ (1 to: 10) reading positioning -= 12 ] on: Incomplete do: [:ex | ex count]) = 10.
+	self assert: ([ (1 to: 10) reading positioning += 12 ] on: Incomplete do: [:ex | ex count]) = 10.
 ! !
 
-!PositionWriteStreamTest class methodsFor:'documentation'!
+!PositionReadStreamTest class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id: Xtreams__PositionWriteStreamTest.st 4 2011-08-22 15:45:26Z mk $'
+    ^ '$Id: Xtreams__PositionReadStreamTest.st 4 2011-08-22 15:45:26Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:34:41 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:10 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/core/tests' }"
 
 "{ NameSpace: Xtreams }"
-
-ReadingWritingTest subclass:#InfiniteReadingWritingTests
-	instanceVariableNames:''
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Core-Tests'
-!
-
-InfiniteReadingWritingTests comment:'These are tests specifically for those streams that cannot be effectively closed, i.e. pointer and shared queue streams.
-
-'
-!
-
-
-!InfiniteReadingWritingTests methodsFor:'tests - core'!
-
-testGet
-	self output write: #[ 1 2 3 4 ].
-	self assert: self input get = 1.
-	self assert: self input get = 2.
-	self assert: self input get = 3.
-	self assert: self input get = 4
-!
-
-testRead
-	self output write: #[ 1 2 3 4 ].
-	self assert: (self input read: 3) = #[1 2 3].
-	self assert: self input get = 4
-! !
-
-!InfiniteReadingWritingTests class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__InfiniteReadingWritingTests.st 4 2011-08-22 15:45:26Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:34:41 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/core/tests' }"
 
 LibraryDefinition subclass:#stx_goodies_xtreams_core_tests
 	instanceVariableNames:''
@@ -636,10 +565,10 @@ preRequisites
      exclude individual packages in the #excludedFromPrerequisites method."
 
     ^ #(
-        #'stx:goodies/sunit'    "TestCase - superclass of Xtreams::InfiniteReadingWritingTests "
-        #'stx:goodies/xtreams/core'    "Xtreams::Incomplete - referenced by Xtreams::FiniteReadingWritingTests>>testReadPositioningSeekFrom "
+        #'stx:goodies/sunit'    "TestAsserter - superclass of Xtreams::ReadingWritingTest "
+        #'stx:goodies/xtreams/core'    "Xtreams::PositionWriteStream - referenced by Xtreams::FiniteReadingWritingTests>>testWritePositioningWithRingBuffer "
         #'stx:goodies/xtreams/substreams'
-        #'stx:libbasic'    "ProjectDefinition - superclass of stx_goodies_xtreams_core_tests "
+        #'stx:libbasic'    "Object - superclass of Xtreams::ReadingWritingTest "
     )
 ! !
 
@@ -659,7 +588,7 @@ classNamesAndAttributes
         (#'Xtreams::PositionWriteStreamTest' autoload)
         (#'Xtreams::ReadingWritingTest' autoload)
         (#'Xtreams::RingBufferTest' autoload)
-        #'stx_goodies_xtreams_core_tests'
+        #'Xtreams::stx_goodies_xtreams_core_tests'
         (#'Xtreams::FiniteReadingWritingTests' autoload)
         (#'Xtreams::InfiniteReadingWritingTests' autoload)
     )
@@ -728,196 +657,7 @@ svnRevisionNr
 version_SVN
     ^ '$Id: stx_goodies_xtreams_core_tests.st 13 2011-11-21 06:01:33Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:34:41 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/core/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-TestCase subclass:#BufferTest
-	instanceVariableNames:'output buffer'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Core-Tests'
-!
-
-
-!BufferTest methodsFor:'initialize-release'!
-
-setUp
-
-	buffer := Buffer on: String new
-! !
-
-!BufferTest methodsFor:'tests'!
-
-testClear
-
-	output := 'wwww' copy.
-	buffer write: 4 from: '1234' at: 1.
-	buffer clear.
-	buffer write: 4 from: 'ABCD' at: 1.
-	buffer read: 4 into: output at: 1.
-	self assert: output = 'ABCD'.
-	self assert: buffer readPosition = 4.
-	self assert: buffer readSize = 0.
-	self assert: buffer writePosition = 4.
-	self assert: buffer writeSize = 8
-!
-
-testInsertInTheMiddle
-
-	| chunk |
-	chunk := 'hello'.
-	buffer write: chunk; write: chunk.
-	buffer writePosition: chunk size.
-	buffer insert: chunk.
-	self assert: buffer writePosition = (chunk size * 2).
-	self assert: buffer activeSize = (chunk size * 3)
-!
-
-testRead
-
-	output := 'wwww' copy.
-	buffer write: 4 from: '1234' at: 1.
-	buffer read: 1 into: output at: 1.
-	self assert: output = '1www'.
-	self assert: buffer readPosition = 1.
-	self assert: buffer readSize = 3.
-	self assert: buffer writePosition = 4.
-	self assert: buffer writeSize = 5.
-	buffer read: 3 into: output at: 2.
-	self assert: output = '1234'.
-	self assert: buffer readPosition = 4.
-	self assert: buffer writePosition = 4.
-	self assert: buffer readSize = 0.
-	self assert: buffer writeSize = 8
-!
-
-testReadOverflow
-
-	output := 'wwwwww' copy.
-	buffer write: 4 from: '1234' at: 1.
-	self should: [buffer read: 6 into: output at: 1] raise: Incomplete.
-	self assert: output = '1234ww'.
-	self assert: buffer readPosition = 4.
-	self assert: buffer readSize = 0.
-	self assert: buffer writePosition = 4.
-	self assert: buffer writeSize = 8
-!
-
-testTrim
-
-	output := 'wwww' copy.
-	buffer write: 8 from: '12345678' at: 1.
-	buffer read: 2 into: output at: 1.
-	buffer writeSkip: -2.
-	buffer trim.
-	self assert: buffer readPosition = 0.
-	self assert: buffer readSize = 4.
-	self assert: buffer writePosition = 4.
-	self assert: buffer writeSize = 0.
-	buffer read: 4 into: output at: 1.
-	self assert: output = '3456'.
-	self assert: buffer readPosition = 4.
-	self assert: buffer readSize = 0.
-	self assert: buffer writePosition = 4.
-	self assert: buffer writeSize = 4
-!
-
-testWrite
-
-	buffer := Buffer on: 'xxxx' copy.
-	self assert: buffer cacheSize = 4.
-	self assert: buffer activeSize = 0.
-	self assert: buffer inactiveSize = 4.
-	self assert: buffer readPosition = 0.
-	self assert: buffer writePosition = 0.
-	self assert: buffer readSize = 0.
-	self assert: buffer writeSize = 4.
-	buffer write: 1 from: '1234' at: 1.
-	self assert: buffer cache = '1xxx'.
-	self assert: buffer cacheSize = 4.
-	self assert: buffer activeSize = 1.
-	self assert: buffer inactiveSize = 3.
-	self assert: buffer readPosition = 0.
-	self assert: buffer writePosition = 1.
-	self assert: buffer readSize = 1.
-	self assert: buffer writeSize = 3.
-	buffer write: 3 from: '1234' at: 2.
-	self assert: buffer cache = '1234'.
-	self assert: buffer cacheSize = 4.
-	self assert: buffer activeSize = 4.
-	self assert: buffer inactiveSize = 0.
-	self assert: buffer readPosition = 0.
-	self assert: buffer writePosition = 4.
-	self assert: buffer readSize = 4.
-	self assert: buffer writeSize = 0
-!
-
-testWriteGrow
-
-	self assert: buffer cacheSize = 0.
-	self assert: buffer activeSize = 0.
-	self assert: buffer inactiveSize = 0.
-	self assert: buffer readPosition = 0.
-	self assert: buffer writePosition = 0.
-	self assert: buffer readSize = 0.
-	self assert: buffer writeSize = 0.
-	buffer write: 4 from: '1234' at: 1.
-	self assert: (buffer cache first: 4) = '1234'.
-	self assert: buffer cacheSize = 8.
-	self assert: buffer activeSize = 4.
-	self assert: buffer inactiveSize = 4.
-	self assert: buffer readPosition = 0.
-	self assert: buffer writePosition = 4.
-	self assert: buffer readSize = 4.
-	self assert: buffer writeSize = 4
-!
-
-testWriteObject
-
-	buffer := Buffer on: 'xxxx' copy.
-	self assert: buffer cacheSize = 4.
-	self assert: buffer activeSize = 0.
-	self assert: buffer inactiveSize = 4.
-	self assert: buffer readPosition = 0.
-	self assert: buffer writePosition = 0.
-	self assert: buffer readSize = 0.
-	self assert: buffer writeSize = 4.
-	buffer put: $1.
-	self assert: buffer cache = '1xxx'.
-	self assert: buffer cacheSize = 4.
-	self assert: buffer activeSize = 1.
-	self assert: buffer inactiveSize = 3.
-	self assert: buffer readPosition = 0.
-	self assert: buffer writePosition = 1.
-	self assert: buffer readSize = 1.
-	self assert: buffer writeSize = 3.
-	buffer put: $2; put: $3; put: $4.
-	self assert: buffer cache = '1234'.
-	self assert: buffer cacheSize = 4.
-	self assert: buffer activeSize = 4.
-	self assert: buffer inactiveSize = 0.
-	self assert: buffer readPosition = 0.
-	self assert: buffer writePosition = 4.
-	self assert: buffer readSize = 4.
-	self assert: buffer writeSize = 0.
-	buffer put: $5.
-	self assert: (buffer cache first: 5) = '12345'.
-	self assert: buffer cacheSize >= 5.
-	self assert: buffer activeSize = 5.
-	self assert: buffer readPosition = 0.
-	self assert: buffer writePosition = 5.
-	self assert: buffer readSize = 5.
-! !
-
-!BufferTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__BufferTest.st 4 2011-08-22 15:45:26Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:34:41 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:10 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/core/tests' }"
 
@@ -1217,7 +957,7 @@ testWriteWrap
 version_SVN
     ^ '$Id: Xtreams__RingBufferTest.st 4 2011-08-22 15:45:26Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:34:41 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:10 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/core/tests' }"
 
@@ -2008,7 +1748,7 @@ testWriteTransformingPastEnd
 version_SVN
     ^ '$Id: Xtreams__FiniteReadingWritingTests.st 4 2011-08-22 15:45:26Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 11-12-2011 at 07:34:41 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:10 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/core/tests' }"
 
@@ -2243,4 +1983,266 @@ testWriteWrapOverflow
 
 version_SVN
     ^ '$Id: Xtreams__ElasticBufferTest.st 4 2011-08-22 15:45:26Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:10 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/core/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+TestCase subclass:#BufferTest
+	instanceVariableNames:'output buffer'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Core-Tests'
+!
+
+
+!BufferTest methodsFor:'initialize-release'!
+
+setUp
+
+	buffer := Buffer on: String new
+! !
+
+!BufferTest methodsFor:'tests'!
+
+testClear
+
+	output := 'wwww' copy.
+	buffer write: 4 from: '1234' at: 1.
+	buffer clear.
+	buffer write: 4 from: 'ABCD' at: 1.
+	buffer read: 4 into: output at: 1.
+	self assert: output = 'ABCD'.
+	self assert: buffer readPosition = 4.
+	self assert: buffer readSize = 0.
+	self assert: buffer writePosition = 4.
+	self assert: buffer writeSize = 8
+!
+
+testInsertInTheMiddle
+
+	| chunk |
+	chunk := 'hello'.
+	buffer write: chunk; write: chunk.
+	buffer writePosition: chunk size.
+	buffer insert: chunk.
+	self assert: buffer writePosition = (chunk size * 2).
+	self assert: buffer activeSize = (chunk size * 3)
+!
+
+testRead
+
+	output := 'wwww' copy.
+	buffer write: 4 from: '1234' at: 1.
+	buffer read: 1 into: output at: 1.
+	self assert: output = '1www'.
+	self assert: buffer readPosition = 1.
+	self assert: buffer readSize = 3.
+	self assert: buffer writePosition = 4.
+	self assert: buffer writeSize = 5.
+	buffer read: 3 into: output at: 2.
+	self assert: output = '1234'.
+	self assert: buffer readPosition = 4.
+	self assert: buffer writePosition = 4.
+	self assert: buffer readSize = 0.
+	self assert: buffer writeSize = 8
+!
+
+testReadOverflow
+
+	output := 'wwwwww' copy.
+	buffer write: 4 from: '1234' at: 1.
+	self should: [buffer read: 6 into: output at: 1] raise: Incomplete.
+	self assert: output = '1234ww'.
+	self assert: buffer readPosition = 4.
+	self assert: buffer readSize = 0.
+	self assert: buffer writePosition = 4.
+	self assert: buffer writeSize = 8
+!
+
+testTrim
+
+	output := 'wwww' copy.
+	buffer write: 8 from: '12345678' at: 1.
+	buffer read: 2 into: output at: 1.
+	buffer writeSkip: -2.
+	buffer trim.
+	self assert: buffer readPosition = 0.
+	self assert: buffer readSize = 4.
+	self assert: buffer writePosition = 4.
+	self assert: buffer writeSize = 0.
+	buffer read: 4 into: output at: 1.
+	self assert: output = '3456'.
+	self assert: buffer readPosition = 4.
+	self assert: buffer readSize = 0.
+	self assert: buffer writePosition = 4.
+	self assert: buffer writeSize = 4
+!
+
+testWrite
+
+	buffer := Buffer on: 'xxxx' copy.
+	self assert: buffer cacheSize = 4.
+	self assert: buffer activeSize = 0.
+	self assert: buffer inactiveSize = 4.
+	self assert: buffer readPosition = 0.
+	self assert: buffer writePosition = 0.
+	self assert: buffer readSize = 0.
+	self assert: buffer writeSize = 4.
+	buffer write: 1 from: '1234' at: 1.
+	self assert: buffer cache = '1xxx'.
+	self assert: buffer cacheSize = 4.
+	self assert: buffer activeSize = 1.
+	self assert: buffer inactiveSize = 3.
+	self assert: buffer readPosition = 0.
+	self assert: buffer writePosition = 1.
+	self assert: buffer readSize = 1.
+	self assert: buffer writeSize = 3.
+	buffer write: 3 from: '1234' at: 2.
+	self assert: buffer cache = '1234'.
+	self assert: buffer cacheSize = 4.
+	self assert: buffer activeSize = 4.
+	self assert: buffer inactiveSize = 0.
+	self assert: buffer readPosition = 0.
+	self assert: buffer writePosition = 4.
+	self assert: buffer readSize = 4.
+	self assert: buffer writeSize = 0
+!
+
+testWriteGrow
+
+	self assert: buffer cacheSize = 0.
+	self assert: buffer activeSize = 0.
+	self assert: buffer inactiveSize = 0.
+	self assert: buffer readPosition = 0.
+	self assert: buffer writePosition = 0.
+	self assert: buffer readSize = 0.
+	self assert: buffer writeSize = 0.
+	buffer write: 4 from: '1234' at: 1.
+	self assert: (buffer cache first: 4) = '1234'.
+	self assert: buffer cacheSize = 8.
+	self assert: buffer activeSize = 4.
+	self assert: buffer inactiveSize = 4.
+	self assert: buffer readPosition = 0.
+	self assert: buffer writePosition = 4.
+	self assert: buffer readSize = 4.
+	self assert: buffer writeSize = 4
+!
+
+testWriteObject
+
+	buffer := Buffer on: 'xxxx' copy.
+	self assert: buffer cacheSize = 4.
+	self assert: buffer activeSize = 0.
+	self assert: buffer inactiveSize = 4.
+	self assert: buffer readPosition = 0.
+	self assert: buffer writePosition = 0.
+	self assert: buffer readSize = 0.
+	self assert: buffer writeSize = 4.
+	buffer put: $1.
+	self assert: buffer cache = '1xxx'.
+	self assert: buffer cacheSize = 4.
+	self assert: buffer activeSize = 1.
+	self assert: buffer inactiveSize = 3.
+	self assert: buffer readPosition = 0.
+	self assert: buffer writePosition = 1.
+	self assert: buffer readSize = 1.
+	self assert: buffer writeSize = 3.
+	buffer put: $2; put: $3; put: $4.
+	self assert: buffer cache = '1234'.
+	self assert: buffer cacheSize = 4.
+	self assert: buffer activeSize = 4.
+	self assert: buffer inactiveSize = 0.
+	self assert: buffer readPosition = 0.
+	self assert: buffer writePosition = 4.
+	self assert: buffer readSize = 4.
+	self assert: buffer writeSize = 0.
+	buffer put: $5.
+	self assert: (buffer cache first: 5) = '12345'.
+	self assert: buffer cacheSize >= 5.
+	self assert: buffer activeSize = 5.
+	self assert: buffer readPosition = 0.
+	self assert: buffer writePosition = 5.
+	self assert: buffer readSize = 5.
+! !
+
+!BufferTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__BufferTest.st 4 2011-08-22 15:45:26Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:10 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/core/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+ReadingWritingTest subclass:#InfiniteReadingWritingTests
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Core-Tests'
+!
+
+InfiniteReadingWritingTests comment:'These are tests specifically for those streams that cannot be effectively closed, i.e. pointer and shared queue streams.
+
+'
+!
+
+
+!InfiniteReadingWritingTests methodsFor:'tests - core'!
+
+testGet
+	self output write: #[ 1 2 3 4 ].
+	self assert: self input get = 1.
+	self assert: self input get = 2.
+	self assert: self input get = 3.
+	self assert: self input get = 4
+!
+
+testRead
+	self output write: #[ 1 2 3 4 ].
+	self assert: (self input read: 3) = #[1 2 3].
+	self assert: self input get = 4
+! !
+
+!InfiniteReadingWritingTests class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__InfiniteReadingWritingTests.st 4 2011-08-22 15:45:26Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:10 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/core/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+TestCase subclass:#PositionWriteStreamTest
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Core-Tests'
+!
+
+
+!PositionWriteStreamTest methodsFor:'tests'!
+
+testIncompleteCounts
+
+	self assert: ([ ([ :x | ] writing limiting: 10) positioning write: (1 to: 5); -- 8 ] on: Incomplete do: [:ex | ex count]) = 5.
+	self assert: ([ ([ :x | ] writing limiting: 10) positioning write: (1 to: 5); ++ 8 ] on: Incomplete do: [:ex | ex count]) = 0.
+	self assert: ([ ([ :x | ] writing limiting: 10) positioning write: (1 to: 5); -= 12 ] on: Incomplete do: [:ex | ex count]) = 5.
+	self assert: ([ ([ :x | ] writing limiting: 10) positioning write: (1 to: 5); += 12 ] on: Incomplete do: [:ex | ex count]) = 5.
+	self assert: ([ (Array new: 10) writing positioning write: (1 to: 5); -- 8 ] on: Incomplete do: [:ex | ex count]) = 5.
+	self assert: ([ (Array new: 10) writing positioning write: (1 to: 5); ++ 8 ] on: Incomplete do: [:ex | ex count]) = 0.
+	self assert: ([ (Array new: 10) writing positioning write: (1 to: 5); -= 12 ] on: Incomplete do: [:ex | ex count]) = 5.
+	self assert: ([ (Array new: 10) writing positioning write: (1 to: 5); += 12 ] on: Incomplete do: [:ex | ex count]) = 5.
+! !
+
+!PositionWriteStreamTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__PositionWriteStreamTest.st 4 2011-08-22 15:45:26Z mk $'
 ! !
