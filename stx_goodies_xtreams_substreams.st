@@ -1,4 +1,4 @@
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:14 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:07 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/substreams' }"
 
@@ -91,7 +91,417 @@ substreamClosed
 version_SVN
     ^ '$Id: Xtreams__ReadSubstream.st 5 2011-08-22 15:46:38Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:14 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:07 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/substreams' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteStream subclass:#WriteSubstream
+	instanceVariableNames:'destinationAtEnd closeBlock substreamClosed'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Substreams'
+!
+
+WriteSubstream comment:'This is abstract superclass of all substreams. Substreams normally don''t close their underlying source, their closing behavior is customized via closeBlock.
+
+Instance Variables
+	destinationAtEnd	<Boolean> flags end of the destination
+	closeBlock	<BlockClosure> unary block invoked in response to #close, allows customizing closing behavior
+	substreamClosed	<Boolean> flags the end of the receiver
+
+'
+!
+
+
+!WriteSubstream class methodsFor:'private'!
+
+slice: sliceBlock close: closeBlock
+	| substream |
+	substream := nil.
+	^[substream == nil ifFalse:
+		[substream substreamClosed ifFalse: [substream close].
+		substream subseekend.
+		substream destinationAtEnd ifTrue: [Incomplete zero raise]].
+	substream := sliceBlock value]
+		reading
+			closeBlock: closeBlock;
+			yourself
+! !
+
+!WriteSubstream methodsFor:'accessing'!
+
+closeBlock
+	^closeBlock
+!
+
+closeBlock: anObject
+	closeBlock := anObject
+!
+
+insert: anInteger from: aSequenceableCollection at: startIndex
+	[destination insert: anInteger from: aSequenceableCollection at: startIndex] on: Incomplete do: [:incomplete |
+		destinationAtEnd := true.
+		incomplete pass].
+	^anInteger
+!
+
+put: anObject
+	[destination put: anObject] on: Incomplete do: [:incomplete |
+		destinationAtEnd := true.
+		incomplete pass]
+!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+	[destination write: anInteger from: aSequenceableCollection at: startIndex] on: Incomplete do: [:incomplete |
+		destinationAtEnd := true.
+		incomplete pass].
+	^anInteger
+! !
+
+!WriteSubstream methodsFor:'initialize-release'!
+
+close
+	closeBlock cull: self.
+	substreamClosed := true
+!
+
+contentsSpecies
+	^destination contentsSpecies
+!
+
+on: aDestination
+	super on: aDestination.
+	closeBlock := [].
+	destinationAtEnd := false.
+	substreamClosed := false
+!
+
+subseekend
+! !
+
+!WriteSubstream methodsFor:'testing'!
+
+destinationAtEnd
+	^destinationAtEnd
+!
+
+substreamClosed
+	^substreamClosed
+! !
+
+!WriteSubstream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__WriteSubstream.st 5 2011-08-22 15:46:38Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:07 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/substreams' }"
+
+"{ NameSpace: Xtreams }"
+
+ReadSubstream subclass:#PositionReadSubstream
+	instanceVariableNames:'position'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Substreams'
+!
+
+PositionReadSubstream comment:'This is an abstract substreams that keeps track of its own position and allows positioning if the underlying stream is positionable.
+
+Instance Variables
+	position	<Integer> current position within the substream
+
+'
+!
+
+
+!PositionReadSubstream methodsFor:'accessing'!
+
+get
+	| object |
+	object := super get.
+	position := position + 1.
+	^object
+!
+
+read: anInteger into: aSequenceableCollection at: startIndex
+	[source read: anInteger into: aSequenceableCollection at: startIndex] on: Incomplete do: [:incomplete |
+		sourceAtEnd := true.
+		position := position + incomplete count.
+		incomplete pass].
+	position := position + anInteger.
+	^anInteger
+! !
+
+!PositionReadSubstream methodsFor:'initialize-release'!
+
+on: aSource
+	super on: aSource.
+	position := 0
+! !
+
+!PositionReadSubstream methodsFor:'seeking'!
+
+++ anInteger
+	| count |
+	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
+	count := self available min: anInteger.
+	count := [source ++ count. count] on: Incomplete do: [ :ex | ex count ].
+	position := position + count.
+	count < anInteger ifTrue: [sourceAtEnd := true. (Incomplete count: count) raise].
+	^anInteger
+!
+
+-- anInteger
+	| count |
+	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
+	count := anInteger min: position.
+	count := [source -- count. count] on: Incomplete do: [ :ex | ex count ].
+	position := position - count.
+	count < anInteger ifTrue: [(Incomplete count: count) raise].
+	anInteger isZero ifFalse: [sourceAtEnd := false].
+	^anInteger
+!
+
+-= anInteger
+	position := self length - anInteger max: 0.
+	^source -= anInteger
+!
+
+length
+	^source available + position
+!
+
+position
+	^position
+!
+
+position: anInteger
+	| delta available |
+	self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
+
+	anInteger < 0 ifTrue: [Incomplete zero raise].
+	available := anInteger min: self length.
+	delta := available - position.
+	[delta positive
+		ifTrue:	[source ++ delta]
+		ifFalse:	[source -- delta negated]]
+			on: Incomplete do: [sourceAtEnd := true].
+	position := available.
+	available = anInteger ifTrue: [^anInteger].
+	(Incomplete count: available) raise
+! !
+
+!PositionReadSubstream methodsFor:'testing'!
+
+isPositionable
+	^source isPositionable
+! !
+
+!PositionReadSubstream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__PositionReadSubstream.st 5 2011-08-22 15:46:38Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:07 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/substreams' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteSubstream subclass:#TestWriteSubstream
+	instanceVariableNames:'substreamAtEnd test inclusive'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Substreams'
+!
+
+TestWriteSubstream comment:'This is a substream bounded by an element matching the @test criteria.
+
+Instance Variables
+	substreamAtEnd	<Boolean> is this substream at end
+	test	<BlockClosure> the bounding criteria
+	inclusive	<Boolean> is the boundary part of the substream contents
+
+'
+!
+
+
+!TestWriteSubstream class methodsFor:'instance creation'!
+
+on: aDestination test: testBlock inclusive: aBoolean
+	^self new on: aDestination test: testBlock inclusive: aBoolean
+! !
+
+!TestWriteSubstream methodsFor:'accessing'!
+
+insert: anInteger from: aSequenceableCollection at: startIndex
+	^self write: anInteger from: aSequenceableCollection at: startIndex
+!
+
+put: anObject
+	substreamAtEnd ifTrue: [Incomplete zero raise].
+	((substreamAtEnd := test value: anObject) and: [inclusive not]) ifTrue: [Incomplete zero raise].
+	[destination put: anObject] on: Incomplete do: [:incomplete | destinationAtEnd := substreamAtEnd := true. incomplete pass].
+	^anObject
+!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+	| count object |
+	substreamAtEnd ifTrue: [Incomplete zero raise].
+	count := 0.
+	[[count < anInteger and: [substreamAtEnd not]] whileTrue:
+		[object := aSequenceableCollection at: startIndex + count.
+		((substreamAtEnd := test value: object) and: [inclusive not]) ifFalse: [destination put: object].
+		count := count + 1]]
+			on: Incomplete do: [:incomplete |
+				destinationAtEnd := substreamAtEnd := true.
+				(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
+	count < anInteger ifTrue: [(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
+	^anInteger
+! !
+
+!TestWriteSubstream methodsFor:'initialize-release'!
+
+on: aDestination test: testBlock inclusive: aBoolean
+	self on: aDestination.
+	test := testBlock.
+	inclusive := aBoolean.
+	substreamAtEnd := false
+! !
+
+!TestWriteSubstream methodsFor:'private'!
+
+streamingInsert: anInteger from: aReadStream
+	self streamingWrite: anInteger from: aReadStream
+!
+
+streamingInsertFrom: aReadStream
+	self streamingWriteFrom: aReadStream
+!
+
+streamingWrite: anInteger from: aReadStream
+	| count object |
+	substreamAtEnd ifTrue: [Incomplete zero raise].
+	count := 0.
+	[[count < anInteger and: [substreamAtEnd not]] whileTrue:
+		[object := aReadStream get.
+		((substreamAtEnd := test value: object) and: [inclusive not]) ifFalse: [destination put: object].
+		count := count + 1]]
+			on: Incomplete do: [:incomplete |
+				destinationAtEnd := substreamAtEnd := true.
+				(Incomplete count: count) raise].
+	count < anInteger ifTrue: [(Incomplete count: count) raise].
+	^anInteger
+!
+
+streamingWriteFrom: aReadStream
+	| object count |
+	substreamAtEnd ifTrue: [Incomplete zero raise].
+	count := 0.
+	^[[substreamAtEnd not] whileTrue:
+		[object := aReadStream get.
+		((substreamAtEnd := test value: object) and: [inclusive not]) ifFalse: [destination put: object. count := count + 1]].
+		count
+	] on: Incomplete do: [:incomplete | destinationAtEnd := substreamAtEnd := true. count ]
+! !
+
+!TestWriteSubstream methodsFor:'testing'!
+
+isPositionable
+	^false
+! !
+
+!TestWriteSubstream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__TestWriteSubstream.st 5 2011-08-22 15:46:38Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:07 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/substreams' }"
+
+"{ NameSpace: Xtreams }"
+
+ReadStream subclass:#StitchReadStream
+	instanceVariableNames:'active contentsSpecies'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Substreams'
+!
+
+StitchReadStream comment:'StitchReadStream combines a stream of source which returns streams in to a single continuous stream.
+
+Instance Variables
+	active	<ReadStream>	the substream that is currently active
+	contentsSpecies	<Class>	the contents species of the substreams
+
+'
+!
+
+
+!StitchReadStream class methodsFor:'instance creation'!
+
+on: aSource contentsSpecies: aClass
+	^self new on: aSource contentsSpecies: aClass
+!
+
+on: aSource first: firstActiveStream
+	^self new on: aSource first: firstActiveStream
+! !
+
+!StitchReadStream methodsFor:'accessing'!
+
+read: anInteger into: aSequenceableCollection at: startIndex
+	| remaining amount index |
+	index := startIndex.
+	remaining := anInteger.
+	amount := 0.
+	[
+		active == nil ifTrue: [
+			[active := source get]
+				on: Incomplete
+				do: [:ex | (Incomplete on: aSequenceableCollection count: anInteger - remaining at: startIndex) raise]].
+		amount := [active read: remaining into: aSequenceableCollection at: index] on: Incomplete do: [:ex | ex count].
+		remaining := remaining - amount.
+		index := index + amount.
+		remaining > 0] whileTrue:
+			[active close.
+			active := nil].
+	^anInteger
+! !
+
+!StitchReadStream methodsFor:'initialize-release'!
+
+close
+	active == nil ifFalse: [active close].
+	super close
+!
+
+contentsSpecies
+	^contentsSpecies
+!
+
+on: aSource contentsSpecies: aClass
+	super on: aSource.
+	contentsSpecies := aClass
+!
+
+on: aSource first: firstActiveStream
+	super on: aSource.
+	active := firstActiveStream.
+	contentsSpecies := active contentsSpecies
+! !
+
+!StitchReadStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__StitchReadStream.st 5 2011-08-22 15:46:38Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:07 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/substreams' }"
 
@@ -216,467 +626,7 @@ isPositionable
 version_SVN
     ^ '$Id: Xtreams__TestReadSubstream.st 5 2011-08-22 15:46:38Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:14 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/substreams' }"
-
-"{ NameSpace: Xtreams }"
-
-LibraryDefinition subclass:#stx_goodies_xtreams_substreams
-	instanceVariableNames:''
-	classVariableNames:''
-	poolDictionaries:''
-	category:'* Projects & Packages *'
-!
-
-!stx_goodies_xtreams_substreams class methodsFor:'documentation'!
-
-extensionsVersion_SVN
-    ^ '$Id: extensions.st 14 2011-11-21 06:01:55Z mkobetic $'
-! !
-
-!stx_goodies_xtreams_substreams class methodsFor:'description'!
-
-excludedFromPreRequisites
-    "list all packages which should be ignored in the automatic
-     preRequisites scan. See #preRequisites for more."
-
-    ^ #(
-    )
-!
-
-preRequisites
-    "list all required packages.
-     This list can be maintained manually or (better) generated and
-     updated by scanning the superclass hierarchies and looking for
-     global variable accesses. (the browser has a menu function for that)
-     Howevery, often too much is found, and you may want to explicitely
-     exclude individual packages in the #excludedFromPrerequisites method."
-
-    ^ #(
-        #'stx:goodies/xtreams/core'    "Xtreams::WriteStream - superclass of Xtreams::MatchWriteSubstream "
-        #'stx:libbasic'    "Object - superclass of Xtreams::MatchWriteSubstream "
-    )
-! !
-
-!stx_goodies_xtreams_substreams class methodsFor:'description - contents'!
-
-classNamesAndAttributes
-    "lists the classes which are to be included in the project.
-     Each entry in the list may be: a single class-name (symbol),
-     or an array-literal consisting of class name and attributes.
-     Attributes are: #autoload or #<os> where os is one of win32, unix,..."
-
-    ^ #(
-        "<className> or (<className> attributes...) in load order"
-        #'Xtreams::ReadSubstream'
-        #'Xtreams::StitchReadStream'
-        #'Xtreams::StitchWriteStream'
-        #'Xtreams::WriteSubstream'
-        #'Xtreams::stx_goodies_xtreams_substreams'
-        #'Xtreams::MatchReadSubstream'
-        #'Xtreams::MatchWriteSubstream'
-        #'Xtreams::PositionReadSubstream'
-        #'Xtreams::PositionWriteSubstream'
-        #'Xtreams::TestReadSubstream'
-        #'Xtreams::TestWriteSubstream'
-        #'Xtreams::LimitReadSubstream'
-        #'Xtreams::LimitWriteSubstream'
-    )
-!
-
-extensionMethodNames
-    "lists the extension methods which are to be included in the project.
-     Entries are 2-element array literals, consisting of class-name and selector."
-
-    ^ #(
-        Block streamingReadMatching:inclusive:
-        Block streamingWriteMatching:inclusive:
-        Object streamingReadMatching:inclusive:
-        Object streamingWriteMatching:inclusive:
-        SequenceableCollection streamingMatchPrefixFunction
-        SequenceableCollection streamingReadMatching:inclusive:
-        SequenceableCollection streamingWriteMatching:inclusive:
-        #'Xtreams::ReadStream' #','
-        #'Xtreams::ReadStream' closing:
-        #'Xtreams::ReadStream' ending:
-        #'Xtreams::ReadStream' ending:inclusive:
-        #'Xtreams::ReadStream' limiting:
-        #'Xtreams::ReadStream' slicing
-        #'Xtreams::ReadStream' stitching
-        #'Xtreams::WriteStream' closing:
-        #'Xtreams::WriteStream' ending:
-        #'Xtreams::WriteStream' ending:inclusive:
-        #'Xtreams::WriteStream' limiting:
-        #'Xtreams::WriteStream' slicing
-        #'Xtreams::WriteStream' stitching
-    )
-! !
-
-!stx_goodies_xtreams_substreams class methodsFor:'description - project information'!
-
-applicationIconFileName
-    "Return the name (without suffix) of an icon-file (the app's icon); will be included in the rc-resource file"
-
-    ^ nil
-    "/ ^ self applicationName
-!
-
-companyName
-    "Return a companyname which will appear in <lib>.rc"
-
-    ^ 'eXept Software AG'
-!
-
-description
-    "Return a description string which will appear in vc.def / bc.def"
-
-    ^ 'Smalltalk/X Class library'
-!
-
-legalCopyright
-    "Return a copyright string which will appear in <lib>.rc"
-
-    ^ 'Copyright Claus Gittinger 1988-2011\nCopyright eXept Software AG 1998-2011'
-!
-
-productName
-    "Return a product name which will appear in <lib>.rc"
-
-    ^ 'Smalltalk/X'
-! !
-
-!stx_goodies_xtreams_substreams class methodsFor:'description - svn'!
-
-svnRepositoryUrlString
-    "Return a SVN repository URL of myself.
-     (Generated since 2011-04-08)
-    "        
-
-    ^ '$URL: https://swing.fit.cvut.cz/svn/stx/goodies/xtreams/trunk/substreams/stx_goodies_xtreams_substreams.st $'
-!
-
-svnRevisionNr
-    "Return a SVN revision number of myself.
-     This number is updated after a commit"
-
-    ^ "$SVN-Revision:"'23'"$"
-! !
-
-!stx_goodies_xtreams_substreams class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: stx_goodies_xtreams_substreams.st 14 2011-11-21 06:01:55Z mkobetic $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:14 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/substreams' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteStream subclass:#WriteSubstream
-	instanceVariableNames:'destinationAtEnd closeBlock substreamClosed'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Substreams'
-!
-
-WriteSubstream comment:'This is abstract superclass of all substreams. Substreams normally don''t close their underlying source, their closing behavior is customized via closeBlock.
-
-Instance Variables
-	destinationAtEnd	<Boolean> flags end of the destination
-	closeBlock	<BlockClosure> unary block invoked in response to #close, allows customizing closing behavior
-	substreamClosed	<Boolean> flags the end of the receiver
-
-'
-!
-
-
-!WriteSubstream class methodsFor:'private'!
-
-slice: sliceBlock close: closeBlock
-	| substream |
-	substream := nil.
-	^[substream == nil ifFalse:
-		[substream substreamClosed ifFalse: [substream close].
-		substream subseekend.
-		substream destinationAtEnd ifTrue: [Incomplete zero raise]].
-	substream := sliceBlock value]
-		reading
-			closeBlock: closeBlock;
-			yourself
-! !
-
-!WriteSubstream methodsFor:'accessing'!
-
-closeBlock
-	^closeBlock
-!
-
-closeBlock: anObject
-	closeBlock := anObject
-!
-
-insert: anInteger from: aSequenceableCollection at: startIndex
-	[destination insert: anInteger from: aSequenceableCollection at: startIndex] on: Incomplete do: [:incomplete |
-		destinationAtEnd := true.
-		incomplete pass].
-	^anInteger
-!
-
-put: anObject
-	[destination put: anObject] on: Incomplete do: [:incomplete |
-		destinationAtEnd := true.
-		incomplete pass]
-!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-	[destination write: anInteger from: aSequenceableCollection at: startIndex] on: Incomplete do: [:incomplete |
-		destinationAtEnd := true.
-		incomplete pass].
-	^anInteger
-! !
-
-!WriteSubstream methodsFor:'initialize-release'!
-
-close
-	closeBlock cull: self.
-	substreamClosed := true
-!
-
-contentsSpecies
-	^destination contentsSpecies
-!
-
-on: aDestination
-	super on: aDestination.
-	closeBlock := [].
-	destinationAtEnd := false.
-	substreamClosed := false
-!
-
-subseekend
-! !
-
-!WriteSubstream methodsFor:'testing'!
-
-destinationAtEnd
-	^destinationAtEnd
-!
-
-substreamClosed
-	^substreamClosed
-! !
-
-!WriteSubstream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__WriteSubstream.st 5 2011-08-22 15:46:38Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:14 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/substreams' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteSubstream subclass:#PositionWriteSubstream
-	instanceVariableNames:'position'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Substreams'
-!
-
-PositionWriteSubstream comment:'This is an abstract substreams that keeps track of its own position and allows positioning if the underlying stream is positionable.
-
-Instance Variables
-	position	<Integer> current position within the substream
-
-'
-!
-
-
-!PositionWriteSubstream methodsFor:'accessing'!
-
-insert: anInteger from: aSequenceableCollection at: startIndex
-	[destination insert: anInteger from: aSequenceableCollection at: startIndex] on: Incomplete do: [:incomplete |
-		position := position + incomplete count.
-		incomplete pass].
-	position := position + anInteger.
-	^anInteger
-!
-
-put: anObject
-	| object |
-	object := destination put: anObject.
-	position := position + 1.
-	^object
-!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-	[destination write: anInteger from: aSequenceableCollection at: startIndex] on: Incomplete do: [:incomplete |
-		position := position + incomplete count.
-		incomplete pass].
-	position := position + anInteger.
-	^anInteger
-! !
-
-!PositionWriteSubstream methodsFor:'initialize-release'!
-
-on: aDestination
-	super on: aDestination.
-	position := 0
-! !
-
-!PositionWriteSubstream methodsFor:'seeking'!
-
-++ anInteger
-	| count |
-	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
-	count := self available min: anInteger.
-	count := [destination ++ count. count] on: Incomplete do: [ :ex | ex count ].
-	position := position + count.
-	count < anInteger ifTrue: [destinationAtEnd := true. (Incomplete count: count) raise].
-	^anInteger
-!
-
--- anInteger
-	| count |
-	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
-	count := anInteger min: position.
-	count := [destination -- count. count] on: Incomplete do: [ :ex | ex count ].
-	position := position - count.
-	count < anInteger ifTrue: [(Incomplete count: count) raise].
-	anInteger isZero ifFalse: [destinationAtEnd := false].
-	^anInteger
-!
-
--= anInteger
-	position := self length - anInteger max: 0.
-	^destination -= anInteger.
-!
-
-length
-	^destination available + position
-!
-
-position
-	^position
-!
-
-position: anInteger
-	| available adjustment |
-	self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
-
-	anInteger < 0 ifTrue: [Incomplete zero raise].
-	available := anInteger min: self length.
-	adjustment := available - position.
-	adjustment positive
-		ifTrue: [ destination ++ adjustment ]
-		ifFalse: [ destination -- adjustment negated ].
-	position := available.
-	available = anInteger ifTrue: [^anInteger].
-	(Incomplete count: available) raise
-! !
-
-!PositionWriteSubstream methodsFor:'testing'!
-
-isPositionable
-	^destination isPositionable
-! !
-
-!PositionWriteSubstream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__PositionWriteSubstream.st 5 2011-08-22 15:46:38Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:14 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/substreams' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteStream subclass:#StitchWriteStream
-	instanceVariableNames:'active contentsSpecies'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Substreams'
-!
-
-StitchWriteStream comment:'StitchWriteStream combines a stream of source which returns streams in to a single continuous stream.
-
-Instance Variables
-	active	<WriteStream>	the substream that is currently active
-	contentsSpecies	<Class>	the contents species of the substreams
-
-'
-!
-
-
-!StitchWriteStream class methodsFor:'instance creation'!
-
-on: aDestination contentsSpecies: aClass
-	^self new on: aDestination contentsSpecies: aClass
-!
-
-on: aDestination first: firstActiveStream
-	^self new on: aDestination first: firstActiveStream
-! !
-
-!StitchWriteStream methodsFor:'accessing'!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-	| remaining amount index |
-	index := startIndex.
-	remaining := anInteger.
-	amount := 0.
-	[
-		active == nil ifTrue: [
-			[active := destination get]
-				on: Incomplete
-				do: [ :ex | (Incomplete on: aSequenceableCollection count: anInteger - remaining at: startIndex) raise]].
-		amount := [active write: remaining from: aSequenceableCollection at: index] on: Incomplete do: [:ex | ex count].
-		remaining := remaining - amount.
-		index := index + amount.
-		remaining > 0] whileTrue:
-			[active close.
-			active := nil].
-	^anInteger
-! !
-
-!StitchWriteStream methodsFor:'initialize-release'!
-
-close
-	self flush.
-	destination close
-!
-
-contentsSpecies
-	^contentsSpecies
-!
-
-flush
-	active == nil ifTrue: [^self].
-	active close.
-	active := nil
-!
-
-on: aDestination contentsSpecies: aClass
-	super on: aDestination.
-	contentsSpecies := aClass
-!
-
-on: aDestination first: firstActiveStream
-	super on: aDestination.
-	active := firstActiveStream.
-	contentsSpecies := active contentsSpecies
-! !
-
-!StitchWriteStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__StitchWriteStream.st 5 2011-08-22 15:46:38Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:14 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:07 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/substreams' }"
 
@@ -861,121 +811,437 @@ isPositionable
 version_SVN
     ^ '$Id: Xtreams__MatchReadSubstream.st 5 2011-08-22 15:46:38Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:14 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:07 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/substreams' }"
 
 "{ NameSpace: Xtreams }"
 
-WriteSubstream subclass:#TestWriteSubstream
-	instanceVariableNames:'substreamAtEnd test inclusive'
+WriteStream subclass:#StitchWriteStream
+	instanceVariableNames:'active contentsSpecies'
 	classVariableNames:''
 	poolDictionaries:''
 	category:'Xtreams-Substreams'
 !
 
-TestWriteSubstream comment:'This is a substream bounded by an element matching the @test criteria.
+StitchWriteStream comment:'StitchWriteStream combines a stream of source which returns streams in to a single continuous stream.
 
 Instance Variables
-	substreamAtEnd	<Boolean> is this substream at end
-	test	<BlockClosure> the bounding criteria
-	inclusive	<Boolean> is the boundary part of the substream contents
+	active	<WriteStream>	the substream that is currently active
+	contentsSpecies	<Class>	the contents species of the substreams
 
 '
 !
 
 
-!TestWriteSubstream class methodsFor:'instance creation'!
+!StitchWriteStream class methodsFor:'instance creation'!
 
-on: aDestination test: testBlock inclusive: aBoolean
-	^self new on: aDestination test: testBlock inclusive: aBoolean
+on: aDestination contentsSpecies: aClass
+	^self new on: aDestination contentsSpecies: aClass
+!
+
+on: aDestination first: firstActiveStream
+	^self new on: aDestination first: firstActiveStream
 ! !
 
-!TestWriteSubstream methodsFor:'accessing'!
+!StitchWriteStream methodsFor:'accessing'!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+	| remaining amount index |
+	index := startIndex.
+	remaining := anInteger.
+	amount := 0.
+	[
+		active == nil ifTrue: [
+			[active := destination get]
+				on: Incomplete
+				do: [ :ex | (Incomplete on: aSequenceableCollection count: anInteger - remaining at: startIndex) raise]].
+		amount := [active write: remaining from: aSequenceableCollection at: index] on: Incomplete do: [:ex | ex count].
+		remaining := remaining - amount.
+		index := index + amount.
+		remaining > 0] whileTrue:
+			[active close.
+			active := nil].
+	^anInteger
+! !
+
+!StitchWriteStream methodsFor:'initialize-release'!
+
+close
+	self flush.
+	destination close
+!
+
+contentsSpecies
+	^contentsSpecies
+!
+
+flush
+	active == nil ifTrue: [^self].
+	active close.
+	active := nil
+!
+
+on: aDestination contentsSpecies: aClass
+	super on: aDestination.
+	contentsSpecies := aClass
+!
+
+on: aDestination first: firstActiveStream
+	super on: aDestination.
+	active := firstActiveStream.
+	contentsSpecies := active contentsSpecies
+! !
+
+!StitchWriteStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__StitchWriteStream.st 5 2011-08-22 15:46:38Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:07 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/substreams' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteSubstream subclass:#PositionWriteSubstream
+	instanceVariableNames:'position'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Substreams'
+!
+
+PositionWriteSubstream comment:'This is an abstract substreams that keeps track of its own position and allows positioning if the underlying stream is positionable.
+
+Instance Variables
+	position	<Integer> current position within the substream
+
+'
+!
+
+
+!PositionWriteSubstream methodsFor:'accessing'!
 
 insert: anInteger from: aSequenceableCollection at: startIndex
-	^self write: anInteger from: aSequenceableCollection at: startIndex
+	[destination insert: anInteger from: aSequenceableCollection at: startIndex] on: Incomplete do: [:incomplete |
+		position := position + incomplete count.
+		incomplete pass].
+	position := position + anInteger.
+	^anInteger
 !
 
 put: anObject
-	substreamAtEnd ifTrue: [Incomplete zero raise].
-	((substreamAtEnd := test value: anObject) and: [inclusive not]) ifTrue: [Incomplete zero raise].
-	[destination put: anObject] on: Incomplete do: [:incomplete | destinationAtEnd := substreamAtEnd := true. incomplete pass].
-	^anObject
+	| object |
+	object := destination put: anObject.
+	position := position + 1.
+	^object
 !
 
 write: anInteger from: aSequenceableCollection at: startIndex
-	| count object |
-	substreamAtEnd ifTrue: [Incomplete zero raise].
-	count := 0.
-	[[count < anInteger and: [substreamAtEnd not]] whileTrue:
-		[object := aSequenceableCollection at: startIndex + count.
-		((substreamAtEnd := test value: object) and: [inclusive not]) ifFalse: [destination put: object].
-		count := count + 1]]
-			on: Incomplete do: [:incomplete |
-				destinationAtEnd := substreamAtEnd := true.
-				(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
+	[destination write: anInteger from: aSequenceableCollection at: startIndex] on: Incomplete do: [:incomplete |
+		position := position + incomplete count.
+		incomplete pass].
+	position := position + anInteger.
+	^anInteger
+! !
+
+!PositionWriteSubstream methodsFor:'initialize-release'!
+
+on: aDestination
+	super on: aDestination.
+	position := 0
+! !
+
+!PositionWriteSubstream methodsFor:'seeking'!
+
+++ anInteger
+	| count |
+	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
+	count := self available min: anInteger.
+	count := [destination ++ count. count] on: Incomplete do: [ :ex | ex count ].
+	position := position + count.
+	count < anInteger ifTrue: [destinationAtEnd := true. (Incomplete count: count) raise].
+	^anInteger
+!
+
+-- anInteger
+	| count |
+	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
+	count := anInteger min: position.
+	count := [destination -- count. count] on: Incomplete do: [ :ex | ex count ].
+	position := position - count.
+	count < anInteger ifTrue: [(Incomplete count: count) raise].
+	anInteger isZero ifFalse: [destinationAtEnd := false].
+	^anInteger
+!
+
+-= anInteger
+	position := self length - anInteger max: 0.
+	^destination -= anInteger.
+!
+
+length
+	^destination available + position
+!
+
+position
+	^position
+!
+
+position: anInteger
+	| available adjustment |
+	self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
+
+	anInteger < 0 ifTrue: [Incomplete zero raise].
+	available := anInteger min: self length.
+	adjustment := available - position.
+	adjustment positive
+		ifTrue: [ destination ++ adjustment ]
+		ifFalse: [ destination -- adjustment negated ].
+	position := available.
+	available = anInteger ifTrue: [^anInteger].
+	(Incomplete count: available) raise
+! !
+
+!PositionWriteSubstream methodsFor:'testing'!
+
+isPositionable
+	^destination isPositionable
+! !
+
+!PositionWriteSubstream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__PositionWriteSubstream.st 5 2011-08-22 15:46:38Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:07 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/substreams' }"
+
+"{ NameSpace: Xtreams }"
+
+PositionReadSubstream subclass:#LimitReadSubstream
+	instanceVariableNames:'limit'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Substreams'
+!
+
+LimitReadSubstream comment:'Limits the number of elements that can be read from the source stream.
+
+Instance Variables
+	limit	<Integer> maximum number of elements that can be read from this stream
+	position	<Integer> number of elements already read from the stream
+
+'
+!
+
+
+!LimitReadSubstream class methodsFor:'instance creation'!
+
+on: aSource limit: anInteger
+	^self new on: aSource limit: anInteger
+! !
+
+!LimitReadSubstream methodsFor:'accessing'!
+
+get
+	position = limit ifTrue: [Incomplete zero raise].
+	^super get
+!
+
+read: anInteger into: aSequenceableCollection at: startIndex
+	| count |
+	count := anInteger min: self available.
+	super read: count into: aSequenceableCollection at: startIndex.
 	count < anInteger ifTrue: [(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
 	^anInteger
 ! !
 
-!TestWriteSubstream methodsFor:'initialize-release'!
+!LimitReadSubstream methodsFor:'initialize-release'!
 
-on: aDestination test: testBlock inclusive: aBoolean
-	self on: aDestination.
-	test := testBlock.
-	inclusive := aBoolean.
-	substreamAtEnd := false
-! !
-
-!TestWriteSubstream methodsFor:'private'!
-
-streamingInsert: anInteger from: aReadStream
-	self streamingWrite: anInteger from: aReadStream
+on: aSource limit: anInteger
+	self on: aSource.
+	limit := anInteger
 !
 
-streamingInsertFrom: aReadStream
-	self streamingWriteFrom: aReadStream
-!
-
-streamingWrite: anInteger from: aReadStream
-	| count object |
-	substreamAtEnd ifTrue: [Incomplete zero raise].
-	count := 0.
-	[[count < anInteger and: [substreamAtEnd not]] whileTrue:
-		[object := aReadStream get.
-		((substreamAtEnd := test value: object) and: [inclusive not]) ifFalse: [destination put: object].
-		count := count + 1]]
-			on: Incomplete do: [:incomplete |
-				destinationAtEnd := substreamAtEnd := true.
-				(Incomplete count: count) raise].
-	count < anInteger ifTrue: [(Incomplete count: count) raise].
-	^anInteger
-!
-
-streamingWriteFrom: aReadStream
-	| object count |
-	substreamAtEnd ifTrue: [Incomplete zero raise].
-	count := 0.
-	^[[substreamAtEnd not] whileTrue:
-		[object := aReadStream get.
-		((substreamAtEnd := test value: object) and: [inclusive not]) ifFalse: [destination put: object. count := count + 1]].
-		count
-	] on: Incomplete do: [:incomplete | destinationAtEnd := substreamAtEnd := true. count ]
+subseekend
+	self isPositionable ifFalse: [^self].
+	self -= 0
 ! !
 
-!TestWriteSubstream methodsFor:'testing'!
+!LimitReadSubstream methodsFor:'seeking'!
 
-isPositionable
-	^false
+-= anInteger
+	| available |
+	anInteger < 0 ifTrue: [Incomplete zero raise].
+	available := anInteger min: limit.
+	source ++ (limit - position - available).
+	position := limit - available.
+	available = anInteger ifTrue: [^anInteger].
+	^(Incomplete count: available) raise
+!
+
+length
+	^limit
 ! !
 
-!TestWriteSubstream class methodsFor:'documentation'!
+!LimitReadSubstream class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id: Xtreams__TestWriteSubstream.st 5 2011-08-22 15:46:38Z mk $'
+    ^ '$Id: Xtreams__LimitReadSubstream.st 5 2011-08-22 15:46:38Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:14 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:07 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/substreams' }"
+
+LibraryDefinition subclass:#stx_goodies_xtreams_substreams
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'* Projects & Packages *'
+!
+
+!stx_goodies_xtreams_substreams class methodsFor:'documentation'!
+
+extensionsVersion_SVN
+    ^ '$Id: extensions.st 14 2011-11-21 06:01:55Z mkobetic $'
+! !
+
+!stx_goodies_xtreams_substreams class methodsFor:'description'!
+
+excludedFromPreRequisites
+    "list all packages which should be ignored in the automatic
+     preRequisites scan. See #preRequisites for more."
+
+    ^ #(
+    )
+!
+
+preRequisites
+    "list all required packages.
+     This list can be maintained manually or (better) generated and
+     updated by scanning the superclass hierarchies and looking for
+     global variable accesses. (the browser has a menu function for that)
+     Howevery, often too much is found, and you may want to explicitely
+     exclude individual packages in the #excludedFromPrerequisites method."
+
+    ^ #(
+        #'stx:goodies/xtreams/core'    "Xtreams::WriteStream - superclass of Xtreams::MatchWriteSubstream "
+        #'stx:libbasic'    "Object - superclass of Xtreams::MatchWriteSubstream "
+    )
+! !
+
+!stx_goodies_xtreams_substreams class methodsFor:'description - contents'!
+
+classNamesAndAttributes
+    "lists the classes which are to be included in the project.
+     Each entry in the list may be: a single class-name (symbol),
+     or an array-literal consisting of class name and attributes.
+     Attributes are: #autoload or #<os> where os is one of win32, unix,..."
+
+    ^ #(
+        "<className> or (<className> attributes...) in load order"
+        #'Xtreams::ReadSubstream'
+        #'Xtreams::StitchReadStream'
+        #'Xtreams::StitchWriteStream'
+        #'Xtreams::WriteSubstream'
+        #'Xtreams::stx_goodies_xtreams_substreams'
+        #'Xtreams::MatchReadSubstream'
+        #'Xtreams::MatchWriteSubstream'
+        #'Xtreams::PositionReadSubstream'
+        #'Xtreams::PositionWriteSubstream'
+        #'Xtreams::TestReadSubstream'
+        #'Xtreams::TestWriteSubstream'
+        #'Xtreams::LimitReadSubstream'
+        #'Xtreams::LimitWriteSubstream'
+    )
+!
+
+extensionMethodNames
+    "lists the extension methods which are to be included in the project.
+     Entries are 2-element array literals, consisting of class-name and selector."
+
+    ^ #(
+        Block streamingReadMatching:inclusive:
+        Block streamingWriteMatching:inclusive:
+        Object streamingReadMatching:inclusive:
+        Object streamingWriteMatching:inclusive:
+        SequenceableCollection streamingMatchPrefixFunction
+        SequenceableCollection streamingReadMatching:inclusive:
+        SequenceableCollection streamingWriteMatching:inclusive:
+        #'Xtreams::ReadStream' #','
+        #'Xtreams::ReadStream' closing:
+        #'Xtreams::ReadStream' ending:
+        #'Xtreams::ReadStream' ending:inclusive:
+        #'Xtreams::ReadStream' limiting:
+        #'Xtreams::ReadStream' slicing
+        #'Xtreams::ReadStream' stitching
+        #'Xtreams::WriteStream' closing:
+        #'Xtreams::WriteStream' ending:
+        #'Xtreams::WriteStream' ending:inclusive:
+        #'Xtreams::WriteStream' limiting:
+        #'Xtreams::WriteStream' slicing
+        #'Xtreams::WriteStream' stitching
+    )
+! !
+
+!stx_goodies_xtreams_substreams class methodsFor:'description - project information'!
+
+applicationIconFileName
+    "Return the name (without suffix) of an icon-file (the app's icon); will be included in the rc-resource file"
+
+    ^ nil
+    "/ ^ self applicationName
+!
+
+companyName
+    "Return a companyname which will appear in <lib>.rc"
+
+    ^ 'eXept Software AG'
+!
+
+description
+    "Return a description string which will appear in vc.def / bc.def"
+
+    ^ 'Smalltalk/X Class library'
+!
+
+legalCopyright
+    "Return a copyright string which will appear in <lib>.rc"
+
+    ^ 'Copyright Claus Gittinger 1988-2011\nCopyright eXept Software AG 1998-2011'
+!
+
+productName
+    "Return a product name which will appear in <lib>.rc"
+
+    ^ 'Smalltalk/X'
+! !
+
+!stx_goodies_xtreams_substreams class methodsFor:'description - svn'!
+
+svnRepositoryUrlString
+    "Return a SVN repository URL of myself.
+     (Generated since 2011-04-08)
+    "        
+
+    ^ '$URL: https://swing.fit.cvut.cz/svn/stx/goodies/xtreams/trunk/substreams/stx_goodies_xtreams_substreams.st $'
+!
+
+svnRevisionNr
+    "Return a SVN revision number of myself.
+     This number is updated after a commit"
+
+    ^ "$SVN-Revision:"'23'"$"
+! !
+
+!stx_goodies_xtreams_substreams class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: stx_goodies_xtreams_substreams.st 14 2011-11-21 06:01:55Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:07 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/substreams' }"
 
@@ -1109,88 +1375,7 @@ streamingWriteFrom: aReadStream
 version_SVN
     ^ '$Id: Xtreams__MatchWriteSubstream.st 5 2011-08-22 15:46:38Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:14 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/substreams' }"
-
-"{ NameSpace: Xtreams }"
-
-ReadStream subclass:#StitchReadStream
-	instanceVariableNames:'active contentsSpecies'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Substreams'
-!
-
-StitchReadStream comment:'StitchReadStream combines a stream of source which returns streams in to a single continuous stream.
-
-Instance Variables
-	active	<ReadStream>	the substream that is currently active
-	contentsSpecies	<Class>	the contents species of the substreams
-
-'
-!
-
-
-!StitchReadStream class methodsFor:'instance creation'!
-
-on: aSource contentsSpecies: aClass
-	^self new on: aSource contentsSpecies: aClass
-!
-
-on: aSource first: firstActiveStream
-	^self new on: aSource first: firstActiveStream
-! !
-
-!StitchReadStream methodsFor:'accessing'!
-
-read: anInteger into: aSequenceableCollection at: startIndex
-	| remaining amount index |
-	index := startIndex.
-	remaining := anInteger.
-	amount := 0.
-	[
-		active == nil ifTrue: [
-			[active := source get]
-				on: Incomplete
-				do: [:ex | (Incomplete on: aSequenceableCollection count: anInteger - remaining at: startIndex) raise]].
-		amount := [active read: remaining into: aSequenceableCollection at: index] on: Incomplete do: [:ex | ex count].
-		remaining := remaining - amount.
-		index := index + amount.
-		remaining > 0] whileTrue:
-			[active close.
-			active := nil].
-	^anInteger
-! !
-
-!StitchReadStream methodsFor:'initialize-release'!
-
-close
-	active == nil ifFalse: [active close].
-	super close
-!
-
-contentsSpecies
-	^contentsSpecies
-!
-
-on: aSource contentsSpecies: aClass
-	super on: aSource.
-	contentsSpecies := aClass
-!
-
-on: aSource first: firstActiveStream
-	super on: aSource.
-	active := firstActiveStream.
-	contentsSpecies := active contentsSpecies
-! !
-
-!StitchReadStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__StitchReadStream.st 5 2011-08-22 15:46:38Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:14 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:07 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/substreams' }"
 
@@ -1274,193 +1459,6 @@ length
 
 version_SVN
     ^ '$Id: Xtreams__LimitWriteSubstream.st 5 2011-08-22 15:46:38Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:14 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/substreams' }"
-
-"{ NameSpace: Xtreams }"
-
-ReadSubstream subclass:#PositionReadSubstream
-	instanceVariableNames:'position'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Substreams'
-!
-
-PositionReadSubstream comment:'This is an abstract substreams that keeps track of its own position and allows positioning if the underlying stream is positionable.
-
-Instance Variables
-	position	<Integer> current position within the substream
-
-'
-!
-
-
-!PositionReadSubstream methodsFor:'accessing'!
-
-get
-	| object |
-	object := super get.
-	position := position + 1.
-	^object
-!
-
-read: anInteger into: aSequenceableCollection at: startIndex
-	[source read: anInteger into: aSequenceableCollection at: startIndex] on: Incomplete do: [:incomplete |
-		sourceAtEnd := true.
-		position := position + incomplete count.
-		incomplete pass].
-	position := position + anInteger.
-	^anInteger
-! !
-
-!PositionReadSubstream methodsFor:'initialize-release'!
-
-on: aSource
-	super on: aSource.
-	position := 0
-! !
-
-!PositionReadSubstream methodsFor:'seeking'!
-
-++ anInteger
-	| count |
-	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
-	count := self available min: anInteger.
-	count := [source ++ count. count] on: Incomplete do: [ :ex | ex count ].
-	position := position + count.
-	count < anInteger ifTrue: [sourceAtEnd := true. (Incomplete count: count) raise].
-	^anInteger
-!
-
--- anInteger
-	| count |
-	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
-	count := anInteger min: position.
-	count := [source -- count. count] on: Incomplete do: [ :ex | ex count ].
-	position := position - count.
-	count < anInteger ifTrue: [(Incomplete count: count) raise].
-	anInteger isZero ifFalse: [sourceAtEnd := false].
-	^anInteger
-!
-
--= anInteger
-	position := self length - anInteger max: 0.
-	^source -= anInteger
-!
-
-length
-	^source available + position
-!
-
-position
-	^position
-!
-
-position: anInteger
-	| delta available |
-	self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
-
-	anInteger < 0 ifTrue: [Incomplete zero raise].
-	available := anInteger min: self length.
-	delta := available - position.
-	[delta positive
-		ifTrue:	[source ++ delta]
-		ifFalse:	[source -- delta negated]]
-			on: Incomplete do: [sourceAtEnd := true].
-	position := available.
-	available = anInteger ifTrue: [^anInteger].
-	(Incomplete count: available) raise
-! !
-
-!PositionReadSubstream methodsFor:'testing'!
-
-isPositionable
-	^source isPositionable
-! !
-
-!PositionReadSubstream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__PositionReadSubstream.st 5 2011-08-22 15:46:38Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:14 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/substreams' }"
-
-"{ NameSpace: Xtreams }"
-
-PositionReadSubstream subclass:#LimitReadSubstream
-	instanceVariableNames:'limit'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Substreams'
-!
-
-LimitReadSubstream comment:'Limits the number of elements that can be read from the source stream.
-
-Instance Variables
-	limit	<Integer> maximum number of elements that can be read from this stream
-	position	<Integer> number of elements already read from the stream
-
-'
-!
-
-
-!LimitReadSubstream class methodsFor:'instance creation'!
-
-on: aSource limit: anInteger
-	^self new on: aSource limit: anInteger
-! !
-
-!LimitReadSubstream methodsFor:'accessing'!
-
-get
-	position = limit ifTrue: [Incomplete zero raise].
-	^super get
-!
-
-read: anInteger into: aSequenceableCollection at: startIndex
-	| count |
-	count := anInteger min: self available.
-	super read: count into: aSequenceableCollection at: startIndex.
-	count < anInteger ifTrue: [(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
-	^anInteger
-! !
-
-!LimitReadSubstream methodsFor:'initialize-release'!
-
-on: aSource limit: anInteger
-	self on: aSource.
-	limit := anInteger
-!
-
-subseekend
-	self isPositionable ifFalse: [^self].
-	self -= 0
-! !
-
-!LimitReadSubstream methodsFor:'seeking'!
-
--= anInteger
-	| available |
-	anInteger < 0 ifTrue: [Incomplete zero raise].
-	available := anInteger min: limit.
-	source ++ (limit - position - available).
-	position := limit - available.
-	available = anInteger ifTrue: [^anInteger].
-	^(Incomplete count: available) raise
-!
-
-length
-	^limit
-! !
-
-!LimitReadSubstream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__LimitReadSubstream.st 5 2011-08-22 15:46:38Z mk $'
 ! !
 !ReadStream methodsFor:'substreaming'!
 

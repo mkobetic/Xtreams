@@ -1,4 +1,633 @@
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteStream subclass:#InterpretedWriteStream
+	instanceVariableNames:'elementSize cache cacheSize operation contentsSpecies'
+	classVariableNames:''
+	poolDictionaries:'XtreamsPool'
+	category:'Xtreams-Transforms'
+!
+
+InterpretedWriteStream comment:'Converts consumed elements into bytes of pre-configured (primitive) CType, e.g. float, long etc. The type of the written elements must match the CType, the underlying destination must be binary.
+
+Instance Variables
+	elementSize	<Integer> byte size of elements of the pre-configured CType
+	cache	<InterpretedBytes> caches the bytes so that they can be bulk written
+	cacheSize	<SmallInteger> how many elements (not bytes) do we want to cache
+	operation	<BlockClosure> CType translation primitive used to write into the buffer
+	contentsSpecies	<Class> collection type to use to hold collections of elements
+
+'
+!
+
+
+!InterpretedWriteStream class methodsFor:'instance creation'!
+
+on: aWriteStream bytesPerElement: anInteger contentsSpecies: aClass operation: aBlock cacheSize: aSize
+	^self new on: aWriteStream bytesPerElement: anInteger contentsSpecies: aClass operation: aBlock cacheSize: aSize
+!
+
+on: aWriteStream type: aType cacheSize: aSize
+	| interpretation |
+	interpretation := InterpretedBytes perform: aType.
+	^self on: aWriteStream bytesPerElement: (interpretation at: 1) contentsSpecies: (interpretation at: 2) operation: (interpretation at: 4) cacheSize: aSize
+! !
+
+!InterpretedWriteStream methodsFor:'accessing'!
+
+insert: anInteger from: aSequenceableCollection at: startIndex
+
+	| count amount |
+	count := 0.
+	[count = anInteger] whileFalse: 
+		[amount := cacheSize min: anInteger - count.
+		0 to: amount - 1 do:  [:index | operation value: cache value: index * elementSize + 1 value: (aSequenceableCollection at: index + startIndex)].
+		destination insert: amount * elementSize from: cache at: 1.
+		count := count + amount].
+	^anInteger
+!
+
+put: anObject
+
+	operation value: cache value: 1 value: anObject.
+	destination write: elementSize from: cache at: 1.
+	^anObject
+!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+
+	| count amount |
+	count := 0.
+	[count = anInteger] whileFalse: 
+		[amount := cacheSize min: anInteger - count.
+		0 to: amount - 1 do:  [:index | operation value: cache value: index * elementSize + 1 value: (aSequenceableCollection at: count + index + startIndex)].
+		destination write: amount * elementSize from: cache at: 1.
+		count := count + amount].
+	^anInteger
+! !
+
+!InterpretedWriteStream methodsFor:'initialize-release'!
+
+close
+	super close.
+	cache recycle.
+	cache := nil
+!
+
+contentsSpecies
+	^contentsSpecies
+!
+
+on: aWriteStream bytesPerElement: anInteger contentsSpecies: aClass operation: aBlock cacheSize: aSize
+	super on: aWriteStream.
+	cacheSize := aSize.
+	elementSize := anInteger.
+	contentsSpecies := aClass.
+	operation := aBlock.
+	cache := InterpretedBytes newRecycled: ((elementSize * cacheSize) max: DefaultBufferSize)
+! !
+
+!InterpretedWriteStream methodsFor:'seeking'!
+
+++ anInteger
+
+	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
+	[destination ++ anInteger * elementSize]
+		on: Incomplete do: [:exception | (Incomplete count: exception count / elementSize) raise].
+	^anInteger
+!
+
+-- anInteger
+	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
+	[destination -- anInteger * elementSize]
+		on: Incomplete do: [:exception | (Incomplete count: exception count / elementSize) raise].
+	^anInteger
+!
+
+length
+	^destination length / elementSize
+!
+
+position
+	^destination position / elementSize
+!
+
+position: aPosition
+
+	^([ destination position: aPosition * elementSize ] on: Incomplete do: [ :ex | ex count ]) // elementSize
+! !
+
+!InterpretedWriteStream methodsFor:'testing'!
+
+isPositionable
+
+	^destination isPositionable
+! !
+
+!InterpretedWriteStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__InterpretedWriteStream.st 11 2011-08-22 16:06:51Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteStream subclass:#DuplicateWriteStream
+	instanceVariableNames:'duplicate'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Transforms'
+!
+
+DuplicateWriteStream comment:'Duplicates contents flowing through the stream into a secondary write stream.
+
+Instance Variables
+	duplicate	<WriteStream> stream to duplicate the content to
+
+'
+!
+
+
+!DuplicateWriteStream class methodsFor:'instance creation'!
+
+on: aDestination duplicate: aSecondDestination
+
+	^self new on: aDestination duplicate: aSecondDestination
+! !
+
+!DuplicateWriteStream methodsFor:'accessing'!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+
+	[	destination write: anInteger from: aSequenceableCollection at: startIndex
+	] on: Incomplete do: [ :incomplete |
+		duplicate write: incomplete count from: aSequenceableCollection at: startIndex.
+		incomplete pass ].
+	duplicate write: anInteger from: aSequenceableCollection at: startIndex.
+	^anInteger
+! !
+
+!DuplicateWriteStream methodsFor:'initialize-release'!
+
+contentsSpecies
+
+	^destination contentsSpecies
+!
+
+on: aDestination duplicate: aSecondDestination
+
+	super on: aDestination.
+	duplicate := aSecondDestination
+! !
+
+!DuplicateWriteStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__DuplicateWriteStream.st 11 2011-08-22 16:06:51Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms' }"
+
+"{ NameSpace: Xtreams }"
+
+ReadStream subclass:#ObjectAnalyseStream
+	instanceVariableNames:'marshaler nothing log depth objects int8 int16 int32 int64 uint16
+		uint32 uint64 float double'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Transforms'
+!
+
+
+!ObjectAnalyseStream class methodsFor:'instance creation'!
+
+on: aDestination
+	^self on: aDestination marshaler: ObjectMarshaler new
+!
+
+on: aDestination marshaler: aMarshaler
+	^self new on: aDestination marshaler: aMarshaler
+! !
+
+!ObjectAnalyseStream methodsFor:'accessing'!
+
+get
+	| details |
+	marshaler analyse: self.
+	details := log conclusion.
+	log := String new writing.
+	self complete.
+	^details
+!
+
+read: anInteger into: aSequenceableCollection at: startIndex
+	| count |
+	count := 0.
+	[anInteger timesRepeat:
+		[marshaler analyse: self.
+		aSequenceableCollection at: startIndex + count put: log conclusion.
+		log := String new writing.
+		self complete.
+		count := count + 1]]
+			on: Incomplete do: [:exception |
+				aSequenceableCollection at: startIndex + count put: log conclusion.
+				log := String new writing.
+				self complete.
+				(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
+	^anInteger
+! !
+
+!ObjectAnalyseStream methodsFor:'initialize-release'!
+
+contentsSpecies
+	^Array
+!
+
+on: aSource marshaler: aMarshaler
+	super on: aSource.
+	marshaler := aMarshaler.
+	nothing := Object new.
+	objects := OrderedCollection with: Transcript.
+	depth := 0.
+
+	log := String new writing.
+	int8 := aSource interpreting: #signedChar.
+	(self log: 'header' do: [marshaler configureAnalyse: aSource])
+		ifTrue: [
+			int16 := aSource interpreting: #signedShort_be.
+			int32 := aSource interpreting: #signedLong_be.
+			int64 := aSource interpreting: #signedLonglong_be.
+			uint16 := aSource interpreting: #unsignedShort_be.
+			uint32 := aSource interpreting: #unsignedLong_be.
+			uint64 := aSource interpreting: #unsignedLonglong_be]
+		ifFalse: [
+			int16 := aSource interpreting: #signedShort_le.
+			int32 := aSource interpreting: #signedLong_le.
+			int64 := aSource interpreting: #signedLonglong_le.
+			uint16 := aSource interpreting: #unsignedShort_le.
+			uint32 := aSource interpreting: #unsignedLong_le.
+			uint64 := aSource interpreting: #unsignedLonglong_le].
+	float := aSource interpreting: #float.
+	double := aSource interpreting: #double
+! !
+
+!ObjectAnalyseStream methodsFor:'primitives'!
+
+double
+	^double
+!
+
+float
+	^float
+!
+
+int16
+	^int16
+!
+
+int32
+	^int32
+!
+
+int64
+	^int64
+!
+
+int8
+	^int8
+!
+
+uint16
+	^uint16
+!
+
+uint32
+	^uint32
+!
+
+uint64
+	^uint64
+!
+
+uint8
+	^source
+! !
+
+!ObjectAnalyseStream methodsFor:'private'!
+
+complete
+	objects := OrderedCollection with: Transcript
+!
+
+log: type do: aBlock
+	| superlog sublog position incomplete |
+	position := source position.
+	superlog := log.
+	log := String new writing.
+
+	depth := depth + 1.
+	incomplete := false.
+	^[aBlock on: Incomplete do: [:ex | incomplete := true. ex pass]] ensure:
+		[depth := depth - 1.
+		sublog := log conclusion.
+		log := superlog.
+
+		incomplete ifFalse:
+			[log tab: depth; print: position; write: '+'; print: (source position - position); tab.
+			type isCharacters
+				ifTrue:	[log write: type]
+				ifFalse:	[log write: type value].
+			log cr; write: sublog]]
+!
+
+nothing
+	^nothing
+!
+
+objects
+	^objects
+! !
+
+!ObjectAnalyseStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__ObjectAnalyseStream.st 11 2011-08-22 16:06:51Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteStream subclass:#EncodeWriteStream
+	instanceVariableNames:'encoder buffer bufferReading bufferWriting decodedLineEnd
+		encodedLineEnd'
+	classVariableNames:''
+	poolDictionaries:'XtreamsPool'
+	category:'Xtreams-Transforms'
+!
+
+EncodeWriteStream comment:'Accepts characters, converts them to bytes (0..255) using pre-configured encoding and writes the bytes into destination. Unless set to lineEndTransparent, converts any CRs into configured line-end convention (LF or CRLF).
+
+Instance Variables
+	encoder	<Encoder> converts characters to bytes
+	buffer	<Buffer on: ByteArray> batch writing buffer
+	bufferReading	<ReadStream> read stream on buffer
+	bufferWriting	<WriteStream> write stream on buffer
+	decodedLineEnd	<Character> CR or nil if transparent
+	encodedLineEnd	<ByteArray> encoded bytes of CR in the configured convention (LF or CRLF), or nil if transparent
+
+'
+!
+
+
+!EncodeWriteStream class methodsFor:'instance creation'!
+
+on: aDestination encoding: anEncoding
+	^self new on: aDestination encoding: anEncoding
+! !
+
+!EncodeWriteStream methodsFor:'accessing'!
+
+encoder
+
+	^encoder
+!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+
+	| character |
+	startIndex to: startIndex + anInteger - 1 do:  [:index |
+		buffer writeSize < 10 ifTrue: [destination write: buffer readSize from: bufferReading].
+		character := aSequenceableCollection at: index.
+		character == decodedLineEnd
+			ifTrue:	[bufferWriting write: encodedLineEnd]
+			ifFalse:	[encoder encode: character on: bufferWriting]].
+	destination write: buffer readSize from: bufferReading.
+	^anInteger
+! !
+
+!EncodeWriteStream methodsFor:'initialize-release'!
+
+close
+	super close.
+	buffer recycle.
+	buffer := nil
+!
+
+contentsSpecies
+
+	^String
+!
+
+on: aSource encoding: anEncoding
+
+	super on: aSource.
+	encoder := Encoder for: anEncoding.
+	buffer := RingBuffer new: DefaultBufferSize class: ByteArray.
+	bufferReading := buffer reading.
+	bufferWriting := buffer writing.
+	self setLineEndAuto
+! !
+
+!EncodeWriteStream methodsFor:'line-end'!
+
+setLineEndAuto
+
+        OperatingSystem isMSWINDOWSlike
+                ifTrue:         [self setLineEndCRLF]
+                ifFalse:        [self setLineEndLF]
+!
+
+setLineEndCRLF
+
+	| stream |
+	decodedLineEnd := Character cr.
+	stream := ByteArray new writing.
+	encoder encode: Character cr on: stream; encode: Character lf on: stream.
+	encodedLineEnd := stream contents
+!
+
+setLineEndLF
+
+	| stream |
+	decodedLineEnd := Character cr.
+	stream := ByteArray new writing.
+	encoder encode: Character lf on: stream.
+	encodedLineEnd := stream contents
+!
+
+setLineEndTransparent
+
+	decodedLineEnd := nil.
+	encodedLineEnd := nil
+! !
+
+!EncodeWriteStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__EncodeWriteStream.st 11 2011-08-22 16:06:51Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms' }"
+
+"{ NameSpace: Xtreams }"
+
+ReadStream subclass:#EncodeReadStream
+	instanceVariableNames:'transparent crPreceeding encoder buffer bufferWriting
+		bufferReading'
+	classVariableNames:''
+	poolDictionaries:'XtreamsPool'
+	category:'Xtreams-Transforms'
+!
+
+EncodeReadStream comment:'Converts bytes into characters using pre-configured encoding. At the same time, if set to lineEndAuto (default) it can perform line-end translation, converting any line-end convention into CRs. The source stream must provide bytes (0...255).
+
+Instance Variables
+	transparent	<Boolean> should the stream perform line-end translations
+	crPreceeding	<Boolean> was previous character read a CR (used when not transparent)
+	encoder	<Encoder> converts bytes to characters
+	buffer	<Buffer on: ByteArray> used to optimize bulk reads
+	bufferWriting	<WriteStream> write stream on buffer
+	bufferReading	<ReadStream> read stream on buffer
+
+'
+!
+
+
+!EncodeReadStream class methodsFor:'instance creation'!
+
+on: aSource encoding: anEncoding
+	^self new on: aSource encoding: anEncoding
+! !
+
+!EncodeReadStream methodsFor:'accessing'!
+
+encoder
+
+	^encoder
+!
+
+get
+	| character |
+	buffer hasDataToRead ifTrue: [^super get].
+	character := encoder decodeFrom: source.
+	transparent ifFalse: 
+		[character == LF
+			ifTrue: [crPreceeding
+				ifTrue: 
+					[character := encoder decodeFrom: source.
+					crPreceeding := character = CR]
+				ifFalse: 
+					[crPreceeding := false.
+					character := CR]]
+			ifFalse: [crPreceeding := character = CR]].
+	^character
+!
+
+read: anInteger into: aSequenceableCollection at: startIndex
+
+	| remaining position character bufferAvailable |
+	remaining := anInteger.
+	position := startIndex.
+	[remaining > 0] whileTrue: [
+		| mark |
+		"Top up our buffer if we have room and we need data"
+		[bufferWriting write: (buffer writeSize min: remaining) from: source] on: Incomplete do: [:incomplete |
+			(incomplete count == 0 and: [buffer hasDataToRead not]) ifTrue: [
+				(Incomplete on: aSequenceableCollection count: anInteger - remaining at: startIndex) raise]].
+
+		"We now conduct an inner loop that iterates over the buffer data while:
+			a) we need to read more data
+			b) there is data available in the buffer
+			c) a character can successfully be decoded
+		"
+
+		"If our buffer size is too low before we begin our decode loop, we need to take an undo copy in case we cannot decode a character."
+		buffer readSize < 10 ifTrue:
+			[mark := buffer readPosition.
+			encoder backupState ].
+
+		[["The following may raise an incomplete, which means we don't have enough data in the buffer to decode the full character.
+		 This is handled by the Incomplete exception capture before."
+		character := encoder decodeFrom: bufferReading.
+
+		"If we are not transparent, convert stray LFs in to CRs and CRLFs in to CRs"
+		transparent ifFalse: [
+			character == LF
+				ifTrue:	[character := crPreceeding ifTrue: [nil] ifFalse: [CR]. crPreceeding := false]
+				ifFalse:	[crPreceeding := character = CR]].
+
+		"If we didn't filter out an LF at the tail of a CRLF, commit the character to the output."
+		character == nil ifFalse:
+			[aSequenceableCollection at: position put: character.
+			remaining := remaining - 1.
+			position := position + 1].
+
+		"Find out how much data we have left in the buffer. If it's too low we need to keep track of the undo record in case we cannot decode a character."
+		(bufferAvailable := buffer readSize) < 10 ifTrue:
+			[mark := buffer readPosition.
+			encoder backupState ].
+
+		remaining > 0 and: [bufferAvailable > 0]] whileTrue]
+			on: Incomplete do: [:incomplete |
+				"We failed to decode a character, we've hit the end of the buffer and need to refill it. We rewind the buffer and leave the decoding loop
+				 to return to the main loop where more data will be fetched in to our buffer."
+				buffer readPosition: mark.
+				encoder restoreState]].
+	^anInteger
+! !
+
+!EncodeReadStream methodsFor:'initialize-release'!
+
+close
+	super close.
+	buffer recycle.
+	buffer := nil
+!
+
+contentsSpecies
+	
+	^String
+!
+
+on: aSource encoding: anEncoding
+
+	super on: aSource.
+	encoder := Encoder for: anEncoding.
+	buffer := RingBuffer new: DefaultBufferSize class: ByteArray.
+	bufferReading := buffer reading.
+	bufferWriting := buffer writing.
+	transparent := false.
+	crPreceeding := false.
+! !
+
+!EncodeReadStream methodsFor:'line-end'!
+
+setLineEndAuto
+
+	transparent := false
+!
+
+setLineEndTransparent
+
+	transparent := true
+! !
+
+!EncodeReadStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__EncodeReadStream.st 11 2011-08-22 16:06:51Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/transforms' }"
 
@@ -153,11 +782,9 @@ fillBufferIfRequired: anInteger
 version_SVN
     ^ '$Id: Xtreams__TransformReadStream.st 11 2011-08-22 16:06:51Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/transforms' }"
-
-"{ NameSpace: Xtreams }"
 
 LibraryDefinition subclass:#stx_goodies_xtreams_transforms
 	instanceVariableNames:''
@@ -333,7 +960,432 @@ svnRevisionNr
 version_SVN
     ^ '$Id: stx_goodies_xtreams_transforms.st 19 2011-11-21 06:04:06Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms' }"
+
+"{ NameSpace: Xtreams }"
+
+ReadStream subclass:#DuplicateReadStream
+	instanceVariableNames:'duplicate'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Transforms'
+!
+
+DuplicateReadStream comment:'Duplicates contents flowing through the stream into a secondary write stream.
+
+Instance Variables
+	duplicate	<WriteStream> stream to duplicate the content to
+
+'
+!
+
+
+!DuplicateReadStream class methodsFor:'instance creation'!
+
+on: aSource duplicate: aDestination
+
+	^self new on: aSource duplicate: aDestination
+! !
+
+!DuplicateReadStream methodsFor:'accessing'!
+
+read: anInteger into: aSequenceableCollection at: startIndex
+
+	[	source read: anInteger into: aSequenceableCollection at: startIndex.
+	] on: Incomplete do: [ :incomplete |
+		duplicate write: incomplete count from: aSequenceableCollection at: startIndex.
+		incomplete pass ].
+	duplicate write: anInteger from: aSequenceableCollection at: startIndex
+! !
+
+!DuplicateReadStream methodsFor:'initialize-release'!
+
+contentsSpecies
+
+	^source contentsSpecies
+!
+
+on: aSource duplicate: aDestination
+
+	super on: aSource.
+	duplicate := aDestination
+! !
+
+!DuplicateReadStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__DuplicateReadStream.st 11 2011-08-22 16:06:51Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms' }"
+
+"{ NameSpace: Xtreams }"
+
+ReadStream subclass:#ObjectReadStream
+	instanceVariableNames:'marshaler objects float double nothing uint16 uint32 uint64 int64
+		int8 int16 int32'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Transforms'
+!
+
+ObjectReadStream comment:'Unmarshals objects from binary source, previously marshaled using the same ObjectMarshaler. The bytes must start with marshaler version ID.
+
+Instance Variables
+	marshaler	<ObjectMarshaler> performs marshaling of object bodies
+	objects	<Array> retains unmarshaled objects for resolution of backward references (to preserve identity)
+	longs	<InterpretedReadStream> (internal) for reading of longs
+	longlongs	<InterpretedReadStream> (internal) for reading of longlongs
+	floats	<InterpretedReadStream> (internal) for reading of floats
+	doubles	<InterpretedReadStream> (internal) for reading of doubles
+	nothing	<Object> (internal) an object used to occupy empty slots in objects (since nil is potentially valid content)
+
+'
+!
+
+
+!ObjectReadStream class methodsFor:'instance creation'!
+
+on: aDestination
+	^self on: aDestination marshaler: ObjectMarshaler new
+!
+
+on: aDestination marshaler: aMarshaler
+	^self new on: aDestination marshaler: aMarshaler
+! !
+
+!ObjectReadStream methodsFor:'accessing'!
+
+get
+	| object |
+	object := marshaler unmarshal: self.
+	self complete.
+	^object
+!
+
+read: anInteger into: aSequenceableCollection at: startIndex
+	| count |
+	count := 0.
+	[anInteger timesRepeat:
+		[aSequenceableCollection at: startIndex + count put: (marshaler unmarshal: self).
+		self complete.
+		count := count + 1]]
+			on: Incomplete do: [:exception |
+				self complete.
+				(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
+	^anInteger
+! !
+
+!ObjectReadStream methodsFor:'initialize-release'!
+
+contentsSpecies
+	^Array
+!
+
+on: aSource marshaler: aMarshaler
+	super on: aSource.
+	marshaler := aMarshaler.
+	objects := Array with: false with: Transcript.
+	nothing := Object new.
+
+	int8 := aSource interpreting: #signedChar.
+	(marshaler configureUnmarshal: aSource)
+		ifTrue: [
+			int16 := aSource interpreting: #signedShort_be.
+			int32 := aSource interpreting: #signedLong_be.
+			int64 := aSource interpreting: #signedLonglong_be.
+			uint16 := aSource interpreting: #unsignedShort_be.
+			uint32 := aSource interpreting: #unsignedLong_be.
+			uint64 := aSource interpreting: #unsignedLonglong_be]
+		ifFalse: [
+			int16 := aSource interpreting: #signedShort_le.
+			int32 := aSource interpreting: #signedLong_le.
+			int64 := aSource interpreting: #signedLonglong_le.
+			uint16 := aSource interpreting: #unsignedShort_le.
+			uint32 := aSource interpreting: #unsignedLong_le.
+			uint64 := aSource interpreting: #unsignedLonglong_le].
+	float := aSource interpreting: #float.
+	double := aSource interpreting: #double
+! !
+
+!ObjectReadStream methodsFor:'primitives'!
+
+double
+	^double
+!
+
+float
+	^float
+!
+
+int16
+	^int16
+!
+
+int32
+	^int32
+!
+
+int64
+	^int64
+!
+
+int8
+	^int8
+!
+
+uint16
+	^uint16
+!
+
+uint32
+	^uint32
+!
+
+uint64
+	^uint64
+!
+
+uint8
+	^source
+! !
+
+!ObjectReadStream methodsFor:'private'!
+
+complete
+	1 to: objects size by: 2 do: [:index |
+		objects at: index put: false.
+		objects at: index + 1 put: nothing].
+	objects at: 2 put: Transcript
+!
+
+grow: index
+	| replacement |
+	(replacement := Array new: index)
+		replaceFrom: 1 to: objects size with: objects startingAt: 1.
+	objects size + 1 to: index by: 2 do: [:i |
+		replacement
+			at: i put: false;
+			at: i + 1 put: nothing].
+	objects := replacement
+!
+
+nothing
+	^nothing
+!
+
+objects
+	^objects
+! !
+
+!ObjectReadStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__ObjectReadStream.st 11 2011-08-22 16:06:51Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteStream subclass:#TransformWriteStream
+	instanceVariableNames:'buffer block closeBlock process incompleteCount readReady
+		writeReady closeReady'
+	classVariableNames:''
+	poolDictionaries:'XtreamsPool'
+	category:'Xtreams-Transforms'
+!
+
+TransformWriteStream comment:'Transform write stream provides the most expressive form of transformation. The transformation is described by a binary block that is given two arguments, @input and @output. The @input is a virtual stream of elements written into the stream. The @output is the destination stream under the transform stream. The block can read arbitrary amount of elements from @input (including none) and write arbitrary amount of elements into @output (including none). The block will be invoked as many times as necessary to consume everything written into the stream, or until an Incomplete is raised by the destination.
+
+The closing behavior of the stream can be customized through the closeBlock. The default closeBlock simply propagates #close to the destination as with any other transform stream.
+
+In some cases it might be desirable to tweak the buffering strategy of the virtual input stream. In that case the buffer of the stream can be set manually to any kind of Buffer that matches the requirements of the transformation.
+
+From the point of view of the API, the TransformWriteStream is very much like the TransformReadStream. Notably any valid transform block should work the same way on either read or write stream without modification. However to preserve the invariants and expressivity of the transform block, the implementation is vastly different. Primarily it is necessary to convert all the writes into a virtual stream of written elements that can be passed into the transform block as the input stream. Consequently the transformation itself needs to be suspended if there weren''t enough elements written yet, to complete an iteration of the transform block. Therefore it needs to run in its own process. Any writes get redirected into an internal buffer and a background process repeatedly invokes the transform block to drain the contents of the buffer and produces output into the destination. Obviously buffer access has to be synchronized between any writing threads and the background process. The readReady/writeReady semaphores work in a lock-step mode, to interleave the background buffer draining with any writes.
+
+Instance Variables
+	buffer	<Buffer> holds the contents of the virtual input stream
+	block	<BlockClosure> binary transformation block that reads elements from input (first argument) and writes elements into output (second argument)
+	closeBlock	<BlockClosure> binary block invoked in response to the #close message, allows customizing the close behavior
+	process	<Process> background process that runs the transformation block
+	incompleteCount	<Integer> indicates that the transformation raised or received Incomplete and how many elements were actually consumed by the transformation block so that we can reraise Incomplete with correct count in the client thread
+	readReady	<Semaphore> signals to the background process that elements were written into the buffer
+	writeReady	<Semaphore> gates any writes into the stream, making sure background process is not draining the buffer at the same time
+	closeReady	<Semaphore> signals back to the user thread that the background process finished draining the buffer and the stream is properly closed, so the #close call can return
+
+'
+!
+
+
+!TransformWriteStream class methodsFor:'instance creation'!
+
+on: aWriteStream block: block
+	^self new on: aWriteStream block: block
+! !
+
+!TransformWriteStream methodsFor:'accessing'!
+
+block
+	^block
+!
+
+buffer
+	^buffer
+!
+
+closeBlock
+	^closeBlock
+!
+
+insert: anInteger from: aSequenceableCollection at: startIndex
+	| count amount |
+	anInteger isZero ifTrue: [^0].
+
+	count := 0.
+	[count < anInteger] whileTrue:
+		[amount := anInteger - count.
+		buffer hasFixedWriteSpace ifTrue: [amount := amount min: buffer cacheSize].
+		buffer insert: amount from: aSequenceableCollection at: startIndex + count.
+
+		"There is now data in the buffer for the drain to read"
+		readReady signal.
+		writeReady wait.
+		incompleteCount == nil ifFalse: [(Incomplete count: count + incompleteCount) raise].
+		count := count + amount ].
+	^anInteger
+!
+
+put: anObject
+	incompleteCount == nil ifFalse: [Incomplete zero raise].
+
+	buffer put: anObject.
+
+	"There is now data in the buffer for the drain to read"
+	readReady signal.
+	writeReady wait
+!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+	| count amount |
+	anInteger isZero ifTrue: [^0].
+
+	count := 0.
+	[count < anInteger] whileTrue:
+		[amount := anInteger - count.
+		buffer hasFixedWriteSpace ifTrue: [amount := amount min: buffer cacheSize].
+		buffer write: amount from: aSequenceableCollection at: startIndex + count.
+		
+		"There is now data in the buffer for the drain to read"
+		readReady signal.
+		writeReady wait.
+		incompleteCount == nil ifFalse: [(Incomplete count: count + incompleteCount) raise].
+		count := count + amount ].
+	^anInteger
+! !
+
+!TransformWriteStream methodsFor:'initialize-release'!
+
+buffer: aBuffer
+	buffer := aBuffer.
+	self drainBuffer
+!
+
+close
+	buffer ifNil: [^self].
+	"Write nothing to the buffer, but signal that there is data to read, causing the drain to throw Incomplete"
+	readReady signal.
+
+	"Wait for the drain to finish up completely. Rearm the closeReady incase somebody calls #close again."
+	closeReady wait.
+	closeReady signal.
+
+	closeBlock cull: destination cull: self.
+
+	buffer recycle.
+	buffer := nil
+!
+
+closeBlock: anObject
+	closeBlock := anObject
+!
+
+contentsSpecies
+	^buffer contentsSpecies
+!
+
+contentsSpecies: aClass
+
+	self buffer: (buffer class new: buffer cacheSize class: aClass)
+!
+
+on: aStreamable block: aBlock
+	super on: aStreamable.
+	block := aBlock.
+	incompleteCount := nil.
+	closeBlock := [ :destinationStream | destinationStream close].
+	buffer := ElasticBuffer new: DefaultBufferSize class: aStreamable contentsSpecies.
+	self drainBuffer
+! !
+
+!TransformWriteStream methodsFor:'printing'!
+
+streamingPrintOn: aStream
+	super streamingPrintOn: aStream.
+	aStream
+		space;
+		write: '#';
+		write: block method homeMethod selector;
+		write: ' buffered: ';
+		print: buffer writeSize.
+	buffer writeSize isZero ifTrue: [^self].
+	aStream
+		cr; tab;
+		print: buffer contentsPast
+! !
+
+!TransformWriteStream methodsFor:'private'!
+
+drainBuffer
+	| reading |
+	process ifNotNil: [process terminate].
+	incompleteCount == nil ifFalse: [^self].
+
+	closeReady := Semaphore new.
+	readReady := Semaphore new.
+	writeReady := Semaphore new.
+	reading := buffer reading transforming: [:in :out |
+		| count |
+		"Wait for the main process to have written to the buffer"
+		readReady wait.
+
+		"If nothing was written to the buffer, this indicates we're closing, we raise Incomplete"
+		(count := buffer readSize) isZero ifTrue: [Incomplete zero raise].
+		out write: count from: in.
+
+		"Allow the main process to write to the buffer"
+		writeReady signal].
+	process := [
+		[[block value: reading value: destination] repeat] on: Incomplete do: [].
+		incompleteCount := reading buffer readPosition.
+
+		"Signal that we're closed so that an attempt to write or close will immediately complete"
+		writeReady signal.
+		closeReady signal]
+			newProcess.
+	process resume
+! !
+
+!TransformWriteStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__TransformWriteStream.st 11 2011-08-22 16:06:51Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/transforms' }"
 
@@ -462,7 +1514,515 @@ isPositionable
 version_SVN
     ^ '$Id: Xtreams__CollectWriteStream.st 11 2011-08-22 16:06:51Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteStream subclass:#ObjectWriteStream
+	instanceVariableNames:'marshaler objects nothing int16 int32 int64 uint16 uint32 uint64
+		float double int8'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Transforms'
+!
+
+ObjectWriteStream comment:'Marshals objects into a binary destination using the associated ObjectMarshaler. The marshaler version ID is emited at the beginning.
+
+Instance Variables
+	marshaler	<ObjectMarshaler> performs marshaling of object bodies
+	objects	<Array> retains unmarshaled objects for resolution of backward references (to preserve identity)
+	longs	<InterpretedReadStream> (internal) for reading of longs
+	longlongs	<InterpretedReadStream> (internal) for reading of longlongs
+	floats	<InterpretedReadStream> (internal) for reading of floats
+	doubles	<InterpretedReadStream> (internal) for reading of doubles
+	nothing	<Object> (internal) an object used to occupy empty slots in objects (since nil is potentially valid content)
+
+'
+!
+
+
+!ObjectWriteStream class methodsFor:'instance creation'!
+
+on: aDestination
+	^self on: aDestination marshaler: ObjectMarshaler new
+!
+
+on: aDestination marshaler: aMarshaler
+	^self new on: aDestination marshaler: aMarshaler
+! !
+
+!ObjectWriteStream methodsFor:'accessing'!
+
+put: object
+	marshaler marshal: self object: object.
+	self complete.
+	^object
+!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+	startIndex to: anInteger + startIndex - 1 do: [:index |
+		marshaler marshal: self object: (aSequenceableCollection at: index).
+		self complete].
+	^anInteger
+! !
+
+!ObjectWriteStream methodsFor:'initialize-release'!
+
+contentsSpecies
+	^Array
+!
+
+on: aDestination marshaler: aMarshaler
+	super on: aDestination.
+	marshaler := aMarshaler.
+	objects := Array with: Transcript.
+	nothing := Object new.
+
+	int8 := aDestination interpreting: #signedChar.
+	(marshaler configureMarshal: aDestination)
+		ifTrue: [
+			int16 := aDestination interpreting: #signedShort_be.
+			int32 := aDestination interpreting: #signedLong_be.
+			int64 := aDestination interpreting: #signedLonglong_be.
+			uint16 := aDestination interpreting: #unsignedShort_be.
+			uint32 := aDestination interpreting: #unsignedLong_be.
+			uint64 := aDestination interpreting: #unsignedLonglong_be]
+		ifFalse: [
+			int16 := aDestination interpreting: #signedShort_le.
+			int32 := aDestination interpreting: #signedLong_le.
+			int64 := aDestination interpreting: #signedLonglong_le.
+			uint16 := aDestination interpreting: #unsignedShort_le.
+			uint32 := aDestination interpreting: #unsignedLong_le.
+			uint64 := aDestination interpreting: #unsignedLonglong_le].
+	float := aDestination interpreting: #float.
+	double := aDestination interpreting: #double
+! !
+
+!ObjectWriteStream methodsFor:'primitives'!
+
+double
+	^double
+!
+
+float
+	^float
+!
+
+int16
+	^int16
+!
+
+int32
+	^int32
+!
+
+int64
+	^int64
+!
+
+int8
+	^int8
+!
+
+uint16
+	^uint16
+!
+
+uint32
+	^uint32
+!
+
+uint64
+	^uint64
+!
+
+uint8
+	^destination
+! !
+
+!ObjectWriteStream methodsFor:'private'!
+
+complete
+	objects atAllPut: nothing.
+	objects at: 1 put: Transcript
+!
+
+grow
+	objects := objects copyWith: nothing
+!
+
+nothing
+	^nothing
+!
+
+objects
+	^objects
+! !
+
+!ObjectWriteStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__ObjectWriteStream.st 11 2011-08-22 16:06:51Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms' }"
+
+"{ NameSpace: Xtreams }"
+
+Object subclass:#MessagePackMarshaler
+	instanceVariableNames:'unmarshaling marshaling analysing'
+	classVariableNames:''
+	poolDictionaries:'XtreamsPool'
+	category:'Xtreams-Transforms'
+!
+
+MessagePackMarshaler comment:'MessagePackMarshaler defines the binary format of the MessagePack protocol ( http://wiki.msgpack.org/display/MSGPACK/Format+specification ), which is a binary JSON. It can marshal simple objects, but not whole classes, just like JSON. It is considered to be a very fast marshaler because of its lightweight protocol. It cannot handle circular references.
+
+Instance Variables
+	analysing	<Object>	analysing operations
+	marshaling	<Dictionary>	marshaling operations
+	unmarshaling	<(Array of: (BlockClosure))>	unmarshaling operations
+
+
+
+'
+!
+
+
+!MessagePackMarshaler class methodsFor:'instance creation'!
+
+new
+	^super new initialize
+! !
+
+!MessagePackMarshaler class methodsFor:'constants - containers'!
+
+array16
+	^16rDC
+!
+
+array32
+	^16rDD
+!
+
+map16
+	^16rDE
+!
+
+map32
+	^16rDF
+!
+
+raw16
+	^16rDA
+!
+
+raw32
+	^16rDB
+! !
+
+!MessagePackMarshaler class methodsFor:'constants - numbers'!
+
+double
+	^16rCB
+!
+
+float
+	^16rCA
+!
+
+int16
+	^16rD1
+!
+
+int32
+	^16rD2
+!
+
+int64
+	^16rD3
+!
+
+int8
+	^16rD0
+!
+
+uint16
+	^16rCD
+!
+
+uint32
+	^16rCE
+!
+
+uint64
+	^16rCF
+!
+
+uint8
+	^16rCC
+! !
+
+!MessagePackMarshaler class methodsFor:'constants - singletons'!
+
+false
+	^16rC2
+!
+
+nil
+	^16rC0
+!
+
+true
+	^16rC3
+! !
+
+!MessagePackMarshaler methodsFor:'api'!
+
+analyse: reading
+	| type |
+	type := reading uint8 get.
+	type <= 16rBF ifTrue: [
+		| fixMapOrArray |
+		type <= 16r7F ifTrue: [^reading log: 'positive fixnum' do: [type]].
+		fixMapOrArray := type bitShift: -4.
+		fixMapOrArray = 2r1001 ifTrue: [^reading log: 'fix array' do: [(1 to: (type bitAnd: 2r00001111)) collect: [:i | self analyse: reading]]].
+		fixMapOrArray = 2r1000 ifTrue: [
+			^reading log: 'fix map' do: [
+				| map |
+				map := Dictionary new.
+				(type bitAnd: 2r00001111) timesRepeat: [
+					map at: (self analyse: reading) put: (self analyse: reading)].
+				map]].
+		^reading log: 'fix raw' do: [reading uint8 read: (type bitAnd: 2r00011111)]].
+	(type bitShift: -5) = 2r111 ifTrue: [^reading log: 'negative fixnum' do: [-32 + (type bitAnd: 2r00011111)]].
+	^reading log: (type printStringRadix: 16) do: [(analysing at: type) value: reading]
+!
+
+marshal: writing object: object
+	(marshaling at: object class ifAbsent: [self error: 'Unmarshalable class with the MessagePack protocol']) value: writing value: object
+!
+
+unmarshal: reading
+	| type |
+	type := reading uint8 get.
+	type <= 16rBF ifTrue: [
+		| fixMapOrArray |
+		type <= 16r7F ifTrue: [^type].
+		fixMapOrArray := type bitShift: -4.
+		fixMapOrArray = 2r1001 ifTrue: [^(1 to: (type bitAnd: 2r00001111)) collect: [:i | self unmarshal: reading]].
+		fixMapOrArray = 2r1000 ifTrue: [
+			| map |
+			map := Dictionary new.
+			(type bitAnd: 2r00001111) timesRepeat: [
+				map at: (self unmarshal: reading) put: (self unmarshal: reading)].
+			^map].
+		^reading uint8 read: (type bitAnd: 2r00011111)].
+	(type bitShift: -5) = 2r111 ifTrue: [^-32 + (type bitAnd: 2r00011111)].
+	^(unmarshaling at: type) value: reading
+! !
+
+!MessagePackMarshaler methodsFor:'configuration'!
+
+configureAnalyse: reading
+	"This protocol has fixed endianness built in"
+	^true
+!
+
+configureMarshal: writing
+	"This protocol has fixed endianness built in"
+	^true
+!
+
+configureUnmarshal: reading
+	"This protocol has fixed endianness built in"
+	^true
+! !
+
+!MessagePackMarshaler methodsFor:'initialize-release'!
+
+initialize
+	self initializeMarshaling.
+	self initializeUnmarshaling.
+	self initializeAnalysing.
+!
+
+initializeAnalysing
+	(analysing := unmarshaling copy)
+		at: self class array16 put: [:reading | reading log: 'array16' do: [(1 to: reading uint16 get) collect: [:i | self analyse: reading]]];
+		at: self class array32 put: [:reading | reading log: 'array32' do: [(1 to: reading uint32 get) collect: [:i | self analyse: reading]]];
+		at: self class map16 put: [:reading |
+			reading log: 'map16' do: [
+				| map |
+				map := Dictionary new.
+				reading uint16 get timesRepeat: [
+					map at: (self analyse: reading) put: (self analyse:reading)].
+				map]];
+		at: self class map32 put: [:reading |
+			reading log: 'map32' do: [
+				| map |
+				map := Dictionary new.
+				reading uint16 get timesRepeat: [
+					map at: (self analyse: reading) put: (self analyse: reading)].
+				map]];
+		yourself
+!
+
+initializeMarshaling
+	(marshaling := Dictionary new)
+		"singletons"
+		at: UndefinedObject put: [:writing :object | writing uint8 put: self class nil];
+		at: True put: [:writing :object | writing uint8 put: self class true];
+		at: False put: [:writing :object | writing uint8 put: self class false];
+
+		"numbers"
+		at: Float put: [:writing :object | writing uint8 put: self class float. writing float put: object];
+		at: Double put: [:writing :object | writing uint8 put: self class double. writing double put: object];
+		at: SmallDouble put: [:writing :object | writing uint8 put: self class double. writing double put: object];
+		yourself.
+
+	Integer allSubclassesDo: [:each |
+		marshaling at: each put: [:writing :object | self write: writing integer: object]].
+
+	SequenceableCollection allSubclassesDo: [:each |
+		marshaling at: each put: [:writing :object | self write: writing array: object]].
+	(KeyedCollection withAllSubclasses, Dictionary withAllSubclasses) do: [:each |
+		marshaling at: each put: [:writing :object | self write: writing map: object]].
+	(CharacterArray withAllSubclasses, IntegerArray withAllSubclasses) do: [:each |
+		marshaling at: each put: [:writing :object | self error: each name, ' are not supported by the MessagePack protocol']].
+	marshaling at: ByteArray put: [:writing :object | self write: writing raw: object]
+!
+
+initializeUnmarshaling
+	(unmarshaling := Array new: 255 withAll: [:reading | self error: 'unknown type'])
+		"singletons"
+		at: self class nil put: [:reading | nil];
+		at: self class true put: [:reading | true];
+		at: self class false put: [:reading | false];
+
+		"numbers"
+		at: self class uint8 put: [:reading | reading uint8 get];
+		at: self class uint16 put: [:reading | reading uint16 get];
+		at: self class uint32 put: [:reading | reading uint32 get];
+		at: self class uint64 put: [:reading | reading uint64 get];
+		at: self class int8 put: [:reading | reading int8 get];
+		at: self class int16 put: [:reading | reading int16 get];
+		at: self class int32 put: [:reading | reading int32 get];
+		at: self class int64 put: [:reading | reading int64 get];
+		at: self class float put: [:reading | reading float get];
+		at: self class double put: [:reading | reading double get];
+
+		"containers"
+		at: self class raw16 put: [:reading | reading uint8 read: reading uint16 get];
+		at: self class raw32 put: [:reading | reading uint8 read: reading uint32 get];
+		at: self class array16 put: [:reading | (1 to: reading uint16 get) collect: [:i | self unmarshal: reading]];
+		at: self class array32 put: [:reading | (1 to: reading uint32 get) collect: [:i | self unmarshal: reading]];
+		at: self class map16 put: [:reading |
+			| map |
+			map := Dictionary new.
+			reading uint16 get timesRepeat: [
+				map at: (self unmarshal: reading) put: (self unmarshal: reading)].
+			map];
+		at: self class map32 put: [:reading |
+			| map |
+			map := Dictionary new.
+			reading uint32 get timesRepeat: [
+				map at: (self unmarshal: reading) put: (self unmarshal: reading)].
+			map];
+		yourself
+! !
+
+!MessagePackMarshaler methodsFor:'private - writing'!
+
+write: writing array: array
+	self write: writing array_size: array size.
+	array do: [:each | self marshal: writing object: each]
+!
+
+write: writing array_size: size
+	size <= 2r00001111 ifTrue: [^writing uint8 put: size + 2r10010000].
+	size <= 65535 ifTrue: [
+		writing uint8 put: self class array16.
+		^writing uint16 put: size].
+	size <= 4294967295 ifTrue: [
+		writing uint8 put: self class array32.
+		^writing uint32 put: size].
+	self error: 'array too big to marshal with MessagePack protocol'
+!
+
+write: writing integer: integer
+	(integer between: 0 and: 127) ifTrue: [^writing uint8 put: integer].
+	(integer between: -32 and: -1) ifTrue: [^writing uint8 put: integer + 256].
+	integer >= 128 ifTrue: [
+		integer <= 255 ifTrue: [^writing uint8 put: self class uint8; put: integer].
+		integer <= 65535 ifTrue: [
+			writing uint8 put: self class uint16.
+			^writing uint16 put: integer].
+		integer <= 4294967295 ifTrue: [
+			writing uint8 put: self class uint32.
+			^writing uint32 put: integer].
+		integer <= 18446744073709551615 ifTrue: [
+			writing uint8 put: self class uint64.
+			^writing uint64 put: integer].
+		self error: 'integer too big to marshal with MessagePack protocol'].
+	integer >= -128 ifTrue: [
+		writing uint8 put: self class int8.
+		^writing int8 put: integer].
+	integer >= -32768 ifTrue: [
+		writing uint8 put: self class int16.
+		^writing int16 put: integer].
+	integer >= -2147483648 ifTrue: [
+		writing uint8 put: self class int32.
+		^writing int32 put: integer].
+	integer >= -9223372036854775808 ifTrue: [
+		writing uint8 put: self class int64.
+		^writing int64 put: integer].
+	self error: 'integer too small to marshal with MessagePack protocol'.
+!
+
+write: writing map: map
+	self write: writing map_size: map size.
+	map keysAndValuesDo: [:key :value |
+		self marshal: writing object: key.
+		self marshal: writing object: value]
+!
+
+write: writing map_size: size
+	size <= 2r00001111 ifTrue: [^writing uint8 put: size + 2r10000000].
+	size <= 65535 ifTrue: [
+		writing uint8 put: self class map16.
+		^writing uint16 put: size].
+	size <= 4294967295 ifTrue: [
+		writing uint8 put: self class map32.
+		^writing uint32 put: size].
+	self error: 'array too big to marshal with MessagePack protocol'
+!
+
+write: writing raw: bytearray
+	self write: writing raw_size: bytearray size.
+	writing uint8 write: bytearray
+!
+
+write: writing raw_size: size
+	size <= 2r00011111 ifTrue: [^writing uint8 put: size + 2r10100000].
+	size <= 65535 ifTrue: [
+		writing uint8 put: self class raw16.
+		^writing uint16 put: size].
+	size <= 4294967295 ifTrue: [
+		writing uint8 put: self class raw32.
+		^writing uint32 put: size].
+	self error: 'array too big to marshal with MessagePack protocol'
+! !
+
+!MessagePackMarshaler class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__MessagePackMarshaler.st 11 2011-08-22 16:06:51Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/transforms' }"
 
@@ -974,17 +2534,17 @@ initialize
 !
 
 initializeVersion
-	| hash versionWriting |
-	version := #[83 84 83 84 20]. "STST 2.0"
-	hash := self class absoluteName hash.
-	(self class methodDictionary keys asSortedCollection: [:a :b | (a trueCompare: b) <= 0]) do: [:key |
-		hash := (hash bitXor: key stringhash) bitXor: (self class methodDictionary at: key) bytes hash].
+        | hash versionWriting |
+        version := #[83 84 83 84 20]. "STST 2.0"
+        hash := self class absoluteName hash.
+        (self class methodDictionary keys asSortedCollection: [:a :b | (a compareCollatingWith: b) <= 0]) do: [:key |
+                hash := (hash bitXor: key hash) bitXor: (self class methodDictionary at: key) byteCode hash].
 
-	versionWriting := ByteArray new writing.
-	versionWriting write: version.
-	versionWriting write: hash digitLength.
-	[hash > 0] whileTrue: [versionWriting write: (hash bitAnd: 255). hash := hash bitShift: -8].
-	version := versionWriting conclusion
+        versionWriting := ByteArray new writing.
+        versionWriting write: version.
+        versionWriting write: hash digitLength.
+        [hash > 0] whileTrue: [versionWriting write: (hash bitAnd: 255). hash := hash bitShift: -8].
+        version := versionWriting conclusion
 !
 
 resolveClass: className isMeta: classIsMeta format: classFormat instVarNames: classInstVarNames
@@ -1508,7 +3068,168 @@ put: writing integerSmall: integer
 version_SVN
     ^ '$Id: Xtreams__ObjectMarshaler.st 11 2011-08-22 16:06:51Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms' }"
+
+"{ NameSpace: Xtreams }"
+
+Encoder subclass:#ISO8859L1Encoder
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Transforms'
+!
+
+ISO8859L1Encoder comment:'Implements ISO-8859-1 (Latin 1) encoding.
+
+'
+!
+
+
+!ISO8859L1Encoder class methodsFor:'class initialization'!
+
+initialize
+	| newSelf |
+	newSelf := self new.
+	#(#'latin-1' #latin1 #iso8859L1 #ISO8859L1) do: [:id | self encoders at: id put: newSelf]
+! !
+
+!ISO8859L1Encoder methodsFor:'accessing'!
+
+decodeFrom: aReadStream
+	^Character value: aReadStream get
+!
+
+encode: aCharacter on: aWriteStream
+	aWriteStream put: aCharacter asInteger
+! !
+
+!ISO8859L1Encoder class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__ISO8859L1Encoder.st 11 2011-08-22 16:06:51Z mk $'
+! !
+
+ISO8859L1Encoder initialize!
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms' }"
+
+"{ NameSpace: Xtreams }"
+
+ReadStream subclass:#InterpretedReadStream
+	instanceVariableNames:'elementSize cache cacheSize operation contentsSpecies'
+	classVariableNames:''
+	poolDictionaries:'XtreamsPool'
+	category:'Xtreams-Transforms'
+!
+
+InterpretedReadStream comment:'Interprets bytes from a binary source as values of preconfigured (primitive) CType, e.g. float, long etc.
+
+Instance Variables
+	elementSize	<Integer> byte size of elements of the pre-configured CType
+	cache	<InterpretedBytes> caches bulk read bytes before interpreting for speed; size = elementSize * cacheSize
+	cacheSize	<SmallInteger> how many elements (not bytes) do we want to cache
+	operation	<BlockClosure> CType translation primitive used to read from the buffer
+	contentsSpecies	<Class> collection type to use to hold collections of elements
+
+'
+!
+
+
+!InterpretedReadStream class methodsFor:'instance creation'!
+
+on: aReadStream bytesPerElement: anInteger contentsSpecies: aClass operation: aBlock cacheSize: aSize
+	^self new on: aReadStream bytesPerElement: anInteger contentsSpecies: aClass operation: aBlock cacheSize: aSize
+!
+
+on: aReadStream type: aSymbol cacheSize: anInteger
+	| interpretation |
+	interpretation := InterpretedBytes perform: aSymbol.
+	^self on: aReadStream bytesPerElement: (interpretation at: 1) contentsSpecies: (interpretation at: 2) operation: (interpretation at: 3) cacheSize: anInteger
+! !
+
+!InterpretedReadStream methodsFor:'accessing'!
+
+read: anInteger into: aSequenceableCollection at: startIndex
+	| count amount |
+	count := 0.
+	[[count = anInteger] whileFalse:
+		[amount := cacheSize min: (anInteger - count).
+		source read: amount * elementSize into: cache at: 1.
+		0 to: amount - 1 do: [:index | aSequenceableCollection at: startIndex + count + index put: (operation value: cache value: index * elementSize + 1)].
+		count := count + amount]]
+			on: Incomplete do: [:exception |
+				0 to: exception count // elementSize - 1 do: [:index | aSequenceableCollection at: startIndex + count + index put: (operation value: cache value: index * elementSize + 1)].
+				(Incomplete on: aSequenceableCollection count: count + (exception count / elementSize) at: startIndex) raise].
+	^anInteger
+! !
+
+!InterpretedReadStream methodsFor:'initialize-release'!
+
+close
+	super close.
+	cache recycle.
+	cache := nil
+!
+
+contentsSpecies
+	^contentsSpecies
+!
+
+on: aReadStream bytesPerElement: anInteger contentsSpecies: aClass operation: aBlock cacheSize: aSize
+	super on: aReadStream.
+	cacheSize := aSize.
+	elementSize := anInteger.
+	contentsSpecies := aClass.
+	operation := aBlock.
+	cache := InterpretedBytes newRecycled: ((elementSize * cacheSize) max: DefaultBufferSize)
+! !
+
+!InterpretedReadStream methodsFor:'seeking'!
+
+++ anInteger
+
+	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
+	[source ++ anInteger * elementSize]
+		on: Incomplete do: [:exception | (Incomplete count: exception count / elementSize) raise].
+	^anInteger
+!
+
+-- anInteger
+	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
+	[source -- anInteger * elementSize]
+		on: Incomplete do: [:exception | (Incomplete count: exception count / elementSize) raise].
+	^anInteger
+!
+
+length
+	^source length / elementSize
+!
+
+position
+	^source position / elementSize
+!
+
+position: aPosition
+
+	^([ source position: aPosition * elementSize ] on: Incomplete do: [ :ex | ex count ]) // elementSize
+! !
+
+!InterpretedReadStream methodsFor:'testing'!
+
+isPositionable
+
+	^source isPositionable
+! !
+
+!InterpretedReadStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__InterpretedReadStream.st 11 2011-08-22 16:06:51Z mk $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/transforms' }"
 
@@ -1561,694 +3282,7 @@ version_SVN
 ! !
 
 ASCIIEncoder initialize!
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms' }"
-
-"{ NameSpace: Xtreams }"
-
-ReadStream subclass:#DuplicateReadStream
-	instanceVariableNames:'duplicate'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Transforms'
-!
-
-DuplicateReadStream comment:'Duplicates contents flowing through the stream into a secondary write stream.
-
-Instance Variables
-	duplicate	<WriteStream> stream to duplicate the content to
-
-'
-!
-
-
-!DuplicateReadStream class methodsFor:'instance creation'!
-
-on: aSource duplicate: aDestination
-
-	^self new on: aSource duplicate: aDestination
-! !
-
-!DuplicateReadStream methodsFor:'accessing'!
-
-read: anInteger into: aSequenceableCollection at: startIndex
-
-	[	source read: anInteger into: aSequenceableCollection at: startIndex.
-	] on: Incomplete do: [ :incomplete |
-		duplicate write: incomplete count from: aSequenceableCollection at: startIndex.
-		incomplete pass ].
-	duplicate write: anInteger from: aSequenceableCollection at: startIndex
-! !
-
-!DuplicateReadStream methodsFor:'initialize-release'!
-
-contentsSpecies
-
-	^source contentsSpecies
-!
-
-on: aSource duplicate: aDestination
-
-	super on: aSource.
-	duplicate := aDestination
-! !
-
-!DuplicateReadStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__DuplicateReadStream.st 11 2011-08-22 16:06:51Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteStream subclass:#InterpretedWriteStream
-	instanceVariableNames:'elementSize cache cacheSize operation contentsSpecies'
-	classVariableNames:''
-	poolDictionaries:'XtreamsPool'
-	category:'Xtreams-Transforms'
-!
-
-InterpretedWriteStream comment:'Converts consumed elements into bytes of pre-configured (primitive) CType, e.g. float, long etc. The type of the written elements must match the CType, the underlying destination must be binary.
-
-Instance Variables
-	elementSize	<Integer> byte size of elements of the pre-configured CType
-	cache	<InterpretedBytes> caches the bytes so that they can be bulk written
-	cacheSize	<SmallInteger> how many elements (not bytes) do we want to cache
-	operation	<BlockClosure> CType translation primitive used to write into the buffer
-	contentsSpecies	<Class> collection type to use to hold collections of elements
-
-'
-!
-
-
-!InterpretedWriteStream class methodsFor:'instance creation'!
-
-on: aWriteStream bytesPerElement: anInteger contentsSpecies: aClass operation: aBlock cacheSize: aSize
-	^self new on: aWriteStream bytesPerElement: anInteger contentsSpecies: aClass operation: aBlock cacheSize: aSize
-!
-
-on: aWriteStream type: aType cacheSize: aSize
-	| interpretation |
-	interpretation := InterpretedBytes perform: aType.
-	^self on: aWriteStream bytesPerElement: (interpretation at: 1) contentsSpecies: (interpretation at: 2) operation: (interpretation at: 4) cacheSize: aSize
-! !
-
-!InterpretedWriteStream methodsFor:'accessing'!
-
-insert: anInteger from: aSequenceableCollection at: startIndex
-
-	| count amount |
-	count := 0.
-	[count = anInteger] whileFalse: 
-		[amount := cacheSize min: anInteger - count.
-		0 to: amount - 1 do:  [:index | operation value: cache value: index * elementSize + 1 value: (aSequenceableCollection at: index + startIndex)].
-		destination insert: amount * elementSize from: cache at: 1.
-		count := count + amount].
-	^anInteger
-!
-
-put: anObject
-
-	operation value: cache value: 1 value: anObject.
-	destination write: elementSize from: cache at: 1.
-	^anObject
-!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-
-	| count amount |
-	count := 0.
-	[count = anInteger] whileFalse: 
-		[amount := cacheSize min: anInteger - count.
-		0 to: amount - 1 do:  [:index | operation value: cache value: index * elementSize + 1 value: (aSequenceableCollection at: count + index + startIndex)].
-		destination write: amount * elementSize from: cache at: 1.
-		count := count + amount].
-	^anInteger
-! !
-
-!InterpretedWriteStream methodsFor:'initialize-release'!
-
-close
-	super close.
-	cache recycle.
-	cache := nil
-!
-
-contentsSpecies
-	^contentsSpecies
-!
-
-on: aWriteStream bytesPerElement: anInteger contentsSpecies: aClass operation: aBlock cacheSize: aSize
-	super on: aWriteStream.
-	cacheSize := aSize.
-	elementSize := anInteger.
-	contentsSpecies := aClass.
-	operation := aBlock.
-	cache := InterpretedBytes newRecycled: ((elementSize * cacheSize) max: DefaultBufferSize)
-! !
-
-!InterpretedWriteStream methodsFor:'seeking'!
-
-++ anInteger
-
-	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
-	[destination ++ anInteger * elementSize]
-		on: Incomplete do: [:exception | (Incomplete count: exception count / elementSize) raise].
-	^anInteger
-!
-
--- anInteger
-	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
-	[destination -- anInteger * elementSize]
-		on: Incomplete do: [:exception | (Incomplete count: exception count / elementSize) raise].
-	^anInteger
-!
-
-length
-	^destination length / elementSize
-!
-
-position
-	^destination position / elementSize
-!
-
-position: aPosition
-
-	^([ destination position: aPosition * elementSize ] on: Incomplete do: [ :ex | ex count ]) // elementSize
-! !
-
-!InterpretedWriteStream methodsFor:'testing'!
-
-isPositionable
-
-	^destination isPositionable
-! !
-
-!InterpretedWriteStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__InterpretedWriteStream.st 11 2011-08-22 16:06:51Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteStream subclass:#DuplicateWriteStream
-	instanceVariableNames:'duplicate'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Transforms'
-!
-
-DuplicateWriteStream comment:'Duplicates contents flowing through the stream into a secondary write stream.
-
-Instance Variables
-	duplicate	<WriteStream> stream to duplicate the content to
-
-'
-!
-
-
-!DuplicateWriteStream class methodsFor:'instance creation'!
-
-on: aDestination duplicate: aSecondDestination
-
-	^self new on: aDestination duplicate: aSecondDestination
-! !
-
-!DuplicateWriteStream methodsFor:'accessing'!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-
-	[	destination write: anInteger from: aSequenceableCollection at: startIndex
-	] on: Incomplete do: [ :incomplete |
-		duplicate write: incomplete count from: aSequenceableCollection at: startIndex.
-		incomplete pass ].
-	duplicate write: anInteger from: aSequenceableCollection at: startIndex.
-	^anInteger
-! !
-
-!DuplicateWriteStream methodsFor:'initialize-release'!
-
-contentsSpecies
-
-	^destination contentsSpecies
-!
-
-on: aDestination duplicate: aSecondDestination
-
-	super on: aDestination.
-	duplicate := aSecondDestination
-! !
-
-!DuplicateWriteStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__DuplicateWriteStream.st 11 2011-08-22 16:06:51Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteStream subclass:#ObjectWriteStream
-	instanceVariableNames:'marshaler objects nothing int16 int32 int64 uint16 uint32 uint64
-		float double int8'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Transforms'
-!
-
-ObjectWriteStream comment:'Marshals objects into a binary destination using the associated ObjectMarshaler. The marshaler version ID is emited at the beginning.
-
-Instance Variables
-	marshaler	<ObjectMarshaler> performs marshaling of object bodies
-	objects	<Array> retains unmarshaled objects for resolution of backward references (to preserve identity)
-	longs	<InterpretedReadStream> (internal) for reading of longs
-	longlongs	<InterpretedReadStream> (internal) for reading of longlongs
-	floats	<InterpretedReadStream> (internal) for reading of floats
-	doubles	<InterpretedReadStream> (internal) for reading of doubles
-	nothing	<Object> (internal) an object used to occupy empty slots in objects (since nil is potentially valid content)
-
-'
-!
-
-
-!ObjectWriteStream class methodsFor:'instance creation'!
-
-on: aDestination
-	^self on: aDestination marshaler: ObjectMarshaler new
-!
-
-on: aDestination marshaler: aMarshaler
-	^self new on: aDestination marshaler: aMarshaler
-! !
-
-!ObjectWriteStream methodsFor:'accessing'!
-
-put: object
-	marshaler marshal: self object: object.
-	self complete.
-	^object
-!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-	startIndex to: anInteger + startIndex - 1 do: [:index |
-		marshaler marshal: self object: (aSequenceableCollection at: index).
-		self complete].
-	^anInteger
-! !
-
-!ObjectWriteStream methodsFor:'initialize-release'!
-
-contentsSpecies
-	^Array
-!
-
-on: aDestination marshaler: aMarshaler
-	super on: aDestination.
-	marshaler := aMarshaler.
-	objects := Array with: Transcript.
-	nothing := Object new.
-
-	int8 := aDestination interpreting: #signedChar.
-	(marshaler configureMarshal: aDestination)
-		ifTrue: [
-			int16 := aDestination interpreting: #signedShort_be.
-			int32 := aDestination interpreting: #signedLong_be.
-			int64 := aDestination interpreting: #signedLonglong_be.
-			uint16 := aDestination interpreting: #unsignedShort_be.
-			uint32 := aDestination interpreting: #unsignedLong_be.
-			uint64 := aDestination interpreting: #unsignedLonglong_be]
-		ifFalse: [
-			int16 := aDestination interpreting: #signedShort_le.
-			int32 := aDestination interpreting: #signedLong_le.
-			int64 := aDestination interpreting: #signedLonglong_le.
-			uint16 := aDestination interpreting: #unsignedShort_le.
-			uint32 := aDestination interpreting: #unsignedLong_le.
-			uint64 := aDestination interpreting: #unsignedLonglong_le].
-	float := aDestination interpreting: #float.
-	double := aDestination interpreting: #double
-! !
-
-!ObjectWriteStream methodsFor:'primitives'!
-
-double
-	^double
-!
-
-float
-	^float
-!
-
-int16
-	^int16
-!
-
-int32
-	^int32
-!
-
-int64
-	^int64
-!
-
-int8
-	^int8
-!
-
-uint16
-	^uint16
-!
-
-uint32
-	^uint32
-!
-
-uint64
-	^uint64
-!
-
-uint8
-	^destination
-! !
-
-!ObjectWriteStream methodsFor:'private'!
-
-complete
-	objects atAllPut: nothing.
-	objects at: 1 put: Transcript
-!
-
-grow
-	objects := objects copyWith: nothing
-!
-
-nothing
-	^nothing
-!
-
-objects
-	^objects
-! !
-
-!ObjectWriteStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__ObjectWriteStream.st 11 2011-08-22 16:06:51Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteStream subclass:#EncodeWriteStream
-	instanceVariableNames:'encoder buffer bufferReading bufferWriting decodedLineEnd
-		encodedLineEnd'
-	classVariableNames:''
-	poolDictionaries:'XtreamsPool'
-	category:'Xtreams-Transforms'
-!
-
-EncodeWriteStream comment:'Accepts characters, converts them to bytes (0..255) using pre-configured encoding and writes the bytes into destination. Unless set to lineEndTransparent, converts any CRs into configured line-end convention (LF or CRLF).
-
-Instance Variables
-	encoder	<Encoder> converts characters to bytes
-	buffer	<Buffer on: ByteArray> batch writing buffer
-	bufferReading	<ReadStream> read stream on buffer
-	bufferWriting	<WriteStream> write stream on buffer
-	decodedLineEnd	<Character> CR or nil if transparent
-	encodedLineEnd	<ByteArray> encoded bytes of CR in the configured convention (LF or CRLF), or nil if transparent
-
-'
-!
-
-
-!EncodeWriteStream class methodsFor:'instance creation'!
-
-on: aDestination encoding: anEncoding
-	^self new on: aDestination encoding: anEncoding
-! !
-
-!EncodeWriteStream methodsFor:'accessing'!
-
-encoder
-
-	^encoder
-!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-
-	| character |
-	startIndex to: startIndex + anInteger - 1 do:  [:index |
-		buffer writeSize < 10 ifTrue: [destination write: buffer readSize from: bufferReading].
-		character := aSequenceableCollection at: index.
-		character == decodedLineEnd
-			ifTrue:	[bufferWriting write: encodedLineEnd]
-			ifFalse:	[encoder encode: character on: bufferWriting]].
-	destination write: buffer readSize from: bufferReading.
-	^anInteger
-! !
-
-!EncodeWriteStream methodsFor:'initialize-release'!
-
-close
-	super close.
-	buffer recycle.
-	buffer := nil
-!
-
-contentsSpecies
-
-	^String
-!
-
-on: aSource encoding: anEncoding
-
-	super on: aSource.
-	encoder := Encoder for: anEncoding.
-	buffer := RingBuffer new: DefaultBufferSize class: ByteArray.
-	bufferReading := buffer reading.
-	bufferWriting := buffer writing.
-	self setLineEndAuto
-! !
-
-!EncodeWriteStream methodsFor:'line-end'!
-
-setLineEndAuto
-
-        OperatingSystem isMSWINDOWSlike
-                ifTrue:         [self setLineEndCRLF]
-                ifFalse:        [self setLineEndLF]
-!
-
-setLineEndCRLF
-
-	| stream |
-	decodedLineEnd := Character cr.
-	stream := ByteArray new writing.
-	encoder encode: Character cr on: stream; encode: Character lf on: stream.
-	encodedLineEnd := stream contents
-!
-
-setLineEndLF
-
-	| stream |
-	decodedLineEnd := Character cr.
-	stream := ByteArray new writing.
-	encoder encode: Character lf on: stream.
-	encodedLineEnd := stream contents
-!
-
-setLineEndTransparent
-
-	decodedLineEnd := nil.
-	encodedLineEnd := nil
-! !
-
-!EncodeWriteStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__EncodeWriteStream.st 11 2011-08-22 16:06:51Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms' }"
-
-"{ NameSpace: Xtreams }"
-
-ReadStream subclass:#ObjectAnalyseStream
-	instanceVariableNames:'marshaler nothing log depth objects int8 int16 int32 int64 uint16
-		uint32 uint64 float double'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Transforms'
-!
-
-
-!ObjectAnalyseStream class methodsFor:'instance creation'!
-
-on: aDestination
-	^self on: aDestination marshaler: ObjectMarshaler new
-!
-
-on: aDestination marshaler: aMarshaler
-	^self new on: aDestination marshaler: aMarshaler
-! !
-
-!ObjectAnalyseStream methodsFor:'accessing'!
-
-get
-	| details |
-	marshaler analyse: self.
-	details := log conclusion.
-	log := String new writing.
-	self complete.
-	^details
-!
-
-read: anInteger into: aSequenceableCollection at: startIndex
-	| count |
-	count := 0.
-	[anInteger timesRepeat:
-		[marshaler analyse: self.
-		aSequenceableCollection at: startIndex + count put: log conclusion.
-		log := String new writing.
-		self complete.
-		count := count + 1]]
-			on: Incomplete do: [:exception |
-				aSequenceableCollection at: startIndex + count put: log conclusion.
-				log := String new writing.
-				self complete.
-				(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
-	^anInteger
-! !
-
-!ObjectAnalyseStream methodsFor:'initialize-release'!
-
-contentsSpecies
-	^Array
-!
-
-on: aSource marshaler: aMarshaler
-	super on: aSource.
-	marshaler := aMarshaler.
-	nothing := Object new.
-	objects := OrderedCollection with: Transcript.
-	depth := 0.
-
-	log := String new writing.
-	int8 := aSource interpreting: #signedChar.
-	(self log: 'header' do: [marshaler configureAnalyse: aSource])
-		ifTrue: [
-			int16 := aSource interpreting: #signedShort_be.
-			int32 := aSource interpreting: #signedLong_be.
-			int64 := aSource interpreting: #signedLonglong_be.
-			uint16 := aSource interpreting: #unsignedShort_be.
-			uint32 := aSource interpreting: #unsignedLong_be.
-			uint64 := aSource interpreting: #unsignedLonglong_be]
-		ifFalse: [
-			int16 := aSource interpreting: #signedShort_le.
-			int32 := aSource interpreting: #signedLong_le.
-			int64 := aSource interpreting: #signedLonglong_le.
-			uint16 := aSource interpreting: #unsignedShort_le.
-			uint32 := aSource interpreting: #unsignedLong_le.
-			uint64 := aSource interpreting: #unsignedLonglong_le].
-	float := aSource interpreting: #float.
-	double := aSource interpreting: #double
-! !
-
-!ObjectAnalyseStream methodsFor:'primitives'!
-
-double
-	^double
-!
-
-float
-	^float
-!
-
-int16
-	^int16
-!
-
-int32
-	^int32
-!
-
-int64
-	^int64
-!
-
-int8
-	^int8
-!
-
-uint16
-	^uint16
-!
-
-uint32
-	^uint32
-!
-
-uint64
-	^uint64
-!
-
-uint8
-	^source
-! !
-
-!ObjectAnalyseStream methodsFor:'private'!
-
-complete
-	objects := OrderedCollection with: Transcript
-!
-
-log: type do: aBlock
-	| superlog sublog position incomplete |
-	position := source position.
-	superlog := log.
-	log := String new writing.
-
-	depth := depth + 1.
-	incomplete := false.
-	^[aBlock on: Incomplete do: [:ex | incomplete := true. ex pass]] ensure:
-		[depth := depth - 1.
-		sublog := log conclusion.
-		log := superlog.
-
-		incomplete ifFalse:
-			[log tab: depth; print: position; write: '+'; print: (source position - position); tab.
-			type isCharacters
-				ifTrue:	[log write: type]
-				ifFalse:	[log write: type value].
-			log cr; write: sublog]]
-!
-
-nothing
-	^nothing
-!
-
-objects
-	^objects
-! !
-
-!ObjectAnalyseStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__ObjectAnalyseStream.st 11 2011-08-22 16:06:51Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:43 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/transforms' }"
 
@@ -2378,1042 +3412,6 @@ isPositionable
 
 version_SVN
     ^ '$Id: Xtreams__CollectReadStream.st 11 2011-08-22 16:06:51Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms' }"
-
-"{ NameSpace: Xtreams }"
-
-ReadStream subclass:#EncodeReadStream
-	instanceVariableNames:'transparent crPreceeding encoder buffer bufferWriting
-		bufferReading'
-	classVariableNames:''
-	poolDictionaries:'XtreamsPool'
-	category:'Xtreams-Transforms'
-!
-
-EncodeReadStream comment:'Converts bytes into characters using pre-configured encoding. At the same time, if set to lineEndAuto (default) it can perform line-end translation, converting any line-end convention into CRs. The source stream must provide bytes (0...255).
-
-Instance Variables
-	transparent	<Boolean> should the stream perform line-end translations
-	crPreceeding	<Boolean> was previous character read a CR (used when not transparent)
-	encoder	<Encoder> converts bytes to characters
-	buffer	<Buffer on: ByteArray> used to optimize bulk reads
-	bufferWriting	<WriteStream> write stream on buffer
-	bufferReading	<ReadStream> read stream on buffer
-
-'
-!
-
-
-!EncodeReadStream class methodsFor:'instance creation'!
-
-on: aSource encoding: anEncoding
-	^self new on: aSource encoding: anEncoding
-! !
-
-!EncodeReadStream methodsFor:'accessing'!
-
-encoder
-
-	^encoder
-!
-
-get
-	| character |
-	buffer hasDataToRead ifTrue: [^super get].
-	character := encoder decodeFrom: source.
-	transparent ifFalse: 
-		[character == LF
-			ifTrue: [crPreceeding
-				ifTrue: 
-					[character := encoder decodeFrom: source.
-					crPreceeding := character = CR]
-				ifFalse: 
-					[crPreceeding := false.
-					character := CR]]
-			ifFalse: [crPreceeding := character = CR]].
-	^character
-!
-
-read: anInteger into: aSequenceableCollection at: startIndex
-
-	| remaining position character bufferAvailable |
-	remaining := anInteger.
-	position := startIndex.
-	[remaining > 0] whileTrue: [
-		| mark |
-		"Top up our buffer if we have room and we need data"
-		[bufferWriting write: (buffer writeSize min: remaining) from: source] on: Incomplete do: [:incomplete |
-			(incomplete count == 0 and: [buffer hasDataToRead not]) ifTrue: [
-				(Incomplete on: aSequenceableCollection count: anInteger - remaining at: startIndex) raise]].
-
-		"We now conduct an inner loop that iterates over the buffer data while:
-			a) we need to read more data
-			b) there is data available in the buffer
-			c) a character can successfully be decoded
-		"
-
-		"If our buffer size is too low before we begin our decode loop, we need to take an undo copy in case we cannot decode a character."
-		buffer readSize < 10 ifTrue:
-			[mark := buffer readPosition.
-			encoder backupState ].
-
-		[["The following may raise an incomplete, which means we don't have enough data in the buffer to decode the full character.
-		 This is handled by the Incomplete exception capture before."
-		character := encoder decodeFrom: bufferReading.
-
-		"If we are not transparent, convert stray LFs in to CRs and CRLFs in to CRs"
-		transparent ifFalse: [
-			character == LF
-				ifTrue:	[character := crPreceeding ifTrue: [nil] ifFalse: [CR]. crPreceeding := false]
-				ifFalse:	[crPreceeding := character = CR]].
-
-		"If we didn't filter out an LF at the tail of a CRLF, commit the character to the output."
-		character == nil ifFalse:
-			[aSequenceableCollection at: position put: character.
-			remaining := remaining - 1.
-			position := position + 1].
-
-		"Find out how much data we have left in the buffer. If it's too low we need to keep track of the undo record in case we cannot decode a character."
-		(bufferAvailable := buffer readSize) < 10 ifTrue:
-			[mark := buffer readPosition.
-			encoder backupState ].
-
-		remaining > 0 and: [bufferAvailable > 0]] whileTrue]
-			on: Incomplete do: [:incomplete |
-				"We failed to decode a character, we've hit the end of the buffer and need to refill it. We rewind the buffer and leave the decoding loop
-				 to return to the main loop where more data will be fetched in to our buffer."
-				buffer readPosition: mark.
-				encoder restoreState]].
-	^anInteger
-! !
-
-!EncodeReadStream methodsFor:'initialize-release'!
-
-close
-	super close.
-	buffer recycle.
-	buffer := nil
-!
-
-contentsSpecies
-	
-	^String
-!
-
-on: aSource encoding: anEncoding
-
-	super on: aSource.
-	encoder := Encoder for: anEncoding.
-	buffer := RingBuffer new: DefaultBufferSize class: ByteArray.
-	bufferReading := buffer reading.
-	bufferWriting := buffer writing.
-	transparent := false.
-	crPreceeding := false.
-! !
-
-!EncodeReadStream methodsFor:'line-end'!
-
-setLineEndAuto
-
-	transparent := false
-!
-
-setLineEndTransparent
-
-	transparent := true
-! !
-
-!EncodeReadStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__EncodeReadStream.st 11 2011-08-22 16:06:51Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms' }"
-
-"{ NameSpace: Xtreams }"
-
-ReadStream subclass:#ObjectReadStream
-	instanceVariableNames:'marshaler objects float double nothing uint16 uint32 uint64 int64
-		int8 int16 int32'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Transforms'
-!
-
-ObjectReadStream comment:'Unmarshals objects from binary source, previously marshaled using the same ObjectMarshaler. The bytes must start with marshaler version ID.
-
-Instance Variables
-	marshaler	<ObjectMarshaler> performs marshaling of object bodies
-	objects	<Array> retains unmarshaled objects for resolution of backward references (to preserve identity)
-	longs	<InterpretedReadStream> (internal) for reading of longs
-	longlongs	<InterpretedReadStream> (internal) for reading of longlongs
-	floats	<InterpretedReadStream> (internal) for reading of floats
-	doubles	<InterpretedReadStream> (internal) for reading of doubles
-	nothing	<Object> (internal) an object used to occupy empty slots in objects (since nil is potentially valid content)
-
-'
-!
-
-
-!ObjectReadStream class methodsFor:'instance creation'!
-
-on: aDestination
-	^self on: aDestination marshaler: ObjectMarshaler new
-!
-
-on: aDestination marshaler: aMarshaler
-	^self new on: aDestination marshaler: aMarshaler
-! !
-
-!ObjectReadStream methodsFor:'accessing'!
-
-get
-	| object |
-	object := marshaler unmarshal: self.
-	self complete.
-	^object
-!
-
-read: anInteger into: aSequenceableCollection at: startIndex
-	| count |
-	count := 0.
-	[anInteger timesRepeat:
-		[aSequenceableCollection at: startIndex + count put: (marshaler unmarshal: self).
-		self complete.
-		count := count + 1]]
-			on: Incomplete do: [:exception |
-				self complete.
-				(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
-	^anInteger
-! !
-
-!ObjectReadStream methodsFor:'initialize-release'!
-
-contentsSpecies
-	^Array
-!
-
-on: aSource marshaler: aMarshaler
-	super on: aSource.
-	marshaler := aMarshaler.
-	objects := Array with: false with: Transcript.
-	nothing := Object new.
-
-	int8 := aSource interpreting: #signedChar.
-	(marshaler configureUnmarshal: aSource)
-		ifTrue: [
-			int16 := aSource interpreting: #signedShort_be.
-			int32 := aSource interpreting: #signedLong_be.
-			int64 := aSource interpreting: #signedLonglong_be.
-			uint16 := aSource interpreting: #unsignedShort_be.
-			uint32 := aSource interpreting: #unsignedLong_be.
-			uint64 := aSource interpreting: #unsignedLonglong_be]
-		ifFalse: [
-			int16 := aSource interpreting: #signedShort_le.
-			int32 := aSource interpreting: #signedLong_le.
-			int64 := aSource interpreting: #signedLonglong_le.
-			uint16 := aSource interpreting: #unsignedShort_le.
-			uint32 := aSource interpreting: #unsignedLong_le.
-			uint64 := aSource interpreting: #unsignedLonglong_le].
-	float := aSource interpreting: #float.
-	double := aSource interpreting: #double
-! !
-
-!ObjectReadStream methodsFor:'primitives'!
-
-double
-	^double
-!
-
-float
-	^float
-!
-
-int16
-	^int16
-!
-
-int32
-	^int32
-!
-
-int64
-	^int64
-!
-
-int8
-	^int8
-!
-
-uint16
-	^uint16
-!
-
-uint32
-	^uint32
-!
-
-uint64
-	^uint64
-!
-
-uint8
-	^source
-! !
-
-!ObjectReadStream methodsFor:'private'!
-
-complete
-	1 to: objects size by: 2 do: [:index |
-		objects at: index put: false.
-		objects at: index + 1 put: nothing].
-	objects at: 2 put: Transcript
-!
-
-grow: index
-	| replacement |
-	(replacement := Array new: index)
-		replaceFrom: 1 to: objects size with: objects startingAt: 1.
-	objects size + 1 to: index by: 2 do: [:i |
-		replacement
-			at: i put: false;
-			at: i + 1 put: nothing].
-	objects := replacement
-!
-
-nothing
-	^nothing
-!
-
-objects
-	^objects
-! !
-
-!ObjectReadStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__ObjectReadStream.st 11 2011-08-22 16:06:51Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms' }"
-
-"{ NameSpace: Xtreams }"
-
-Object subclass:#MessagePackMarshaler
-	instanceVariableNames:'unmarshaling marshaling analysing'
-	classVariableNames:''
-	poolDictionaries:'XtreamsPool'
-	category:'Xtreams-Transforms'
-!
-
-MessagePackMarshaler comment:'MessagePackMarshaler defines the binary format of the MessagePack protocol ( http://wiki.msgpack.org/display/MSGPACK/Format+specification ), which is a binary JSON. It can marshal simple objects, but not whole classes, just like JSON. It is considered to be a very fast marshaler because of its lightweight protocol. It cannot handle circular references.
-
-Instance Variables
-	analysing	<Object>	analysing operations
-	marshaling	<Dictionary>	marshaling operations
-	unmarshaling	<(Array of: (BlockClosure))>	unmarshaling operations
-
-
-
-'
-!
-
-
-!MessagePackMarshaler class methodsFor:'instance creation'!
-
-new
-	^super new initialize
-! !
-
-!MessagePackMarshaler class methodsFor:'constants - containers'!
-
-array16
-	^16rDC
-!
-
-array32
-	^16rDD
-!
-
-map16
-	^16rDE
-!
-
-map32
-	^16rDF
-!
-
-raw16
-	^16rDA
-!
-
-raw32
-	^16rDB
-! !
-
-!MessagePackMarshaler class methodsFor:'constants - numbers'!
-
-double
-	^16rCB
-!
-
-float
-	^16rCA
-!
-
-int16
-	^16rD1
-!
-
-int32
-	^16rD2
-!
-
-int64
-	^16rD3
-!
-
-int8
-	^16rD0
-!
-
-uint16
-	^16rCD
-!
-
-uint32
-	^16rCE
-!
-
-uint64
-	^16rCF
-!
-
-uint8
-	^16rCC
-! !
-
-!MessagePackMarshaler class methodsFor:'constants - singletons'!
-
-false
-	^16rC2
-!
-
-nil
-	^16rC0
-!
-
-true
-	^16rC3
-! !
-
-!MessagePackMarshaler methodsFor:'api'!
-
-analyse: reading
-	| type |
-	type := reading uint8 get.
-	type <= 16rBF ifTrue: [
-		| fixMapOrArray |
-		type <= 16r7F ifTrue: [^reading log: 'positive fixnum' do: [type]].
-		fixMapOrArray := type bitShift: -4.
-		fixMapOrArray = 2r1001 ifTrue: [^reading log: 'fix array' do: [(1 to: (type bitAnd: 2r00001111)) collect: [:i | self analyse: reading]]].
-		fixMapOrArray = 2r1000 ifTrue: [
-			^reading log: 'fix map' do: [
-				| map |
-				map := Dictionary new.
-				(type bitAnd: 2r00001111) timesRepeat: [
-					map at: (self analyse: reading) put: (self analyse: reading)].
-				map]].
-		^reading log: 'fix raw' do: [reading uint8 read: (type bitAnd: 2r00011111)]].
-	(type bitShift: -5) = 2r111 ifTrue: [^reading log: 'negative fixnum' do: [-32 + (type bitAnd: 2r00011111)]].
-	^reading log: (type printStringRadix: 16) do: [(analysing at: type) value: reading]
-!
-
-marshal: writing object: object
-	(marshaling at: object class ifAbsent: [self error: 'Unmarshalable class with the MessagePack protocol']) value: writing value: object
-!
-
-unmarshal: reading
-	| type |
-	type := reading uint8 get.
-	type <= 16rBF ifTrue: [
-		| fixMapOrArray |
-		type <= 16r7F ifTrue: [^type].
-		fixMapOrArray := type bitShift: -4.
-		fixMapOrArray = 2r1001 ifTrue: [^(1 to: (type bitAnd: 2r00001111)) collect: [:i | self unmarshal: reading]].
-		fixMapOrArray = 2r1000 ifTrue: [
-			| map |
-			map := Dictionary new.
-			(type bitAnd: 2r00001111) timesRepeat: [
-				map at: (self unmarshal: reading) put: (self unmarshal: reading)].
-			^map].
-		^reading uint8 read: (type bitAnd: 2r00011111)].
-	(type bitShift: -5) = 2r111 ifTrue: [^-32 + (type bitAnd: 2r00011111)].
-	^(unmarshaling at: type) value: reading
-! !
-
-!MessagePackMarshaler methodsFor:'configuration'!
-
-configureAnalyse: reading
-	"This protocol has fixed endianness built in"
-	^true
-!
-
-configureMarshal: writing
-	"This protocol has fixed endianness built in"
-	^true
-!
-
-configureUnmarshal: reading
-	"This protocol has fixed endianness built in"
-	^true
-! !
-
-!MessagePackMarshaler methodsFor:'initialize-release'!
-
-initialize
-	self initializeMarshaling.
-	self initializeUnmarshaling.
-	self initializeAnalysing.
-!
-
-initializeAnalysing
-	(analysing := unmarshaling copy)
-		at: self class array16 put: [:reading | reading log: 'array16' do: [(1 to: reading uint16 get) collect: [:i | self analyse: reading]]];
-		at: self class array32 put: [:reading | reading log: 'array32' do: [(1 to: reading uint32 get) collect: [:i | self analyse: reading]]];
-		at: self class map16 put: [:reading |
-			reading log: 'map16' do: [
-				| map |
-				map := Dictionary new.
-				reading uint16 get timesRepeat: [
-					map at: (self analyse: reading) put: (self analyse:reading)].
-				map]];
-		at: self class map32 put: [:reading |
-			reading log: 'map32' do: [
-				| map |
-				map := Dictionary new.
-				reading uint16 get timesRepeat: [
-					map at: (self analyse: reading) put: (self analyse: reading)].
-				map]];
-		yourself
-!
-
-initializeMarshaling
-	(marshaling := Dictionary new)
-		"singletons"
-		at: UndefinedObject put: [:writing :object | writing uint8 put: self class nil];
-		at: True put: [:writing :object | writing uint8 put: self class true];
-		at: False put: [:writing :object | writing uint8 put: self class false];
-
-		"numbers"
-		at: Float put: [:writing :object | writing uint8 put: self class float. writing float put: object];
-		at: Double put: [:writing :object | writing uint8 put: self class double. writing double put: object];
-		at: SmallDouble put: [:writing :object | writing uint8 put: self class double. writing double put: object];
-		yourself.
-
-	Integer allSubclassesDo: [:each |
-		marshaling at: each put: [:writing :object | self write: writing integer: object]].
-
-	SequenceableCollection allSubclassesDo: [:each |
-		marshaling at: each put: [:writing :object | self write: writing array: object]].
-	(KeyedCollection withAllSubclasses, Dictionary withAllSubclasses) do: [:each |
-		marshaling at: each put: [:writing :object | self write: writing map: object]].
-	(CharacterArray withAllSubclasses, IntegerArray withAllSubclasses) do: [:each |
-		marshaling at: each put: [:writing :object | self error: each name, ' are not supported by the MessagePack protocol']].
-	marshaling at: ByteArray put: [:writing :object | self write: writing raw: object]
-!
-
-initializeUnmarshaling
-	(unmarshaling := Array new: 255 withAll: [:reading | self error: 'unknown type'])
-		"singletons"
-		at: self class nil put: [:reading | nil];
-		at: self class true put: [:reading | true];
-		at: self class false put: [:reading | false];
-
-		"numbers"
-		at: self class uint8 put: [:reading | reading uint8 get];
-		at: self class uint16 put: [:reading | reading uint16 get];
-		at: self class uint32 put: [:reading | reading uint32 get];
-		at: self class uint64 put: [:reading | reading uint64 get];
-		at: self class int8 put: [:reading | reading int8 get];
-		at: self class int16 put: [:reading | reading int16 get];
-		at: self class int32 put: [:reading | reading int32 get];
-		at: self class int64 put: [:reading | reading int64 get];
-		at: self class float put: [:reading | reading float get];
-		at: self class double put: [:reading | reading double get];
-
-		"containers"
-		at: self class raw16 put: [:reading | reading uint8 read: reading uint16 get];
-		at: self class raw32 put: [:reading | reading uint8 read: reading uint32 get];
-		at: self class array16 put: [:reading | (1 to: reading uint16 get) collect: [:i | self unmarshal: reading]];
-		at: self class array32 put: [:reading | (1 to: reading uint32 get) collect: [:i | self unmarshal: reading]];
-		at: self class map16 put: [:reading |
-			| map |
-			map := Dictionary new.
-			reading uint16 get timesRepeat: [
-				map at: (self unmarshal: reading) put: (self unmarshal: reading)].
-			map];
-		at: self class map32 put: [:reading |
-			| map |
-			map := Dictionary new.
-			reading uint32 get timesRepeat: [
-				map at: (self unmarshal: reading) put: (self unmarshal: reading)].
-			map];
-		yourself
-! !
-
-!MessagePackMarshaler methodsFor:'private - writing'!
-
-write: writing array: array
-	self write: writing array_size: array size.
-	array do: [:each | self marshal: writing object: each]
-!
-
-write: writing array_size: size
-	size <= 2r00001111 ifTrue: [^writing uint8 put: size + 2r10010000].
-	size <= 65535 ifTrue: [
-		writing uint8 put: self class array16.
-		^writing uint16 put: size].
-	size <= 4294967295 ifTrue: [
-		writing uint8 put: self class array32.
-		^writing uint32 put: size].
-	self error: 'array too big to marshal with MessagePack protocol'
-!
-
-write: writing integer: integer
-	(integer between: 0 and: 127) ifTrue: [^writing uint8 put: integer].
-	(integer between: -32 and: -1) ifTrue: [^writing uint8 put: integer + 256].
-	integer >= 128 ifTrue: [
-		integer <= 255 ifTrue: [^writing uint8 put: self class uint8; put: integer].
-		integer <= 65535 ifTrue: [
-			writing uint8 put: self class uint16.
-			^writing uint16 put: integer].
-		integer <= 4294967295 ifTrue: [
-			writing uint8 put: self class uint32.
-			^writing uint32 put: integer].
-		integer <= 18446744073709551615 ifTrue: [
-			writing uint8 put: self class uint64.
-			^writing uint64 put: integer].
-		self error: 'integer too big to marshal with MessagePack protocol'].
-	integer >= -128 ifTrue: [
-		writing uint8 put: self class int8.
-		^writing int8 put: integer].
-	integer >= -32768 ifTrue: [
-		writing uint8 put: self class int16.
-		^writing int16 put: integer].
-	integer >= -2147483648 ifTrue: [
-		writing uint8 put: self class int32.
-		^writing int32 put: integer].
-	integer >= -9223372036854775808 ifTrue: [
-		writing uint8 put: self class int64.
-		^writing int64 put: integer].
-	self error: 'integer too small to marshal with MessagePack protocol'.
-!
-
-write: writing map: map
-	self write: writing map_size: map size.
-	map keysAndValuesDo: [:key :value |
-		self marshal: writing object: key.
-		self marshal: writing object: value]
-!
-
-write: writing map_size: size
-	size <= 2r00001111 ifTrue: [^writing uint8 put: size + 2r10000000].
-	size <= 65535 ifTrue: [
-		writing uint8 put: self class map16.
-		^writing uint16 put: size].
-	size <= 4294967295 ifTrue: [
-		writing uint8 put: self class map32.
-		^writing uint32 put: size].
-	self error: 'array too big to marshal with MessagePack protocol'
-!
-
-write: writing raw: bytearray
-	self write: writing raw_size: bytearray size.
-	writing uint8 write: bytearray
-!
-
-write: writing raw_size: size
-	size <= 2r00011111 ifTrue: [^writing uint8 put: size + 2r10100000].
-	size <= 65535 ifTrue: [
-		writing uint8 put: self class raw16.
-		^writing uint16 put: size].
-	size <= 4294967295 ifTrue: [
-		writing uint8 put: self class raw32.
-		^writing uint32 put: size].
-	self error: 'array too big to marshal with MessagePack protocol'
-! !
-
-!MessagePackMarshaler class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__MessagePackMarshaler.st 11 2011-08-22 16:06:51Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms' }"
-
-"{ NameSpace: Xtreams }"
-
-Encoder subclass:#ISO8859L1Encoder
-	instanceVariableNames:''
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Transforms'
-!
-
-ISO8859L1Encoder comment:'Implements ISO-8859-1 (Latin 1) encoding.
-
-'
-!
-
-
-!ISO8859L1Encoder class methodsFor:'class initialization'!
-
-initialize
-	| newSelf |
-	newSelf := self new.
-	#(#'latin-1' #latin1 #iso8859L1 #ISO8859L1) do: [:id | self encoders at: id put: newSelf]
-! !
-
-!ISO8859L1Encoder methodsFor:'accessing'!
-
-decodeFrom: aReadStream
-	^Character value: aReadStream get
-!
-
-encode: aCharacter on: aWriteStream
-	aWriteStream put: aCharacter asInteger
-! !
-
-!ISO8859L1Encoder class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__ISO8859L1Encoder.st 11 2011-08-22 16:06:51Z mk $'
-! !
-
-ISO8859L1Encoder initialize!
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms' }"
-
-"{ NameSpace: Xtreams }"
-
-ReadStream subclass:#InterpretedReadStream
-	instanceVariableNames:'elementSize cache cacheSize operation contentsSpecies'
-	classVariableNames:''
-	poolDictionaries:'XtreamsPool'
-	category:'Xtreams-Transforms'
-!
-
-InterpretedReadStream comment:'Interprets bytes from a binary source as values of preconfigured (primitive) CType, e.g. float, long etc.
-
-Instance Variables
-	elementSize	<Integer> byte size of elements of the pre-configured CType
-	cache	<InterpretedBytes> caches bulk read bytes before interpreting for speed; size = elementSize * cacheSize
-	cacheSize	<SmallInteger> how many elements (not bytes) do we want to cache
-	operation	<BlockClosure> CType translation primitive used to read from the buffer
-	contentsSpecies	<Class> collection type to use to hold collections of elements
-
-'
-!
-
-
-!InterpretedReadStream class methodsFor:'instance creation'!
-
-on: aReadStream bytesPerElement: anInteger contentsSpecies: aClass operation: aBlock cacheSize: aSize
-	^self new on: aReadStream bytesPerElement: anInteger contentsSpecies: aClass operation: aBlock cacheSize: aSize
-!
-
-on: aReadStream type: aSymbol cacheSize: anInteger
-	| interpretation |
-	interpretation := InterpretedBytes perform: aSymbol.
-	^self on: aReadStream bytesPerElement: (interpretation at: 1) contentsSpecies: (interpretation at: 2) operation: (interpretation at: 3) cacheSize: anInteger
-! !
-
-!InterpretedReadStream methodsFor:'accessing'!
-
-read: anInteger into: aSequenceableCollection at: startIndex
-	| count amount |
-	count := 0.
-	[[count = anInteger] whileFalse:
-		[amount := cacheSize min: (anInteger - count).
-		source read: amount * elementSize into: cache at: 1.
-		0 to: amount - 1 do: [:index | aSequenceableCollection at: startIndex + count + index put: (operation value: cache value: index * elementSize + 1)].
-		count := count + amount]]
-			on: Incomplete do: [:exception |
-				0 to: exception count // elementSize - 1 do: [:index | aSequenceableCollection at: startIndex + count + index put: (operation value: cache value: index * elementSize + 1)].
-				(Incomplete on: aSequenceableCollection count: count + (exception count / elementSize) at: startIndex) raise].
-	^anInteger
-! !
-
-!InterpretedReadStream methodsFor:'initialize-release'!
-
-close
-	super close.
-	cache recycle.
-	cache := nil
-!
-
-contentsSpecies
-	^contentsSpecies
-!
-
-on: aReadStream bytesPerElement: anInteger contentsSpecies: aClass operation: aBlock cacheSize: aSize
-	super on: aReadStream.
-	cacheSize := aSize.
-	elementSize := anInteger.
-	contentsSpecies := aClass.
-	operation := aBlock.
-	cache := InterpretedBytes newRecycled: ((elementSize * cacheSize) max: DefaultBufferSize)
-! !
-
-!InterpretedReadStream methodsFor:'seeking'!
-
-++ anInteger
-
-	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
-	[source ++ anInteger * elementSize]
-		on: Incomplete do: [:exception | (Incomplete count: exception count / elementSize) raise].
-	^anInteger
-!
-
--- anInteger
-	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
-	[source -- anInteger * elementSize]
-		on: Incomplete do: [:exception | (Incomplete count: exception count / elementSize) raise].
-	^anInteger
-!
-
-length
-	^source length / elementSize
-!
-
-position
-	^source position / elementSize
-!
-
-position: aPosition
-
-	^([ source position: aPosition * elementSize ] on: Incomplete do: [ :ex | ex count ]) // elementSize
-! !
-
-!InterpretedReadStream methodsFor:'testing'!
-
-isPositionable
-
-	^source isPositionable
-! !
-
-!InterpretedReadStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__InterpretedReadStream.st 11 2011-08-22 16:06:51Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:32 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteStream subclass:#TransformWriteStream
-	instanceVariableNames:'buffer block closeBlock process incompleteCount readReady
-		writeReady closeReady'
-	classVariableNames:''
-	poolDictionaries:'XtreamsPool'
-	category:'Xtreams-Transforms'
-!
-
-TransformWriteStream comment:'Transform write stream provides the most expressive form of transformation. The transformation is described by a binary block that is given two arguments, @input and @output. The @input is a virtual stream of elements written into the stream. The @output is the destination stream under the transform stream. The block can read arbitrary amount of elements from @input (including none) and write arbitrary amount of elements into @output (including none). The block will be invoked as many times as necessary to consume everything written into the stream, or until an Incomplete is raised by the destination.
-
-The closing behavior of the stream can be customized through the closeBlock. The default closeBlock simply propagates #close to the destination as with any other transform stream.
-
-In some cases it might be desirable to tweak the buffering strategy of the virtual input stream. In that case the buffer of the stream can be set manually to any kind of Buffer that matches the requirements of the transformation.
-
-From the point of view of the API, the TransformWriteStream is very much like the TransformReadStream. Notably any valid transform block should work the same way on either read or write stream without modification. However to preserve the invariants and expressivity of the transform block, the implementation is vastly different. Primarily it is necessary to convert all the writes into a virtual stream of written elements that can be passed into the transform block as the input stream. Consequently the transformation itself needs to be suspended if there weren''t enough elements written yet, to complete an iteration of the transform block. Therefore it needs to run in its own process. Any writes get redirected into an internal buffer and a background process repeatedly invokes the transform block to drain the contents of the buffer and produces output into the destination. Obviously buffer access has to be synchronized between any writing threads and the background process. The readReady/writeReady semaphores work in a lock-step mode, to interleave the background buffer draining with any writes.
-
-Instance Variables
-	buffer	<Buffer> holds the contents of the virtual input stream
-	block	<BlockClosure> binary transformation block that reads elements from input (first argument) and writes elements into output (second argument)
-	closeBlock	<BlockClosure> binary block invoked in response to the #close message, allows customizing the close behavior
-	process	<Process> background process that runs the transformation block
-	incompleteCount	<Integer> indicates that the transformation raised or received Incomplete and how many elements were actually consumed by the transformation block so that we can reraise Incomplete with correct count in the client thread
-	readReady	<Semaphore> signals to the background process that elements were written into the buffer
-	writeReady	<Semaphore> gates any writes into the stream, making sure background process is not draining the buffer at the same time
-	closeReady	<Semaphore> signals back to the user thread that the background process finished draining the buffer and the stream is properly closed, so the #close call can return
-
-'
-!
-
-
-!TransformWriteStream class methodsFor:'instance creation'!
-
-on: aWriteStream block: block
-	^self new on: aWriteStream block: block
-! !
-
-!TransformWriteStream methodsFor:'accessing'!
-
-block
-	^block
-!
-
-buffer
-	^buffer
-!
-
-closeBlock
-	^closeBlock
-!
-
-insert: anInteger from: aSequenceableCollection at: startIndex
-	| count amount |
-	anInteger isZero ifTrue: [^0].
-
-	count := 0.
-	[count < anInteger] whileTrue:
-		[amount := anInteger - count.
-		buffer hasFixedWriteSpace ifTrue: [amount := amount min: buffer cacheSize].
-		buffer insert: amount from: aSequenceableCollection at: startIndex + count.
-
-		"There is now data in the buffer for the drain to read"
-		readReady signal.
-		writeReady wait.
-		incompleteCount == nil ifFalse: [(Incomplete count: count + incompleteCount) raise].
-		count := count + amount ].
-	^anInteger
-!
-
-put: anObject
-	incompleteCount == nil ifFalse: [Incomplete zero raise].
-
-	buffer put: anObject.
-
-	"There is now data in the buffer for the drain to read"
-	readReady signal.
-	writeReady wait
-!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-	| count amount |
-	anInteger isZero ifTrue: [^0].
-
-	count := 0.
-	[count < anInteger] whileTrue:
-		[amount := anInteger - count.
-		buffer hasFixedWriteSpace ifTrue: [amount := amount min: buffer cacheSize].
-		buffer write: amount from: aSequenceableCollection at: startIndex + count.
-		
-		"There is now data in the buffer for the drain to read"
-		readReady signal.
-		writeReady wait.
-		incompleteCount == nil ifFalse: [(Incomplete count: count + incompleteCount) raise].
-		count := count + amount ].
-	^anInteger
-! !
-
-!TransformWriteStream methodsFor:'initialize-release'!
-
-buffer: aBuffer
-	buffer := aBuffer.
-	self drainBuffer
-!
-
-close
-	buffer ifNil: [^self].
-	"Write nothing to the buffer, but signal that there is data to read, causing the drain to throw Incomplete"
-	readReady signal.
-
-	"Wait for the drain to finish up completely. Rearm the closeReady incase somebody calls #close again."
-	closeReady wait.
-	closeReady signal.
-
-	closeBlock cull: destination cull: self.
-
-	buffer recycle.
-	buffer := nil
-!
-
-closeBlock: anObject
-	closeBlock := anObject
-!
-
-contentsSpecies
-	^buffer contentsSpecies
-!
-
-contentsSpecies: aClass
-
-	self buffer: (buffer class new: buffer cacheSize class: aClass)
-!
-
-on: aStreamable block: aBlock
-	super on: aStreamable.
-	block := aBlock.
-	incompleteCount := nil.
-	closeBlock := [ :destinationStream | destinationStream close].
-	buffer := ElasticBuffer new: DefaultBufferSize class: aStreamable contentsSpecies.
-	self drainBuffer
-! !
-
-!TransformWriteStream methodsFor:'printing'!
-
-streamingPrintOn: aStream
-	super streamingPrintOn: aStream.
-	aStream
-		space;
-		write: '#';
-		write: block method homeMethod selector;
-		write: ' buffered: ';
-		print: buffer writeSize.
-	buffer writeSize isZero ifTrue: [^self].
-	aStream
-		cr; tab;
-		print: buffer contentsPast
-! !
-
-!TransformWriteStream methodsFor:'private'!
-
-drainBuffer
-	| reading |
-	process ifNotNil: [process terminate].
-	incompleteCount == nil ifFalse: [^self].
-
-	closeReady := Semaphore new.
-	readReady := Semaphore new.
-	writeReady := Semaphore new.
-	reading := buffer reading transforming: [:in :out |
-		| count |
-		"Wait for the main process to have written to the buffer"
-		readReady wait.
-
-		"If nothing was written to the buffer, this indicates we're closing, we raise Incomplete"
-		(count := buffer readSize) isZero ifTrue: [Incomplete zero raise].
-		out write: count from: in.
-
-		"Allow the main process to write to the buffer"
-		writeReady signal].
-	process := [
-		[[block value: reading value: destination] repeat] on: Incomplete do: [].
-		incompleteCount := reading buffer readPosition.
-
-		"Signal that we're closed so that an attempt to write or close will immediately complete"
-		writeReady signal.
-		closeReady signal]
-			newProcess.
-	process resume
-! !
-
-!TransformWriteStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__TransformWriteStream.st 11 2011-08-22 16:06:51Z mk $'
 ! !
 !ReadStream methodsFor:'interpreting'!
 

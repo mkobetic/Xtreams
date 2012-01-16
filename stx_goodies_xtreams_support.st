@@ -1,134 +1,6 @@
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:21 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:26 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/support' }"
-
-"{ NameSpace: Xtreams }"
-
-Object subclass:#RecyclingCenter
-	instanceVariableNames:'recycled mutex'
-	classVariableNames:''
-	poolDictionaries:'XtreamsPool'
-	category:'Xtreams-Support'
-!
-
-RecyclingCenter class instanceVariableNames:'objectspace1 fixedspace1 objectspaceN fixedspaceN cacheSize'
-
-"
- No other class instance variables are inherited by this class.
-"
-!
-
-RecyclingCenter comment:'Instance Variables
-	recycled	<IdentityDictionary key: Class value: (Array of: SequenceableCollection)> caches fixed number of collections (3) per sequenceable collection class
-	mutex	<Semaphore>
-
-Class Instance Variables
-	objectspace1	<RecyclingCenter> old space collections size 1
-	fixedspace1	<RecyclingCenter> fixed space collections size 1
-	objectspaceN	<RecyclingCenter> old space collections of cacheSize
-	fixedspaceN	<RecyclingCenter> fixed space collection of cacheSize
-	cacheSize	<SmallInteger> default collection size
-
-'
-!
-
-
-!RecyclingCenter class methodsFor:'class initialization'!
-
-initialize
-        | cacheLimit |
-        cacheSize := DefaultBufferSize.
-        cacheLimit := 3.
-        objectspace1 := self new initialize: cacheLimit.
-        fixedspace1 := self new initialize: cacheLimit.
-        objectspaceN := self new initialize: cacheLimit.
-        fixedspaceN := self new initialize: cacheLimit
-! !
-
-!RecyclingCenter class methodsFor:'recycling'!
-
-new: anInteger class: aClass
-	anInteger == 1 ifTrue: [^objectspace1 new: anInteger class: aClass].
-	anInteger == cacheSize ifTrue: [^objectspaceN new: anInteger class: aClass].
-	^aClass withSize: anInteger
-!
-
-newInFixedSpace: anInteger class: aClass
-	anInteger == 1 ifTrue: [^fixedspace1 newInFixedSpace: anInteger class: aClass].
-	anInteger == cacheSize ifTrue: [^fixedspaceN newInFixedSpace: anInteger class: aClass].
-	^aClass newInFixedSpace: anInteger
-!
-
-recycle: aCollection
-	aCollection == nil ifTrue: [^nil].
-	aCollection isFixedArgument
-		ifTrue:
-			[aCollection size == 1 ifTrue: [fixedspace1 recycle: aCollection].
-			aCollection size == cacheSize ifTrue: [fixedspaceN recycle: aCollection]]
-		ifFalse:
-			[aCollection size == 1 ifTrue: [objectspace1 recycle: aCollection].
-			aCollection size == cacheSize ifTrue: [objectspaceN recycle: aCollection]]
-! !
-
-!RecyclingCenter methodsFor:'initialize-release'!
-
-initialize: aCacheLimit
-	mutex := Semaphore forMutualExclusion.
-	recycled := IdentityDictionary new.
-	SequenceableCollection allSubclassesDo: [:aClass | recycled at: aClass put: (Array new: aCacheLimit)].
-	recycled at: InterpretedBytes put: (Array new: aCacheLimit)
-! !
-
-!RecyclingCenter methodsFor:'recycling'!
-
-existing: aClass
-        | queue collection |
-        queue := recycled at: aClass.
-        mutex critical: [
-        1 to: queue size do: [:index |
-                collection := queue at: index.
-                collection == nil ifFalse:
-                        [queue at: index put: nil.
-                        mutex signal.
-                        ^collection]]].
-        ^nil
-!
-
-new: anInteger class: aClass
-	| collection |
-	(collection := self existing: aClass) == nil ifTrue: [collection := aClass withSize: anInteger].
-	^collection
-!
-
-newInFixedSpace: anInteger class: aClass
-	| collection |
-	(collection := self existing: aClass) == nil ifTrue: [collection := aClass newInFixedSpace: anInteger].
-	^collection
-!
-
-recycle: aCollection
-        | queue |
-        queue := recycled at: aCollection class.
-        mutex critical: [
-        1 to: queue size do: [:index |
-                (queue at: index) == nil ifTrue:
-                        [queue at: index put: aCollection.
-                        mutex signal.
-                        ^self]]]
-! !
-
-!RecyclingCenter class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__RecyclingCenter.st 7 2011-08-22 15:51:21Z mk $'
-! !
-
-RecyclingCenter initialize!
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:21 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/support' }"
-
-"{ NameSpace: Xtreams }"
 
 LibraryDefinition subclass:#stx_goodies_xtreams_support
 	instanceVariableNames:''
@@ -254,7 +126,7 @@ svnRevisionNr
 version_SVN
     ^ '$Id: stx_goodies_xtreams_support.st 16 2011-11-21 06:02:29Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:21 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:26 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/support' }"
 
@@ -281,11 +153,11 @@ Shared Variables
 
 for: anEncoding
 
-	anEncoding isSymbol ifFalse: [ ^anEncoding streamingAsEncoder ].
-	^Encoders at: anEncoding ifAbsent: [
-		DialectEncoder
-			ifNil: [ self error: 'Unknown encoding!!' ]
-			ifNotNil: [ :factory | factory for: anEncoding ] ]
+        anEncoding isSymbol ifFalse: [ ^anEncoding streamingAsEncoder ].
+        ^Encoders at: anEncoding ifAbsent: [
+                DialectEncoder
+                        ifNil: [ self error: 'Unknown encoding!!' ]
+                        ifNotNil: [ DialectEncoder for: anEncoding ] ]
 !
 
 streamingAsEncoder
@@ -328,7 +200,397 @@ streamingAsEncoder
 version_SVN
     ^ '$Id: Xtreams__Encoder.st 7 2011-08-22 15:51:21Z mk $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:21 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:26 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/support' }"
+
+"{ NameSpace: Xtreams }"
+
+Object subclass:#RecyclingCenter
+	instanceVariableNames:'recycled mutex'
+	classVariableNames:''
+	poolDictionaries:'XtreamsPool'
+	category:'Xtreams-Support'
+!
+
+RecyclingCenter class instanceVariableNames:'objectspace1 fixedspace1 objectspaceN fixedspaceN cacheSize'
+
+"
+ No other class instance variables are inherited by this class.
+"
+!
+
+RecyclingCenter comment:'Instance Variables
+	recycled	<IdentityDictionary key: Class value: (Array of: SequenceableCollection)> caches fixed number of collections (3) per sequenceable collection class
+	mutex	<Semaphore>
+
+Class Instance Variables
+	objectspace1	<RecyclingCenter> old space collections size 1
+	fixedspace1	<RecyclingCenter> fixed space collections size 1
+	objectspaceN	<RecyclingCenter> old space collections of cacheSize
+	fixedspaceN	<RecyclingCenter> fixed space collection of cacheSize
+	cacheSize	<SmallInteger> default collection size
+
+'
+!
+
+
+!RecyclingCenter class methodsFor:'class initialization'!
+
+initialize
+        | cacheLimit |
+        cacheSize := DefaultBufferSize.
+        cacheLimit := 3.
+        objectspace1 := self new initialize: cacheLimit.
+        fixedspace1 := self new initialize: cacheLimit.
+        objectspaceN := self new initialize: cacheLimit.
+        fixedspaceN := self new initialize: cacheLimit
+! !
+
+!RecyclingCenter class methodsFor:'recycling'!
+
+new: anInteger class: aClass
+	anInteger == 1 ifTrue: [^objectspace1 new: anInteger class: aClass].
+	anInteger == cacheSize ifTrue: [^objectspaceN new: anInteger class: aClass].
+	^aClass withSize: anInteger
+!
+
+newInFixedSpace: anInteger class: aClass
+	anInteger == 1 ifTrue: [^fixedspace1 newInFixedSpace: anInteger class: aClass].
+	anInteger == cacheSize ifTrue: [^fixedspaceN newInFixedSpace: anInteger class: aClass].
+	^aClass newInFixedSpace: anInteger
+!
+
+recycle: aCollection
+	aCollection == nil ifTrue: [^nil].
+	aCollection isFixedArgument
+		ifTrue:
+			[aCollection size == 1 ifTrue: [fixedspace1 recycle: aCollection].
+			aCollection size == cacheSize ifTrue: [fixedspaceN recycle: aCollection]]
+		ifFalse:
+			[aCollection size == 1 ifTrue: [objectspace1 recycle: aCollection].
+			aCollection size == cacheSize ifTrue: [objectspaceN recycle: aCollection]]
+! !
+
+!RecyclingCenter methodsFor:'initialize-release'!
+
+initialize: aCacheLimit
+	mutex := Semaphore forMutualExclusion.
+	recycled := IdentityDictionary new.
+	SequenceableCollection allSubclassesDo: [:aClass | recycled at: aClass put: (Array new: aCacheLimit)].
+	recycled at: InterpretedBytes put: (Array new: aCacheLimit)
+! !
+
+!RecyclingCenter methodsFor:'recycling'!
+
+existing: aClass
+        | queue collection |
+        queue := recycled at: aClass.
+        mutex critical: [
+        1 to: queue size do: [:index |
+                collection := queue at: index.
+                collection == nil ifFalse:
+                        [queue at: index put: nil.
+                        mutex signal.
+                        ^collection]]].
+        ^nil
+!
+
+new: anInteger class: aClass
+	| collection |
+	(collection := self existing: aClass) == nil ifTrue: [collection := aClass withSize: anInteger].
+	^collection
+!
+
+newInFixedSpace: anInteger class: aClass
+	| collection |
+	(collection := self existing: aClass) == nil ifTrue: [collection := aClass newInFixedSpace: anInteger].
+	^collection
+!
+
+recycle: aCollection
+        | queue |
+        queue := recycled at: aCollection class.
+        mutex critical: [
+        1 to: queue size do: [:index |
+                (queue at: index) == nil ifTrue:
+                        [queue at: index put: aCollection.
+                        mutex signal.
+                        ^self]]]
+! !
+
+!RecyclingCenter class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__RecyclingCenter.st 7 2011-08-22 15:51:21Z mk $'
+! !
+
+RecyclingCenter initialize!
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:26 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/support' }"
+
+"{ NameSpace: Xtreams }"
+
+ByteArray variableByteSubclass:#InterpretedBytes
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Support'
+!
+
+!InterpretedBytes class methodsFor:'instance creation'!
+
+withSize: anInteger
+	^self new: anInteger
+! !
+
+!InterpretedBytes class methodsFor:'type descriptions'!
+
+char
+
+	^(Array with: 1 with: ByteArray with: [:b :i | b byteAt: i] with: [:b :i :o | b byteAt: i put: o])
+!
+
+double
+
+	^(Array with: 8 with: "DoubleArray" Array with: [:b :i | b doubleAt: i] with: [:b :i :o | b doubleAt: i put: o])
+!
+
+double_be
+
+	self isBigEndian ifTrue: [ ^self double ].
+	^(Array with: 8 with: "DoubleArray" Array with: [:b :i | b doubleAt: i bigEndian: true] with: [:b :i :o | b doubleAt: i put: o bigEndian: true])
+!
+
+double_le
+
+	self isBigEndian ifFalse: [ ^self double ].
+	^(Array with: 8 with: "DoubleArray" Array with: [:b :i | b doubleAt: i bigEndian: false] with: [:b :i :o | b doubleAt: i put: o bigEndian: false])
+!
+
+float
+
+	^(Array with: 4 with: "FloatArray" Array with: [:b :i | b floatAt: i] with: [:b :i :o | b floatAt: i put: o])
+!
+
+float_be
+
+	self isBigEndian ifTrue: [ ^self float ].
+	^(Array with: 4 with: "FloatArray" Array with: [:b :i | b floatAt: i bigEndian: true] with: [:b :i :o | b floatAt: i put: o bigEndian: true])
+!
+
+float_le
+
+	self isBigEndian ifFalse: [ ^self float ].
+	^(Array with: 4 with: "FloatArray" Array with: [:b :i | b floatAt: i bigEndian: false] with: [:b :i :o | b floatAt: i put: o bigEndian: false])
+!
+
+long
+
+	^(Array with: 4 with: DwordArray with: [:b :i | b unsignedLongAt: i] with: [:b :i :o | b unsignedLongAt: i put: o])
+!
+
+long_be
+
+	self isBigEndian ifTrue: [ ^self long ].
+	^(Array with: 4 with: DwordArray with: [:b :i | b unsignedLongAt: i bigEndian: true ] with: [:b :i :o | b unsignedLongAt: i put: o bigEndian: true])
+!
+
+long_le
+
+	self isBigEndian ifFalse: [ ^self long ].
+	^(Array with: 4 with: DwordArray with: [:b :i | b unsignedLongAt: i bigEndian: false ] with: [:b :i :o | b unsignedLongAt: i put: o bigEndian: false])
+!
+
+longlong
+
+	^(Array with: 8 with: Array with: [:b :i | b unsignedLongLongAt: i] with: [:b :i :o | b unsignedLongLongAt: i put: o])
+!
+
+longlong_be
+
+	self isBigEndian ifTrue: [ ^self longlong ].
+	^(Array with: 8 with: Array with: [:b :i | b unsignedLongLongAt: i bigEndian: true] with: [:b :i :o | b unsignedLongLongAt: i put: o bigEndian: true])
+!
+
+longlong_le
+
+	self isBigEndian ifFalse: [ ^self longlong ].
+	^(Array with: 8 with: Array with: [:b :i | b unsignedLongLongAt: i bigEndian: false] with: [:b :i :o | b unsignedLongLongAt: i put: o bigEndian: false])
+!
+
+short
+
+	^Array with: 2 with: WordArray with: [:b :i | b unsignedShortAt: i] with: [:b :i :o | b unsignedShortAt: i put: o]
+!
+
+short_be
+
+	self isBigEndian ifTrue: [ ^self short ].
+	^Array with: 2 with: WordArray with: [:b :i | b unsignedShortAt: i bigEndian: true ] with: [:b :i :o | b unsignedShortAt: i put: o bigEndian: true ]
+!
+
+short_le
+
+	self isBigEndian ifFalse: [ ^self short ].
+	^Array with: 2 with: WordArray with: [:b :i | b unsignedShortAt: i bigEndian: false ] with: [:b :i :o | b unsignedShortAt: i put: o bigEndian: false ]
+!
+
+signedChar
+
+	^(Array with: 1 with: Array with: [:b :i | b signedByteAt: i] with: [:b :i :o | b signedByteAt: i put: o])
+!
+
+signedLong
+
+	^(Array with: 4 with: Array with: [:b :i | b longAt: i] with: [:b :i :o | b longAt: i put: o])
+!
+
+signedLong_be
+
+	self isBigEndian ifTrue: [ ^self signedLong ].
+	^(Array with: 4 with: Array with: [:b :i | b longAt: i bigEndian: true ] with: [:b :i :o | b longAt: i put: o bigEndian: true])
+!
+
+signedLong_le
+
+	self isBigEndian ifFalse: [ ^self signedLong ].
+	^(Array with: 4 with: Array with: [:b :i | b longAt: i bigEndian: false ] with: [:b :i :o | b longAt: i put: o bigEndian: false])
+!
+
+signedLonglong
+
+	^(Array with: 8 with: Array with: [:b :i | b longLongAt: i] with: [:b :i :o | b longLongAt: i put: o])
+!
+
+signedLonglong_be
+
+	self isBigEndian ifTrue: [ ^self signedLonglong ].
+	^(Array with: 8 with: Array with: [:b :i | b longLongAt: i bigEndian: true] with: [:b :i :o | b longLongAt: i put: o bigEndian: true])
+!
+
+signedLonglong_le
+
+	self isBigEndian ifFalse: [ ^self signedLonglong ].
+	^(Array with: 8 with: Array with: [:b :i | b longLongAt: i bigEndian: false] with: [:b :i :o | b longLongAt: i put: o bigEndian: false])
+!
+
+signedShort
+
+	^(Array with: 2 with: Array with: [:b :i | b shortAt: i] with: [:b :i :o | b shortAt: i put: o])
+!
+
+signedShort_be
+
+	self isBigEndian ifTrue: [ ^self signedShort ].
+	^Array with: 2 with: Array with: [:b :i | b shortAt: i bigEndian: true ] with: [:b :i :o | b shortAt: i put: o bigEndian: true ]
+!
+
+signedShort_le
+
+	self isBigEndian ifFalse: [ ^self signedShort ].
+	^Array with: 2 with: Array with: [:b :i | b shortAt: i bigEndian: false ] with: [:b :i :o | b shortAt: i put: o bigEndian: false ]
+!
+
+tlsUint24
+
+	^Array
+		with: 3
+		with: Array
+		with: [ :b :i | ((((b byteAt: i) bitShift: 8) + (b byteAt: i + 1)) bitShift: 8) + (b byteAt: i + 2) ]
+		with: [ :b :i :o |
+			b       byteAt: i put: (o bitShift: -16);
+				byteAt: i + 1 put: ((o bitShift: -8) bitAnd: 255);
+				byteAt: i + 2 put: (o bitAnd: 255) ]
+!
+
+unsignedChar
+
+	^(Array with: 1 with: ByteArray with: [:b :i | b byteAt: i] with: [:b :i :o | b byteAt: i put: o])
+!
+
+unsignedLong
+
+	^(Array with: 4 with: DwordArray with: [:b :i | b unsignedLongAt: i] with: [:b :i :o | b unsignedLongAt: i put: o])
+!
+
+unsignedLong_be
+
+	self isBigEndian ifTrue: [ ^self unsignedLong ].
+	^(Array with: 4 with: DwordArray with: [:b :i | b unsignedLongAt: i bigEndian: true ] with: [:b :i :o | b unsignedLongAt: i put: o bigEndian: true])
+!
+
+unsignedLong_le
+
+	self isBigEndian ifFalse: [ ^self unsignedLong ].
+	^(Array with: 4 with: DwordArray with: [:b :i | b unsignedLongAt: i bigEndian: false ] with: [:b :i :o | b unsignedLongAt: i put: o bigEndian: false])
+!
+
+unsignedLonglong
+
+	^(Array with: 8 with: Array with: [:b :i | b unsignedLongLongAt: i] with: [:b :i :o | b unsignedLongLongAt: i put: o])
+!
+
+unsignedLonglong_be
+
+	self isBigEndian ifTrue: [ ^self unsignedLonglong ].
+	^(Array with: 8 with: Array with: [:b :i | b unsignedLongLongAt: i bigEndian: true] with: [:b :i :o | b unsignedLongLongAt: i put: o bigEndian: true])
+!
+
+unsignedLonglong_le
+
+	self isBigEndian ifFalse: [ ^self unsignedLonglong ].
+	^(Array with: 8 with: Array with: [:b :i | b unsignedLongLongAt: i bigEndian: false] with: [:b :i :o | b unsignedLongLongAt: i put: o bigEndian: false])
+!
+
+unsignedShort
+
+	^Array with: 2 with: WordArray with: [:b :i | b unsignedShortAt: i] with: [:b :i :o | b unsignedShortAt: i put: o]
+!
+
+unsignedShort_be
+
+	self isBigEndian ifTrue: [ ^self unsignedShort ].
+	^Array with: 2 with: WordArray with: [:b :i | b unsignedShortAt: i bigEndian: true ] with: [:b :i :o | b unsignedShortAt: i put: o bigEndian: true ]
+!
+
+unsignedShort_le
+
+	self isBigEndian ifFalse: [ ^self unsignedShort ].
+	^Array with: 2 with: WordArray with: [:b :i | b unsignedShortAt: i bigEndian: false ] with: [:b :i :o | b unsignedShortAt: i put: o bigEndian: false ]
+! !
+
+!InterpretedBytes class methodsFor:'xtreams'!
+
+newInFixedSpaceRecycled: size
+
+	^RecyclingCenter newInFixedSpace: size class: self
+!
+
+newInFixedSpaceRecycledDefaultSize
+
+	^self newInFixedSpaceRecycled: DefaultBufferSize
+!
+
+newRecycled: size
+
+	^RecyclingCenter new: size class: self
+!
+
+newRecycledDefaultSize
+
+	^self newRecycled: DefaultBufferSize
+! !
+
+!InterpretedBytes methodsFor:'accessing'!
+
+recycle
+
+        RecyclingCenter recycle: self
+! !
+
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:26 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/support' }"
 
@@ -365,6 +627,13 @@ cull: anObject
     ^anObject perform: self
 ! !
 
+!OrderedCollection methodsFor:'xtreams'!
+
+copyGrownToAtLeast: newSize
+
+    self grow: newSize
+! !
+
 !Block methodsFor:'xtreams'!
 
 cull: value
@@ -377,6 +646,13 @@ cull: value
 cull: value1 cull: value2
 
     ^self numArgs < 2 ifTrue: [ self cull: value1 ] ifFalse: [ self value: value1 value: value2 ]
+! !
+
+!Behavior methodsFor:'xtreams'!
+
+absoluteName
+
+        ^self name
 ! !
 
 !SequenceableCollection methodsFor:'xtreams'!
@@ -397,13 +673,6 @@ recycle
     Xtreams::RecyclingCenter recycle: self
 ! !
 
-
-!Object methodsFor:'private'!
-
-isFixedArgument
-
-    ^false
-! !
 
 !UnixOperatingSystem::FileDescriptorHandle methodsFor:'xtreams'!
 
@@ -434,5 +703,12 @@ fileSize
     h := OperatingSystem openFileForRead: '/etc/hosts'.
     [ h fileSize ] ensure: [ h close ]
 "
+! !
+
+!Object methodsFor:'private'!
+
+isFixedArgument
+
+    ^false
 ! !
 

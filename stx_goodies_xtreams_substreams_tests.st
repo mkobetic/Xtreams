@@ -1,4 +1,4 @@
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:17 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:19 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/substreams/tests' }"
 
@@ -146,7 +146,7 @@ svnRevisionNr
 version_SVN
     ^ '$Id: stx_goodies_xtreams_substreams_tests.st 15 2011-11-21 06:02:13Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:17 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:19 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/substreams/tests' }"
 

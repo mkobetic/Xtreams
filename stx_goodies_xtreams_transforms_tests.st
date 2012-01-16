@@ -1,126 +1,360 @@
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:35 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:48 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/transforms/tests' }"
 
 "{ NameSpace: Xtreams }"
 
-TestCase subclass:#InterpretingStreamTest
-	instanceVariableNames:'stream'
+Object subclass:#MessagePackMarshalerTest
+	instanceVariableNames:'stream marshaling log bytes marshaler'
 	classVariableNames:''
 	poolDictionaries:''
 	category:'Xtreams-Transforms-Tests'
 !
 
 
-!InterpretingStreamTest methodsFor:'tests'!
+!MessagePackMarshalerTest methodsFor:'initialize-release'!
 
-testDouble
-	| interpreting |
+setUp
+	marshaler := MessagePackMarshaler new.
 	stream := ByteArray new writing.
-	interpreting := stream interpreting: #double.
-	interpreting put: (SmallInteger minVal - 1.5).
-	interpreting put: (SmallInteger maxVal + 1.5).
-	interpreting := stream contents reading interpreting: #double.
-	self assert: interpreting get = (SmallInteger minVal - 1.5).
-	self assert: interpreting get = (SmallInteger maxVal + 1.5)
-!
-
-testFloat
-	| interpreting |
-	stream := ByteArray new writing.
-	interpreting := stream interpreting: #float.
-	-50.0 to: 50.0 by: 0.5 do: [:each | interpreting put: each].
-	self assert: (stream contents reading interpreting: #float) rest = (-50 to: 50 by: 0.5)
-!
-
-testSignedChar
-	| interpreting |
-	stream := ByteArray new writing.
-	interpreting := stream interpreting: #signedChar.
-	-120 to: 120 do: [:each | interpreting put: each].
-	interpreting := stream contents reading interpreting: #signedChar.
-	self assert: interpreting rest = (-120 to: 120)
-!
-
-testSignedLong
-	| interpreting negative positive |
-	stream := ByteArray new writing.
-	negative := -268435456. "SmallInteger minVal // 2 in 32-bits"
-	positive :=  268435455. "SmallInteger maxVal // 2 in 32-bits"
-	interpreting := stream interpreting: #signedLong.
-	interpreting put: negative.
-	interpreting put: positive.
-	interpreting := stream contents reading interpreting: #signedLong.
-	self assert: interpreting get = negative.
-	self assert: interpreting get = positive
-!
-
-testSignedLonglong
-	| interpreting |
-	stream := ByteArray new writing.
-	interpreting := stream interpreting: #signedLonglong.
-	interpreting put: (SmallInteger minVal // 2) - 1.
-	interpreting put: (SmallInteger maxVal // 2) + 1.
-	interpreting := stream contents reading interpreting: #signedLonglong.
-	self assert: interpreting get = ((SmallInteger minVal // 2) - 1).
-	self assert: interpreting get = ((SmallInteger maxVal // 2) + 1)
-!
-
-testSignedShort
-	| interpreting |
-	stream := ByteArray new writing.
-	interpreting := stream interpreting: #signedShort.
-	interpreting put: -31000.
-	interpreting put: 31000.
-	interpreting := stream contents reading interpreting: #signedShort.
-	self assert: interpreting get = -31000.
-	self assert: interpreting get = 31000
-!
-
-testUnsignedChar
-	| interpreting |
-	stream := ByteArray new writing.
-	interpreting := stream interpreting: #char.
-	0 to: 255 do: [:each | interpreting put: each].
-	self assert: (stream contents reading interpreting: #char) rest asArray = (0 to: 255)
-!
-
-testUnsignedLong
-	| interpreting |
-	stream := ByteArray new writing.
-	interpreting := stream interpreting: #long.
-	65000 to: 70000 do: [:each | interpreting put: each].
-	self assert: (stream contents reading interpreting: #long) rest asArray = (65000 to: 70000)
-!
-
-testUnsignedLongLong
-	| interpreting |
-	stream := ByteArray new writing.
-	interpreting := stream interpreting: #longlong.
-	(SmallInteger maxVal - 100) to: (SmallInteger maxVal + 100) do: [:each | interpreting put: each].
-	self assert: (stream contents reading interpreting: #longlong) rest = ((SmallInteger maxVal - 100) to: (SmallInteger maxVal + 100))
-!
-
-testUnsignedShort
-	| interpreting |
-	stream := ByteArray new writing.
-	interpreting := stream interpreting: #short.
-	250 to: 270 do: [:each | interpreting put: each].
-	self assert: (stream contents reading interpreting: #short) rest asArray = (250 to: 270)
+	marshaling := stream marshaling: marshaler.
+	bytes := nil.
+	log := nil
 ! !
 
-!InterpretingStreamTest class methodsFor:'documentation'!
+!MessagePackMarshalerTest methodsFor:'private'!
+
+analyse
+	"Run an analysis on the stream contents to ensure it has integrity"
+	bytes := stream conclusion.
+	log := String new writing.
+	(ObjectAnalyseStream on: bytes reading marshaler: marshaler class new) do: [:each | log write: each].
+	log := log conclusion.
+	marshaling := bytes reading marshaling: marshaler class new
+! !
+
+!MessagePackMarshalerTest methodsFor:'tests'!
+
+testArray
+	| fixed small big |
+	big := Array new: 65537 withAll: 1.
+	small := (1 to: 255) asArray.
+	fixed := Array with: small with: big.
+	marshaling put: fixed.
+	marshaling put: small.
+	marshaling put: big.
+	self analyse.
+	self assert: marshaling get = fixed.
+	self assert: marshaling get = small.
+	self assert: marshaling get = big
+!
+
+testDictionary
+	| fixed small big |
+	big := Dictionary new: 65537.
+	1 to: 65537 do: [:i | big at: i put: 1].
+	small := Dictionary new: 255.
+	1 to: 255 do: [:i | small at: i put: i].
+	fixed := Dictionary new
+		at: 1 put: big;
+		at: 2 put: small;
+		yourself.
+	marshaling put: fixed.
+	marshaling put: small.
+	marshaling put: big.
+	self analyse.
+	self assert: marshaling get = fixed.
+	self assert: marshaling get = small.
+	self assert: marshaling get = big
+!
+
+testFloatDouble
+	marshaling write: #(3.14 3.14159 3.141592653589793).
+	self analyse.
+	self assert: marshaling rest = #(3.14 3.14159 3.141592653589793)
+!
+
+testIntegers
+	| inrange outofrange |
+	outofrange := #(18446744073709551616 -9223372036854775809).
+	inrange := #(
+		0 1 126 127 128 255 256
+		32767 32768 32769
+		65535 65536 65537
+		4294967294 4294967295 4294967296
+		18446744073709551614 18446744073709551615
+		-1 -2 -32 -33
+		-127 -128 -255 -256
+		-32767 -32768 -32769
+		-65535 -65536 -65537
+		-2147483647 -2147483648 -2147483649
+		-9223372036854775807 -9223372036854775808).
+
+	marshaling write: inrange.
+	outofrange do: [:each | self should: [marshaling put: each] raise: Error].
+	self analyse.
+	self assert: marshaling rest = inrange
+!
+
+testRaw
+	| big |
+	big := ByteArray new: 100000 withAll: 1.
+	marshaling put: #[10 255 0].
+	marshaling put: (ByteArray withAll: (1 to: 255)).
+	marshaling put: big.
+	self analyse.
+	self assert: marshaling get = #[10 255 0].
+	self assert: marshaling get = (ByteArray withAll: (1 to: 255)).
+	self assert: marshaling get = big
+!
+
+testSingletons
+	marshaling put: nil.
+	marshaling put: true.
+	marshaling put: false.
+	self analyse.
+	self assert: marshaling get = nil.
+	self assert: marshaling get = true.
+	self assert: marshaling get = false
+! !
+
+!MessagePackMarshalerTest class methodsFor:'documentation'!
 
 version_SVN
     ^ '$Id$'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:35 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:48 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms/tests' }"
+
+LibraryDefinition subclass:#stx_goodies_xtreams_transforms_tests
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'* Projects & Packages *'
+!
+
+!stx_goodies_xtreams_transforms_tests class methodsFor:'documentation'!
+
+extensionsVersion_SVN
+    ^ '$Id: extensions.st 20 2011-11-21 06:04:22Z mkobetic $'
+! !
+
+!stx_goodies_xtreams_transforms_tests class methodsFor:'description'!
+
+excludedFromPreRequisites
+    "list all packages which should be ignored in the automatic
+     preRequisites scan. See #preRequisites for more."
+
+    ^ #(
+    )
+!
+
+preRequisites
+    "list all required packages.
+     This list can be maintained manually or (better) generated and
+     updated by scanning the superclass hierarchies and looking for
+     global variable accesses. (the browser has a menu function for that)
+     Howevery, often too much is found, and you may want to explicitely
+     exclude individual packages in the #excludedFromPrerequisites method."
+
+    ^ #(
+        #'stx:goodies/sunit'    "TestAsserter - superclass of Xtreams::MessagePackMarshalerTest "
+        #'stx:goodies/xtreams/core'    "Xtreams::Incomplete - referenced by Xtreams::ReadingWritingTest>>testReadTransformingPastEnd "
+        #'stx:goodies/xtreams/core/tests'    "Xtreams::ReadingWritingTest - superclass of extended Xtreams::CollectionReadingWritingTest "
+        #'stx:goodies/xtreams/terminals/tests'    "Xtreams::CollectionReadingWritingTest - extended "
+        #'stx:goodies/xtreams/transforms'    "Xtreams::ObjectMarshaler - referenced by Xtreams::ObjectMarshalerTest>>setUp "
+        #'stx:libbasic'    "Object - superclass of Xtreams::stx_goodies_xtreams_transforms_tests "
+        #'stx:libbasic2'    "Random - referenced by Xtreams::ReadingWritingTest>>testInterpretingPoints "
+        #'stx:libcompat'    "IOAccessor - referenced by Xtreams::ReadingWritingTest>>testWriteEncodingCRLF "
+    )
+! !
+
+!stx_goodies_xtreams_transforms_tests class methodsFor:'description - contents'!
+
+classNamesAndAttributes
+    "lists the classes which are to be included in the project.
+     Each entry in the list may be: a single class-name (symbol),
+     or an array-literal consisting of class name and attributes.
+     Attributes are: #autoload or #<os> where os is one of win32, unix,..."
+
+    ^ #(
+        "<className> or (<className> attributes...) in load order"
+        (#'Xtreams::DuplicateTest' autoload)
+        (#'Xtreams::InterpretingStreamTest' autoload)
+        (#'Xtreams::MessagePackMarshalerTest' autoload)
+        (#'Xtreams::ObjectMarshalerTest' autoload)
+        #'Xtreams::stx_goodies_xtreams_transforms_tests'
+    )
+!
+
+extensionMethodNames
+    "lists the extension methods which are to be included in the project.
+     Entries are 2-element array literals, consisting of class-name and selector."
+
+    ^ #(
+        #'Xtreams::CollectionReadingWritingTest' testReadRejecting
+        #'Xtreams::CollectionReadingWritingTest' testReadSelecting
+        #'Xtreams::CollectionReadingWritingTest' testWriteRejecting
+        #'Xtreams::CollectionReadingWritingTest' testWriteSelecting
+        #'Xtreams::CollectionReadingWritingTest' testWriteTransformHexToByte
+        #'Xtreams::FiniteReadingWritingTests' testInterpretingDoubles
+        #'Xtreams::FiniteReadingWritingTests' testWriteTransformingOverLimitingPastEnd
+        #'Xtreams::FiniteReadingWritingTests' testWriteTransformingPastEnd
+        #'Xtreams::ReadingWritingTest' testDoing
+        #'Xtreams::ReadingWritingTest' testInterpretingPoints
+        #'Xtreams::ReadingWritingTest' testMarshaling
+        #'Xtreams::ReadingWritingTest' testReadCollecting
+        #'Xtreams::ReadingWritingTest' testReadCollectingContentsSpeciesChanged
+        #'Xtreams::ReadingWritingTest' testReadDecodingBase64
+        #'Xtreams::ReadingWritingTest' testReadDecodingCRLF
+        #'Xtreams::ReadingWritingTest' testReadDecodingTransparent
+        #'Xtreams::ReadingWritingTest' testReadDecodingUTF16
+        #'Xtreams::ReadingWritingTest' testReadDecodingUTF8
+        #'Xtreams::ReadingWritingTest' testReadDuplicating
+        #'Xtreams::ReadingWritingTest' testReadInjecting
+        #'Xtreams::ReadingWritingTest' testReadRejecting
+        #'Xtreams::ReadingWritingTest' testReadSelecting
+        #'Xtreams::ReadingWritingTest' testReadTransforming1into2
+        #'Xtreams::ReadingWritingTest' testReadTransforming2into1
+        #'Xtreams::ReadingWritingTest' testReadTransformingPastEnd
+        #'Xtreams::ReadingWritingTest' testReadUnsignedShortEndianness
+        #'Xtreams::ReadingWritingTest' testWriteCollecting
+        #'Xtreams::ReadingWritingTest' testWriteCollectingIncompatibleContentSpecies
+        #'Xtreams::ReadingWritingTest' testWriteCollectingMultipleBufferSize
+        #'Xtreams::ReadingWritingTest' testWriteDuplicating
+        #'Xtreams::ReadingWritingTest' testWriteEncodingBase64
+        #'Xtreams::ReadingWritingTest' testWriteEncodingCRLF
+        #'Xtreams::ReadingWritingTest' testWriteEncodingTransparent
+        #'Xtreams::ReadingWritingTest' testWriteEncodingUTF16
+        #'Xtreams::ReadingWritingTest' testWriteEncodingUTF8
+        #'Xtreams::ReadingWritingTest' testWriteInjecting
+        #'Xtreams::ReadingWritingTest' testWriteRejecting
+        #'Xtreams::ReadingWritingTest' testWriteSelecting
+        #'Xtreams::ReadingWritingTest' testWriteTransformHexToByte
+        #'Xtreams::ReadingWritingTest' testWriteTransforming1into2
+        #'Xtreams::ReadingWritingTest' testWriteTransforming2into1
+        #'Xtreams::ReadingWritingTest' testWriteUnsignedShortEndianness
+    )
+! !
+
+!stx_goodies_xtreams_transforms_tests class methodsFor:'description - project information'!
+
+applicationIconFileName
+    "Return the name (without suffix) of an icon-file (the app's icon); will be included in the rc-resource file"
+
+    ^ nil
+    "/ ^ self applicationName
+!
+
+companyName
+    "Return a companyname which will appear in <lib>.rc"
+
+    ^ 'eXept Software AG'
+!
+
+description
+    "Return a description string which will appear in vc.def / bc.def"
+
+    ^ 'Smalltalk/X Class library'
+!
+
+legalCopyright
+    "Return a copyright string which will appear in <lib>.rc"
+
+    ^ 'Copyright Claus Gittinger 1988-2011\nCopyright eXept Software AG 1998-2011'
+!
+
+productName
+    "Return a product name which will appear in <lib>.rc"
+
+    ^ 'Smalltalk/X'
+! !
+
+!stx_goodies_xtreams_transforms_tests class methodsFor:'description - svn'!
+
+svnRepositoryUrlString
+    "Return a SVN repository URL of myself.
+     (Generated since 2011-04-08)
+    "        
+
+    ^ '$URL: https://swing.fit.cvut.cz/svn/stx/goodies/xtreams/trunk/transforms/tests/stx_goodies_xtreams_transforms_tests.st $'
+!
+
+svnRevisionNr
+    "Return a SVN revision number of myself.
+     This number is updated after a commit"
+
+    ^ "$SVN-Revision:"'29'"$"
+! !
+
+!stx_goodies_xtreams_transforms_tests class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: stx_goodies_xtreams_transforms_tests.st 20 2011-11-21 06:04:22Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:48 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/transforms/tests' }"
 
 "{ NameSpace: Xtreams }"
 
-TestCase subclass:#ObjectMarshalerTest
+TestCase subclass:#DuplicateTest
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Transforms-Tests'
+!
+
+
+!DuplicateTest methodsFor:'tests'!
+
+testDuplicateReading
+	| copy |
+	copy := Array new writing.
+	self assert: ((0 to: 255) reading duplicating: copy) rest = copy conclusion
+!
+
+testDuplicateReadingIncomplete
+	| original copy |
+	copy := ByteArray new writing.
+	[(#[0 1 2 3 4 5 6 7 8 9] reading duplicating: copy) read: 20] on: Incomplete do: [:incomplete | original := incomplete contents].
+	copy := copy conclusion.
+	self assert: original = #[0 1 2 3 4 5 6 7 8 9].
+	self assert: copy = #[0 1 2 3 4 5 6 7 8 9]
+!
+
+testDuplicateWriting
+	| original copy |
+	original := ByteArray new writing.
+	copy := ByteArray new writing.
+	(original duplicating: copy) write: (0 to: 255).
+	self assert: original conclusion = copy conclusion
+!
+
+testDuplicateWritingIncomplete
+	| original copy |
+	original := ByteArray new writing.
+	copy := ByteArray new writing.
+	[((original limiting: 10) duplicating: copy) write: (0 to: 255)] on: Incomplete do: [:incomplete | ].
+	original := original conclusion.
+	copy := copy conclusion.
+	self assert: original = #[0 1 2 3 4 5 6 7 8 9].
+	self assert: copy = #[0 1 2 3 4 5 6 7 8 9]
+! !
+
+!DuplicateTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id$'
+! !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:48 AM'                  !
+
+"{ Package: 'stx:goodies/xtreams/transforms/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+Object subclass:#ObjectMarshalerTest
 	instanceVariableNames:'stream marshaling log bytes marshaler'
 	classVariableNames:''
 	poolDictionaries:''
@@ -345,354 +579,118 @@ testTranscript
 version_SVN
     ^ '$Id$'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:35 PM'                  !
+'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:48 AM'                  !
 
 "{ Package: 'stx:goodies/xtreams/transforms/tests' }"
 
 "{ NameSpace: Xtreams }"
 
-TestCase subclass:#MessagePackMarshalerTest
-	instanceVariableNames:'stream marshaling log bytes marshaler'
+TestCase subclass:#InterpretingStreamTest
+	instanceVariableNames:'stream'
 	classVariableNames:''
 	poolDictionaries:''
 	category:'Xtreams-Transforms-Tests'
 !
 
 
-!MessagePackMarshalerTest methodsFor:'initialize-release'!
+!InterpretingStreamTest methodsFor:'tests'!
 
-setUp
-	marshaler := MessagePackMarshaler new.
+testDouble
+	| interpreting |
 	stream := ByteArray new writing.
-	marshaling := stream marshaling: marshaler.
-	bytes := nil.
-	log := nil
+	interpreting := stream interpreting: #double.
+	interpreting put: (SmallInteger minVal - 1.5).
+	interpreting put: (SmallInteger maxVal + 1.5).
+	interpreting := stream contents reading interpreting: #double.
+	self assert: interpreting get = (SmallInteger minVal - 1.5).
+	self assert: interpreting get = (SmallInteger maxVal + 1.5)
+!
+
+testFloat
+	| interpreting |
+	stream := ByteArray new writing.
+	interpreting := stream interpreting: #float.
+	-50.0 to: 50.0 by: 0.5 do: [:each | interpreting put: each].
+	self assert: (stream contents reading interpreting: #float) rest = (-50 to: 50 by: 0.5)
+!
+
+testSignedChar
+	| interpreting |
+	stream := ByteArray new writing.
+	interpreting := stream interpreting: #signedChar.
+	-120 to: 120 do: [:each | interpreting put: each].
+	interpreting := stream contents reading interpreting: #signedChar.
+	self assert: interpreting rest = (-120 to: 120)
+!
+
+testSignedLong
+	| interpreting negative positive |
+	stream := ByteArray new writing.
+	negative := -268435456. "SmallInteger minVal // 2 in 32-bits"
+	positive :=  268435455. "SmallInteger maxVal // 2 in 32-bits"
+	interpreting := stream interpreting: #signedLong.
+	interpreting put: negative.
+	interpreting put: positive.
+	interpreting := stream contents reading interpreting: #signedLong.
+	self assert: interpreting get = negative.
+	self assert: interpreting get = positive
+!
+
+testSignedLonglong
+	| interpreting |
+	stream := ByteArray new writing.
+	interpreting := stream interpreting: #signedLonglong.
+	interpreting put: (SmallInteger minVal // 2) - 1.
+	interpreting put: (SmallInteger maxVal // 2) + 1.
+	interpreting := stream contents reading interpreting: #signedLonglong.
+	self assert: interpreting get = ((SmallInteger minVal // 2) - 1).
+	self assert: interpreting get = ((SmallInteger maxVal // 2) + 1)
+!
+
+testSignedShort
+	| interpreting |
+	stream := ByteArray new writing.
+	interpreting := stream interpreting: #signedShort.
+	interpreting put: -31000.
+	interpreting put: 31000.
+	interpreting := stream contents reading interpreting: #signedShort.
+	self assert: interpreting get = -31000.
+	self assert: interpreting get = 31000
+!
+
+testUnsignedChar
+	| interpreting |
+	stream := ByteArray new writing.
+	interpreting := stream interpreting: #char.
+	0 to: 255 do: [:each | interpreting put: each].
+	self assert: (stream contents reading interpreting: #char) rest asArray = (0 to: 255)
+!
+
+testUnsignedLong
+	| interpreting |
+	stream := ByteArray new writing.
+	interpreting := stream interpreting: #long.
+	65000 to: 70000 do: [:each | interpreting put: each].
+	self assert: (stream contents reading interpreting: #long) rest asArray = (65000 to: 70000)
+!
+
+testUnsignedLongLong
+	| interpreting |
+	stream := ByteArray new writing.
+	interpreting := stream interpreting: #longlong.
+	(SmallInteger maxVal - 100) to: (SmallInteger maxVal + 100) do: [:each | interpreting put: each].
+	self assert: (stream contents reading interpreting: #longlong) rest = ((SmallInteger maxVal - 100) to: (SmallInteger maxVal + 100))
+!
+
+testUnsignedShort
+	| interpreting |
+	stream := ByteArray new writing.
+	interpreting := stream interpreting: #short.
+	250 to: 270 do: [:each | interpreting put: each].
+	self assert: (stream contents reading interpreting: #short) rest asArray = (250 to: 270)
 ! !
 
-!MessagePackMarshalerTest methodsFor:'private'!
-
-analyse
-	"Run an analysis on the stream contents to ensure it has integrity"
-	bytes := stream conclusion.
-	log := String new writing.
-	(ObjectAnalyseStream on: bytes reading marshaler: marshaler class new) do: [:each | log write: each].
-	log := log conclusion.
-	marshaling := bytes reading marshaling: marshaler class new
-! !
-
-!MessagePackMarshalerTest methodsFor:'tests'!
-
-testArray
-	| fixed small big |
-	big := Array new: 65537 withAll: 1.
-	small := (1 to: 255) asArray.
-	fixed := Array with: small with: big.
-	marshaling put: fixed.
-	marshaling put: small.
-	marshaling put: big.
-	self analyse.
-	self assert: marshaling get = fixed.
-	self assert: marshaling get = small.
-	self assert: marshaling get = big
-!
-
-testDictionary
-	| fixed small big |
-	big := Dictionary new: 65537.
-	1 to: 65537 do: [:i | big at: i put: 1].
-	small := Dictionary new: 255.
-	1 to: 255 do: [:i | small at: i put: i].
-	fixed := Dictionary new
-		at: 1 put: big;
-		at: 2 put: small;
-		yourself.
-	marshaling put: fixed.
-	marshaling put: small.
-	marshaling put: big.
-	self analyse.
-	self assert: marshaling get = fixed.
-	self assert: marshaling get = small.
-	self assert: marshaling get = big
-!
-
-testFloatDouble
-	marshaling write: #(3.14 3.14159 3.141592653589793).
-	self analyse.
-	self assert: marshaling rest = #(3.14 3.14159 3.141592653589793)
-!
-
-testIntegers
-	| inrange outofrange |
-	outofrange := #(18446744073709551616 -9223372036854775809).
-	inrange := #(
-		0 1 126 127 128 255 256
-		32767 32768 32769
-		65535 65536 65537
-		4294967294 4294967295 4294967296
-		18446744073709551614 18446744073709551615
-		-1 -2 -32 -33
-		-127 -128 -255 -256
-		-32767 -32768 -32769
-		-65535 -65536 -65537
-		-2147483647 -2147483648 -2147483649
-		-9223372036854775807 -9223372036854775808).
-
-	marshaling write: inrange.
-	outofrange do: [:each | self should: [marshaling put: each] raise: Error].
-	self analyse.
-	self assert: marshaling rest = inrange
-!
-
-testRaw
-	| big |
-	big := ByteArray new: 100000 withAll: 1.
-	marshaling put: #[10 255 0].
-	marshaling put: (ByteArray withAll: (1 to: 255)).
-	marshaling put: big.
-	self analyse.
-	self assert: marshaling get = #[10 255 0].
-	self assert: marshaling get = (ByteArray withAll: (1 to: 255)).
-	self assert: marshaling get = big
-!
-
-testSingletons
-	marshaling put: nil.
-	marshaling put: true.
-	marshaling put: false.
-	self analyse.
-	self assert: marshaling get = nil.
-	self assert: marshaling get = true.
-	self assert: marshaling get = false
-! !
-
-!MessagePackMarshalerTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:35 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-LibraryDefinition subclass:#stx_goodies_xtreams_transforms_tests
-	instanceVariableNames:''
-	classVariableNames:''
-	poolDictionaries:''
-	category:'* Projects & Packages *'
-!
-
-!stx_goodies_xtreams_transforms_tests class methodsFor:'documentation'!
-
-extensionsVersion_SVN
-    ^ '$Id: extensions.st 20 2011-11-21 06:04:22Z mkobetic $'
-! !
-
-!stx_goodies_xtreams_transforms_tests class methodsFor:'description'!
-
-excludedFromPreRequisites
-    "list all packages which should be ignored in the automatic
-     preRequisites scan. See #preRequisites for more."
-
-    ^ #(
-    )
-!
-
-preRequisites
-    "list all required packages.
-     This list can be maintained manually or (better) generated and
-     updated by scanning the superclass hierarchies and looking for
-     global variable accesses. (the browser has a menu function for that)
-     Howevery, often too much is found, and you may want to explicitely
-     exclude individual packages in the #excludedFromPrerequisites method."
-
-    ^ #(
-        #'stx:goodies/sunit'    "TestAsserter - superclass of Xtreams::MessagePackMarshalerTest "
-        #'stx:goodies/xtreams/core'    "Xtreams::Incomplete - referenced by Xtreams::ReadingWritingTest>>testReadTransformingPastEnd "
-        #'stx:goodies/xtreams/core/tests'    "Xtreams::ReadingWritingTest - superclass of extended Xtreams::CollectionReadingWritingTest "
-        #'stx:goodies/xtreams/terminals/tests'    "Xtreams::CollectionReadingWritingTest - extended "
-        #'stx:goodies/xtreams/transforms'    "Xtreams::ObjectMarshaler - referenced by Xtreams::ObjectMarshalerTest>>setUp "
-        #'stx:libbasic'    "Object - superclass of Xtreams::stx_goodies_xtreams_transforms_tests "
-        #'stx:libbasic2'    "Random - referenced by Xtreams::ReadingWritingTest>>testInterpretingPoints "
-        #'stx:libcompat'    "IOAccessor - referenced by Xtreams::ReadingWritingTest>>testWriteEncodingCRLF "
-    )
-! !
-
-!stx_goodies_xtreams_transforms_tests class methodsFor:'description - contents'!
-
-classNamesAndAttributes
-    "lists the classes which are to be included in the project.
-     Each entry in the list may be: a single class-name (symbol),
-     or an array-literal consisting of class name and attributes.
-     Attributes are: #autoload or #<os> where os is one of win32, unix,..."
-
-    ^ #(
-        "<className> or (<className> attributes...) in load order"
-        (#'Xtreams::DuplicateTest' autoload)
-        (#'Xtreams::InterpretingStreamTest' autoload)
-        (#'Xtreams::MessagePackMarshalerTest' autoload)
-        (#'Xtreams::ObjectMarshalerTest' autoload)
-        #'Xtreams::stx_goodies_xtreams_transforms_tests'
-    )
-!
-
-extensionMethodNames
-    "lists the extension methods which are to be included in the project.
-     Entries are 2-element array literals, consisting of class-name and selector."
-
-    ^ #(
-        #'Xtreams::CollectionReadingWritingTest' testReadRejecting
-        #'Xtreams::CollectionReadingWritingTest' testReadSelecting
-        #'Xtreams::CollectionReadingWritingTest' testWriteRejecting
-        #'Xtreams::CollectionReadingWritingTest' testWriteSelecting
-        #'Xtreams::CollectionReadingWritingTest' testWriteTransformHexToByte
-        #'Xtreams::FiniteReadingWritingTests' testInterpretingDoubles
-        #'Xtreams::FiniteReadingWritingTests' testWriteTransformingOverLimitingPastEnd
-        #'Xtreams::FiniteReadingWritingTests' testWriteTransformingPastEnd
-        #'Xtreams::ReadingWritingTest' testDoing
-        #'Xtreams::ReadingWritingTest' testInterpretingPoints
-        #'Xtreams::ReadingWritingTest' testMarshaling
-        #'Xtreams::ReadingWritingTest' testReadCollecting
-        #'Xtreams::ReadingWritingTest' testReadCollectingContentsSpeciesChanged
-        #'Xtreams::ReadingWritingTest' testReadDecodingBase64
-        #'Xtreams::ReadingWritingTest' testReadDecodingCRLF
-        #'Xtreams::ReadingWritingTest' testReadDecodingTransparent
-        #'Xtreams::ReadingWritingTest' testReadDecodingUTF16
-        #'Xtreams::ReadingWritingTest' testReadDecodingUTF8
-        #'Xtreams::ReadingWritingTest' testReadDuplicating
-        #'Xtreams::ReadingWritingTest' testReadInjecting
-        #'Xtreams::ReadingWritingTest' testReadRejecting
-        #'Xtreams::ReadingWritingTest' testReadSelecting
-        #'Xtreams::ReadingWritingTest' testReadTransforming1into2
-        #'Xtreams::ReadingWritingTest' testReadTransforming2into1
-        #'Xtreams::ReadingWritingTest' testReadTransformingPastEnd
-        #'Xtreams::ReadingWritingTest' testReadUnsignedShortEndianness
-        #'Xtreams::ReadingWritingTest' testWriteCollecting
-        #'Xtreams::ReadingWritingTest' testWriteCollectingIncompatibleContentSpecies
-        #'Xtreams::ReadingWritingTest' testWriteCollectingMultipleBufferSize
-        #'Xtreams::ReadingWritingTest' testWriteDuplicating
-        #'Xtreams::ReadingWritingTest' testWriteEncodingBase64
-        #'Xtreams::ReadingWritingTest' testWriteEncodingCRLF
-        #'Xtreams::ReadingWritingTest' testWriteEncodingTransparent
-        #'Xtreams::ReadingWritingTest' testWriteEncodingUTF16
-        #'Xtreams::ReadingWritingTest' testWriteEncodingUTF8
-        #'Xtreams::ReadingWritingTest' testWriteInjecting
-        #'Xtreams::ReadingWritingTest' testWriteRejecting
-        #'Xtreams::ReadingWritingTest' testWriteSelecting
-        #'Xtreams::ReadingWritingTest' testWriteTransformHexToByte
-        #'Xtreams::ReadingWritingTest' testWriteTransforming1into2
-        #'Xtreams::ReadingWritingTest' testWriteTransforming2into1
-        #'Xtreams::ReadingWritingTest' testWriteUnsignedShortEndianness
-    )
-! !
-
-!stx_goodies_xtreams_transforms_tests class methodsFor:'description - project information'!
-
-applicationIconFileName
-    "Return the name (without suffix) of an icon-file (the app's icon); will be included in the rc-resource file"
-
-    ^ nil
-    "/ ^ self applicationName
-!
-
-companyName
-    "Return a companyname which will appear in <lib>.rc"
-
-    ^ 'eXept Software AG'
-!
-
-description
-    "Return a description string which will appear in vc.def / bc.def"
-
-    ^ 'Smalltalk/X Class library'
-!
-
-legalCopyright
-    "Return a copyright string which will appear in <lib>.rc"
-
-    ^ 'Copyright Claus Gittinger 1988-2011\nCopyright eXept Software AG 1998-2011'
-!
-
-productName
-    "Return a product name which will appear in <lib>.rc"
-
-    ^ 'Smalltalk/X'
-! !
-
-!stx_goodies_xtreams_transforms_tests class methodsFor:'description - svn'!
-
-svnRepositoryUrlString
-    "Return a SVN repository URL of myself.
-     (Generated since 2011-04-08)
-    "        
-
-    ^ '$URL: https://swing.fit.cvut.cz/svn/stx/goodies/xtreams/trunk/transforms/tests/stx_goodies_xtreams_transforms_tests.st $'
-!
-
-svnRevisionNr
-    "Return a SVN revision number of myself.
-     This number is updated after a commit"
-
-    ^ "$SVN-Revision:"'29'"$"
-! !
-
-!stx_goodies_xtreams_transforms_tests class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: stx_goodies_xtreams_transforms_tests.st 20 2011-11-21 06:04:22Z mkobetic $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 14-01-2012 at 09:32:35 PM'                  !
-
-"{ Package: 'stx:goodies/xtreams/transforms/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-TestCase subclass:#DuplicateTest
-	instanceVariableNames:''
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Transforms-Tests'
-!
-
-
-!DuplicateTest methodsFor:'tests'!
-
-testDuplicateReading
-	| copy |
-	copy := Array new writing.
-	self assert: ((0 to: 255) reading duplicating: copy) rest = copy conclusion
-!
-
-testDuplicateReadingIncomplete
-	| original copy |
-	copy := ByteArray new writing.
-	[(#[0 1 2 3 4 5 6 7 8 9] reading duplicating: copy) read: 20] on: Incomplete do: [:incomplete | original := incomplete contents].
-	copy := copy conclusion.
-	self assert: original = #[0 1 2 3 4 5 6 7 8 9].
-	self assert: copy = #[0 1 2 3 4 5 6 7 8 9]
-!
-
-testDuplicateWriting
-	| original copy |
-	original := ByteArray new writing.
-	copy := ByteArray new writing.
-	(original duplicating: copy) write: (0 to: 255).
-	self assert: original conclusion = copy conclusion
-!
-
-testDuplicateWritingIncomplete
-	| original copy |
-	original := ByteArray new writing.
-	copy := ByteArray new writing.
-	[((original limiting: 10) duplicating: copy) write: (0 to: 255)] on: Incomplete do: [:incomplete | ].
-	original := original conclusion.
-	copy := copy conclusion.
-	self assert: original = #[0 1 2 3 4 5 6 7 8 9].
-	self assert: copy = #[0 1 2 3 4 5 6 7 8 9]
-! !
-
-!DuplicateTest class methodsFor:'documentation'!
+!InterpretingStreamTest class methodsFor:'documentation'!
 
 version_SVN
     ^ '$Id$'
@@ -740,16 +738,6 @@ testWriteTransformHexToByte
 	self assert: self input get = 16rAB.
 	result := self input read: 2.
 	self assert: result = #[16rcd 16ref].
-! !
-
-!FiniteReadingWritingTests methodsFor:'tests - interpreting'!
-
-testInterpretingDoubles
-	| doubles result |
-	doubles := (1 to: 10) reading collect: [ :i | i reciprocal asDouble ].
-	(self output interpreting: #double) write: doubles; close.
-	result := (self input interpreting: #double) rest.
-	self assert: result = doubles
 ! !
 
 !FiniteReadingWritingTests methodsFor:'tests - transforming'!
@@ -917,20 +905,6 @@ testInterpretingPoints
 		close.
 	result := (self input interpreting: [ :b :i | (b doubleAt: i) @ (b doubleAt: i + 8) ] size: 16 cacheSize: 5) read: points size.
 	self assert: points = result
-! !
-
-!ReadingWritingTest methodsFor:'tests - interpreting'!
-
-testMarshaling
-	| object result in out |
-	object := Object new.
-	out := self output marshaling.
-	in := self input marshaling.
-	2 timesRepeat: 
-		[out put: ((1 to: 11) collect: [:each | (1 to: 11) collect: [:ea | object]]).
-		result := in get.
-		self assert: result size = 11.
-		self assert: (result allSatisfy: [:each | each allSatisfy: [:ea | ea == result first first]])]
 ! !
 
 !ReadingWritingTest methodsFor:'tests - interpreting'!
