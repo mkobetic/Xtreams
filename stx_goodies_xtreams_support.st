@@ -1,132 +1,4 @@
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:26 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/support' }"
-
-LibraryDefinition subclass:#stx_goodies_xtreams_support
-	instanceVariableNames:''
-	classVariableNames:''
-	poolDictionaries:''
-	category:'* Projects & Packages *'
-!
-
-!stx_goodies_xtreams_support class methodsFor:'documentation'!
-
-extensionsVersion_SVN
-    ^ '$Id: extensions.st 16 2011-11-21 06:02:29Z mkobetic $'
-! !
-
-!stx_goodies_xtreams_support class methodsFor:'description'!
-
-excludedFromPreRequisites
-    "list all packages which should be ignored in the automatic
-     preRequisites scan. See #preRequisites for more."
-
-    ^ #(
-    )
-!
-
-preRequisites
-    "list all required packages.
-     This list can be maintained manually or (better) generated and
-     updated by scanning the superclass hierarchies and looking for
-     global variable accesses. (the browser has a menu function for that)
-     Howevery, often too much is found, and you may want to explicitely
-     exclude individual packages in the #excludedFromPrerequisites method."
-
-    ^ #(
-        #'stx:libbasic'    "Object - superclass of Xtreams::stx_goodies_xtreams_support "
-    )
-! !
-
-!stx_goodies_xtreams_support class methodsFor:'description - contents'!
-
-classNamesAndAttributes
-    "lists the classes which are to be included in the project.
-     Each entry in the list may be: a single class-name (symbol),
-     or an array-literal consisting of class name and attributes.
-     Attributes are: #autoload or #<os> where os is one of win32, unix,..."
-
-    ^ #(
-        "<className> or (<className> attributes...) in load order"
-        #'Xtreams::Encoder'
-        #'Xtreams::RecyclingCenter'
-        #'Xtreams::XtreamsPool'
-        #'Xtreams::stx_goodies_xtreams_support'
-    )
-!
-
-extensionMethodNames
-    "lists the extension methods which are to be included in the project.
-     Entries are 2-element array literals, consisting of class-name and selector."
-
-    ^ #(
-        Block cull:
-        Block cull:cull:
-        Object isFixedArgument
-        SequenceableCollection copyGrownToAtLeast:
-        SequenceableCollection recycle
-        Symbol cull:
-        #'UnixOperatingSystem::FileDescriptorHandle' fileSize
-        'SequenceableCollection class' newRecycled:
-    )
-! !
-
-!stx_goodies_xtreams_support class methodsFor:'description - project information'!
-
-applicationIconFileName
-    "Return the name (without suffix) of an icon-file (the app's icon); will be included in the rc-resource file"
-
-    ^ nil
-    "/ ^ self applicationName
-!
-
-companyName
-    "Return a companyname which will appear in <lib>.rc"
-
-    ^ 'eXept Software AG'
-!
-
-description
-    "Return a description string which will appear in vc.def / bc.def"
-
-    ^ 'Smalltalk/X Class library'
-!
-
-legalCopyright
-    "Return a copyright string which will appear in <lib>.rc"
-
-    ^ 'Copyright Claus Gittinger 1988-2011\nCopyright eXept Software AG 1998-2011'
-!
-
-productName
-    "Return a product name which will appear in <lib>.rc"
-
-    ^ 'Smalltalk/X'
-! !
-
-!stx_goodies_xtreams_support class methodsFor:'description - svn'!
-
-svnRepositoryUrlString
-    "Return a SVN repository URL of myself.
-     (Generated since 2011-04-08)
-    "        
-
-    ^ '$URL: https://swing.fit.cvut.cz/svn/stx/goodies/xtreams/trunk/support/stx_goodies_xtreams_support.st $'
-!
-
-svnRevisionNr
-    "Return a SVN revision number of myself.
-     This number is updated after a commit"
-
-    ^ "$SVN-Revision:"'31'"$"
-! !
-
-!stx_goodies_xtreams_support class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: stx_goodies_xtreams_support.st 16 2011-11-21 06:02:29Z mkobetic $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:26 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:24 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/support' }"
 
@@ -177,6 +49,11 @@ encoders
 backupState
 !
 
+contentsSpecies
+
+        ^String
+!
+
 decodeFrom: aReadStream
 
 	^self subclassResponsibility
@@ -198,9 +75,122 @@ streamingAsEncoder
 !Encoder class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id: Xtreams__Encoder.st 7 2011-08-22 15:51:21Z mk $'
+    ^ '$Id: Xtreams__Encoder.st 66 2012-01-30 22:05:57Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:26 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:24 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/support' }"
+
+"{ NameSpace: Xtreams }"
+
+Encoder subclass:#STXEncoder
+	instanceVariableNames:'encoder stream character contentsSpecies'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Support'
+!
+
+STXEncoder comment:'Provides access to all encodings supported by VisualWorks.
+
+Instance Variables
+	encoder <StreamEncoder> the encoder from classic EncodedStream
+	skipRecord      <PositionRecord> the skipRecord of the encoder to allow repeated decoding attempts
+	backupRecord    <PositionRecord> snapshot of the skipRecord that we can restore from
+
+'
+!
+
+
+!STXEncoder class methodsFor:'instance creation'!
+
+encoder: anEncoder
+
+	^self new encoder: anEncoder
+!
+
+for: anEncoding
+
+	^self new encoding: anEncoding
+! !
+
+!STXEncoder class methodsFor:'class initialization'!
+
+initialize
+
+	DialectEncoder := self
+! !
+
+!STXEncoder methodsFor:'accessing'!
+
+contentsSpecies
+
+        ^contentsSpecies
+!
+
+decodeFrom: aReadStream
+
+        stream := aReadStream.
+        ^encoder readNextCharacterFrom: self
+!
+
+encode: aCharacter on: aWriteStream
+
+        character := aCharacter.
+        ^aWriteStream write: (encoder readNextInputCharacterFrom: self)
+!
+
+encoder
+
+	^encoder
+!
+
+next: count
+
+        |bytes|
+
+        bytes := ByteArray new: count.
+        character isNil
+                ifTrue: [ stream read: count into: bytes ]
+                ifFalse: [ bytes at: 1 put: character.
+                        character := nil.
+                        stream read: count - 1 into: bytes at: 2 ].
+        ^bytes
+!
+
+nextUnsignedShortMSB: bigEndian
+
+        ^character codePoint
+!
+
+peek
+
+        ^character ifNil: [ character := stream get ]
+! !
+
+!STXEncoder methodsFor:'initialize-release'!
+
+encoder: anEncoder
+
+        encoder := anEncoder.
+        contentsSpecies := (anEncoder newString: 1) class.
+!
+
+encoding: anEncoding
+
+        | newEncoder |
+        newEncoder := CharacterEncoder encoderFor: anEncoding.
+        newEncoder isNullEncoder ifTrue: [ self error: 'Unsupported encoding!!' ].
+        self encoder: newEncoder
+! !
+
+!STXEncoder class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id$'
+! !
+
+STXEncoder initialize!
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:24 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/support' }"
 
@@ -322,11 +312,11 @@ recycle: aCollection
 !RecyclingCenter class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id: Xtreams__RecyclingCenter.st 7 2011-08-22 15:51:21Z mk $'
+    ^ '$Id: Xtreams__RecyclingCenter.st 66 2012-01-30 22:05:57Z mkobetic $'
 ! !
 
 RecyclingCenter initialize!
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:26 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:24 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/support' }"
 
@@ -338,6 +328,7 @@ ByteArray variableByteSubclass:#InterpretedBytes
 	poolDictionaries:''
 	category:'Xtreams-Support'
 !
+
 
 !InterpretedBytes class methodsFor:'instance creation'!
 
@@ -388,36 +379,36 @@ float_le
 
 long
 
-	^(Array with: 4 with: DwordArray with: [:b :i | b unsignedLongAt: i] with: [:b :i :o | b unsignedLongAt: i put: o])
+        ^(Array with: 4 with: "DwordArray" IntegerArray with: [:b :i | b unsignedLongAt: i] with: [:b :i :o | b unsignedLongAt: i put: o])
 !
 
 long_be
 
-	self isBigEndian ifTrue: [ ^self long ].
-	^(Array with: 4 with: DwordArray with: [:b :i | b unsignedLongAt: i bigEndian: true ] with: [:b :i :o | b unsignedLongAt: i put: o bigEndian: true])
+        self isBigEndian ifTrue: [ ^self long ].
+        ^(Array with: 4 with: "DwordArray" IntegerArray with: [:b :i | b unsignedLongAt: i bigEndian: true ] with: [:b :i :o | b unsignedLongAt: i put: o bigEndian: true])
 !
 
 long_le
 
-	self isBigEndian ifFalse: [ ^self long ].
-	^(Array with: 4 with: DwordArray with: [:b :i | b unsignedLongAt: i bigEndian: false ] with: [:b :i :o | b unsignedLongAt: i put: o bigEndian: false])
+        self isBigEndian ifFalse: [ ^self long ].
+        ^(Array with: 4 with: "DwordArray" IntegerArray  with: [:b :i | b unsignedLongAt: i bigEndian: false ] with: [:b :i :o | b unsignedLongAt: i put: o bigEndian: false])
 !
 
 longlong
 
-	^(Array with: 8 with: Array with: [:b :i | b unsignedLongLongAt: i] with: [:b :i :o | b unsignedLongLongAt: i put: o])
+        ^(Array with: 8 with: LongIntegerArray with: [:b :i | b unsignedLongLongAt: i bigEndian:(UninterpretedBytes isBigEndian)] with: [:b :i :o | b unsignedLongLongAt: i put: o bigEndian:(UninterpretedBytes isBigEndian)])
 !
 
 longlong_be
 
-	self isBigEndian ifTrue: [ ^self longlong ].
-	^(Array with: 8 with: Array with: [:b :i | b unsignedLongLongAt: i bigEndian: true] with: [:b :i :o | b unsignedLongLongAt: i put: o bigEndian: true])
+        self isBigEndian ifTrue: [ ^self longlong ].
+        ^(Array with: 8 with: LongIntegerArray with: [:b :i | b unsignedLongLongAt: i bigEndian: true] with: [:b :i :o | b unsignedLongLongAt: i put: o bigEndian: true])
 !
 
 longlong_le
 
-	self isBigEndian ifFalse: [ ^self longlong ].
-	^(Array with: 8 with: Array with: [:b :i | b unsignedLongLongAt: i bigEndian: false] with: [:b :i :o | b unsignedLongLongAt: i put: o bigEndian: false])
+        self isBigEndian ifFalse: [ ^self longlong ].
+        ^(Array with: 8 with: LongIntegerArray with: [:b :i | b unsignedLongLongAt: i bigEndian: false] with: [:b :i :o | b unsignedLongLongAt: i put: o bigEndian: false])
 !
 
 short
@@ -444,53 +435,53 @@ signedChar
 
 signedLong
 
-	^(Array with: 4 with: Array with: [:b :i | b longAt: i] with: [:b :i :o | b longAt: i put: o])
+        ^(Array with: 4 with: SignedIntegerArray with: [:b :i | b longAt: i] with: [:b :i :o | b longAt: i put: o])
 !
 
 signedLong_be
 
-	self isBigEndian ifTrue: [ ^self signedLong ].
-	^(Array with: 4 with: Array with: [:b :i | b longAt: i bigEndian: true ] with: [:b :i :o | b longAt: i put: o bigEndian: true])
+        self isBigEndian ifTrue: [ ^self signedLong ].
+        ^(Array with: 4 with: SignedIntegerArray with: [:b :i | b longAt: i bigEndian: true ] with: [:b :i :o | b longAt: i put: o bigEndian: true])
 !
 
 signedLong_le
 
-	self isBigEndian ifFalse: [ ^self signedLong ].
-	^(Array with: 4 with: Array with: [:b :i | b longAt: i bigEndian: false ] with: [:b :i :o | b longAt: i put: o bigEndian: false])
+        self isBigEndian ifFalse: [ ^self signedLong ].
+        ^(Array with: 4 with: SignedIntegerArray with: [:b :i | b longAt: i bigEndian: false ] with: [:b :i :o | b longAt: i put: o bigEndian: false])
 !
 
 signedLonglong
 
-	^(Array with: 8 with: Array with: [:b :i | b longLongAt: i] with: [:b :i :o | b longLongAt: i put: o])
+        ^(Array with: 8 with: SignedLongIntegerArray with: [:b :i | b longLongAt: i] with: [:b :i :o | b longLongAt: i put: o])
 !
 
 signedLonglong_be
 
-	self isBigEndian ifTrue: [ ^self signedLonglong ].
-	^(Array with: 8 with: Array with: [:b :i | b longLongAt: i bigEndian: true] with: [:b :i :o | b longLongAt: i put: o bigEndian: true])
+        self isBigEndian ifTrue: [ ^self signedLonglong ].
+        ^(Array with: 8 with: SignedLongIntegerArray with: [:b :i | b longLongAt: i bigEndian: true] with: [:b :i :o | b longLongAt: i put: o bigEndian: true])
 !
 
 signedLonglong_le
 
-	self isBigEndian ifFalse: [ ^self signedLonglong ].
-	^(Array with: 8 with: Array with: [:b :i | b longLongAt: i bigEndian: false] with: [:b :i :o | b longLongAt: i put: o bigEndian: false])
+        self isBigEndian ifFalse: [ ^self signedLonglong ].
+        ^(Array with: 8 with: SignedLongIntegerArray with: [:b :i | b longLongAt: i bigEndian: false] with: [:b :i :o | b longLongAt: i put: o bigEndian: false])
 !
 
 signedShort
 
-	^(Array with: 2 with: Array with: [:b :i | b shortAt: i] with: [:b :i :o | b shortAt: i put: o])
+        ^(Array with: 2 with: SignedWordArray with: [:b :i | b shortAt: i] with: [:b :i :o | b shortAt: i put: o])
 !
 
 signedShort_be
 
-	self isBigEndian ifTrue: [ ^self signedShort ].
-	^Array with: 2 with: Array with: [:b :i | b shortAt: i bigEndian: true ] with: [:b :i :o | b shortAt: i put: o bigEndian: true ]
+        self isBigEndian ifTrue: [ ^self signedShort ].
+        ^Array with: 2 with: SignedWordArray with: [:b :i | b shortAt: i bigEndian: true ] with: [:b :i :o | b shortAt: i put: o bigEndian: true ]
 !
 
 signedShort_le
 
-	self isBigEndian ifFalse: [ ^self signedShort ].
-	^Array with: 2 with: Array with: [:b :i | b shortAt: i bigEndian: false ] with: [:b :i :o | b shortAt: i put: o bigEndian: false ]
+        self isBigEndian ifFalse: [ ^self signedShort ].
+        ^Array with: 2 with: SignedWordArray with: [:b :i | b shortAt: i bigEndian: false ] with: [:b :i :o | b shortAt: i put: o bigEndian: false ]
 !
 
 tlsUint24
@@ -512,36 +503,36 @@ unsignedChar
 
 unsignedLong
 
-	^(Array with: 4 with: DwordArray with: [:b :i | b unsignedLongAt: i] with: [:b :i :o | b unsignedLongAt: i put: o])
+        ^(Array with: 4 with: "DwordArray" IntegerArray with: [:b :i | b unsignedLongAt: i] with: [:b :i :o | b unsignedLongAt: i put: o])
 !
 
 unsignedLong_be
 
-	self isBigEndian ifTrue: [ ^self unsignedLong ].
-	^(Array with: 4 with: DwordArray with: [:b :i | b unsignedLongAt: i bigEndian: true ] with: [:b :i :o | b unsignedLongAt: i put: o bigEndian: true])
+        self isBigEndian ifTrue: [ ^self unsignedLong ].
+        ^(Array with: 4 with: "DwordArray" IntegerArray with: [:b :i | b unsignedLongAt: i bigEndian: true ] with: [:b :i :o | b unsignedLongAt: i put: o bigEndian: true])
 !
 
 unsignedLong_le
 
-	self isBigEndian ifFalse: [ ^self unsignedLong ].
-	^(Array with: 4 with: DwordArray with: [:b :i | b unsignedLongAt: i bigEndian: false ] with: [:b :i :o | b unsignedLongAt: i put: o bigEndian: false])
+        self isBigEndian ifFalse: [ ^self unsignedLong ].
+        ^(Array with: 4 with: "DwordArray" IntegerArray with: [:b :i | b unsignedLongAt: i bigEndian: false ] with: [:b :i :o | b unsignedLongAt: i put: o bigEndian: false])
 !
 
 unsignedLonglong
 
-	^(Array with: 8 with: Array with: [:b :i | b unsignedLongLongAt: i] with: [:b :i :o | b unsignedLongLongAt: i put: o])
+        ^(Array with: 8 with: LongIntegerArray with: [:b :i | b unsignedLongLongAt: i] with: [:b :i :o | b unsignedLongLongAt: i put: o])
 !
 
 unsignedLonglong_be
 
-	self isBigEndian ifTrue: [ ^self unsignedLonglong ].
-	^(Array with: 8 with: Array with: [:b :i | b unsignedLongLongAt: i bigEndian: true] with: [:b :i :o | b unsignedLongLongAt: i put: o bigEndian: true])
+        self isBigEndian ifTrue: [ ^self unsignedLonglong ].
+        ^(Array with: 8 with: LongIntegerArray with: [:b :i | b unsignedLongLongAt: i bigEndian: true] with: [:b :i :o | b unsignedLongLongAt: i put: o bigEndian: true])
 !
 
 unsignedLonglong_le
 
-	self isBigEndian ifFalse: [ ^self unsignedLonglong ].
-	^(Array with: 8 with: Array with: [:b :i | b unsignedLongLongAt: i bigEndian: false] with: [:b :i :o | b unsignedLongLongAt: i put: o bigEndian: false])
+        self isBigEndian ifFalse: [ ^self unsignedLonglong ].
+        ^(Array with: 8 with: LongIntegerArray with: [:b :i | b unsignedLongLongAt: i bigEndian: false] with: [:b :i :o | b unsignedLongLongAt: i put: o bigEndian: false])
 !
 
 unsignedShort
@@ -590,11 +581,14 @@ recycle
         RecyclingCenter recycle: self
 ! !
 
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:26 AM'                  !
+!InterpretedBytes class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id$'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:24 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/support' }"
-
-"{ NameSpace: Xtreams }"
 
 SharedPool subclass:#XtreamsPool
 	instanceVariableNames:''
@@ -620,6 +614,139 @@ version_SVN
 ! !
 
 XtreamsPool initialize!
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:24 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/support' }"
+
+LibraryDefinition subclass:#stx_goodies_xtreams_support
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'* Projects & Packages *'
+!
+
+!stx_goodies_xtreams_support class methodsFor:'documentation'!
+
+extensionsVersion_SVN
+    ^ '$Id: extensions.st 67 2012-01-30 22:16:03Z mkobetic $'
+! !
+
+!stx_goodies_xtreams_support class methodsFor:'description'!
+
+excludedFromPreRequisites
+    "list all packages which should be ignored in the automatic
+     preRequisites scan. See #preRequisites for more."
+
+    ^ #(
+    )
+!
+
+preRequisites
+    "list all required packages.
+     This list can be maintained manually or (better) generated and
+     updated by scanning the superclass hierarchies and looking for
+     global variable accesses. (the browser has a menu function for that)
+     Howevery, often too much is found, and you may want to explicitely
+     exclude individual packages in the #excludedFromPrerequisites method."
+
+    ^ #(
+        #'stx:libbasic'    "SequenceableCollection - superclass of Xtreams::InterpretedBytes "
+        #'stx:libbasic2'    "SignedIntegerArray - referenced by Xtreams::InterpretedBytes class>>signedLong "
+    )
+! !
+
+!stx_goodies_xtreams_support class methodsFor:'description - contents'!
+
+classNamesAndAttributes
+    "lists the classes which are to be included in the project.
+     Each entry in the list may be: a single class-name (symbol),
+     or an array-literal consisting of class name and attributes.
+     Attributes are: #autoload or #<os> where os is one of win32, unix,..."
+
+    ^ #(
+        "<className> or (<className> attributes...) in load order"
+        #'Xtreams::Encoder'
+        #'Xtreams::InterpretedBytes'
+        XtreamsPool
+        #'stx_goodies_xtreams_support'
+        #'Xtreams::RecyclingCenter'
+        #'Xtreams::STXEncoder'
+    )
+!
+
+extensionMethodNames
+    "lists the extension methods which are to be included in the project.
+     Entries are 2-element array literals, consisting of class-name and selector."
+
+    ^ #(
+        Behavior absoluteName
+        Block cull:
+        Block cull:cull:
+        Object isFixedArgument
+        OrderedCollection copyGrownToAtLeast:
+        SequenceableCollection copyGrownToAtLeast:
+        SequenceableCollection recycle
+        Symbol cull:
+        #'UnixOperatingSystem::FileDescriptorHandle' fileSize
+        'SequenceableCollection class' newRecycled:
+    )
+! !
+
+!stx_goodies_xtreams_support class methodsFor:'description - project information'!
+
+applicationIconFileName
+    "Return the name (without suffix) of an icon-file (the app's icon); will be included in the rc-resource file"
+
+    ^ nil
+    "/ ^ self applicationName
+!
+
+companyName
+    "Return a companyname which will appear in <lib>.rc"
+
+    ^ 'eXept Software AG'
+!
+
+description
+    "Return a description string which will appear in vc.def / bc.def"
+
+    ^ 'Smalltalk/X Class library'
+!
+
+legalCopyright
+    "Return a copyright string which will appear in <lib>.rc"
+
+    ^ 'Copyright Claus Gittinger 1988-2011\nCopyright eXept Software AG 1998-2011'
+!
+
+productName
+    "Return a product name which will appear in <lib>.rc"
+
+    ^ 'Smalltalk/X'
+! !
+
+!stx_goodies_xtreams_support class methodsFor:'description - svn'!
+
+svnRepositoryUrlString
+    "Return a SVN repository URL of myself.
+     (Generated since 2011-04-08)
+    "        
+
+    ^ '$URL: https://swing.fit.cvut.cz/svn/stx/goodies/xtreams/trunk/support/stx_goodies_xtreams_support.st $'
+!
+
+svnRevisionNr
+    "Return a SVN revision number of myself.
+     This number is updated after a commit"
+
+    ^ "$SVN-Revision:"'80'"$"
+! !
+
+!stx_goodies_xtreams_support class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id$'
+! !
 !Symbol methodsFor:'xtreams'!
 
 cull: anObject
@@ -705,7 +832,7 @@ fileSize
 "
 ! !
 
-!Object methodsFor:'private'!
+!Object methodsFor:'xtreams'!
 
 isFixedArgument
 

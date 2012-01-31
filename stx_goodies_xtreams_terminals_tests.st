@@ -1,4 +1,119 @@
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:37 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:39 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+FiniteReadingWritingTests subclass:#RingBufferReadingWritingTest
+	instanceVariableNames:'buffer'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals-Tests'
+!
+
+
+!RingBufferReadingWritingTest methodsFor:'initialize-release'!
+
+setUp
+
+	buffer := RingBuffer on: (ByteArray new: 8192).
+	input := buffer reading.
+	output := buffer writing.
+! !
+
+!RingBufferReadingWritingTest methodsFor:'tests - core'!
+
+testReadWriteLargeAmount
+	
+	"does not work on limited size ring buffer"
+! !
+
+!RingBufferReadingWritingTest methodsFor:'tests - transforming'!
+
+testWriteCollectingMultipleBufferSize
+
+	"does not work on limited size ring buffer"
+! !
+
+!RingBufferReadingWritingTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__RingBufferReadingWritingTest.st 72 2012-01-30 22:29:41Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:39 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+TestCase subclass:#BlockClosureTest
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals-Tests'
+!
+
+
+!BlockClosureTest methodsFor:'tests'!
+
+testOneArgumentReading
+	self assert:
+		([:out | 1 to: 10 do: [:i | out put: i]] reading
+			contentsSpecies: ByteArray;
+			read: 5) = #[ 1 2 3 4 5 ]
+! !
+
+!BlockClosureTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__BlockClosureTest.st 72 2012-01-30 22:29:41Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:39 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+FiniteReadingWritingTests subclass:#FileReadingWritingTest
+	instanceVariableNames:'file'
+	classVariableNames:''
+	poolDictionaries:'XtreamsPool'
+	category:'Xtreams-Terminals-Tests'
+!
+
+
+!FileReadingWritingTest methodsFor:'initialize-release'!
+
+setUp
+
+	file := '<1s>-<2s>' expandMacrosWith: self class name with: testSelector.
+	file :=
+		(OSHandle currentOS = #unix and: [ '/dev/shm' asFilename exists ])
+			ifTrue: [ ('/dev/shm/', file) asFilename ]
+			ifFalse: [ file asFilename ].
+	output := file writing.
+	input := file reading.
+!
+
+tearDown
+
+	input close.
+	output close.
+	file delete
+! !
+
+!FileReadingWritingTest methodsFor:'tests - core'!
+
+testInsert
+	"Do nothing, since files are not expected to implement insert:* "
+! !
+
+!FileReadingWritingTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__FileReadingWritingTest.st 72 2012-01-30 22:29:41Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:39 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
@@ -111,41 +226,62 @@ testWriteTransformHexToByte
 !CollectionReadingWritingTest class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id$'
+    ^ '$Id: Xtreams__CollectionReadingWritingTest.st 72 2012-01-30 22:29:41Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:37 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:39 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
 "{ NameSpace: Xtreams }"
 
-FiniteReadingWritingTests subclass:#SocketReadingWritingTest
-	instanceVariableNames:''
+FiniteReadingWritingTests subclass:#BlockClosureReadingWritingTest
+	instanceVariableNames:'collection'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals-Tests'
+!
+
+
+!BlockClosureReadingWritingTest methodsFor:'initialize-release'!
+
+setUp
+
+	collection := OrderedCollection new.
+	input := [ collection isEmpty ifTrue: [ Incomplete zero raise ]. collection removeFirst ] reading.
+	input contentsSpecies: ByteArray.
+	output := [ :x | collection addLast: x ] writing.
+	output contentsSpecies: ByteArray.
+! !
+
+!BlockClosureReadingWritingTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__BlockClosureReadingWritingTest.st 72 2012-01-30 22:29:41Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:39 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+InfiniteReadingWritingTests subclass:#SharedQueueReadingWritingTest
+	instanceVariableNames:'queue'
 	classVariableNames:''
 	poolDictionaries:'XtreamsPool'
 	category:'Xtreams-Terminals-Tests'
 !
 
 
-!SocketReadingWritingTest methodsFor:'initialize-release'!
+!SharedQueueReadingWritingTest methodsFor:'initialize-release'!
 
 setUp
 
-        |listener|
-
-        listener := Socket newTCP: 0.
-        [   [   listener listenFor: 1.
-                input := Socket newTCPclientToHost: #[127 0 0 1] port: listener port.
-                output := listener accept
-            ] ifCurtailed: [
-                input notNil ifTrue: [ input close ].
-                output notNil ifTrue: [ output close ] ].
-        ] ensure: [ listener close ].
-        input := input reading.
-        output := output writing.
+        queue := SharedQueue new: 1024.
+        (input := queue reading) contentsSpecies: ByteArray.
+        (output := queue writing) contentsSpecies: ByteArray
 ! !
 
-!SocketReadingWritingTest methodsFor:'utilities'!
+!SharedQueueReadingWritingTest methodsFor:'utilities'!
 
 timeout: timeoutDuration server: serverBlock client: clientBlock
         "For tests that must be able to write and read at the same time, where they may block on each.
@@ -170,18 +306,46 @@ timeout: timeoutDuration server: serverBlock client: clientBlock
         self deny: timeout
 ! !
 
-!SocketReadingWritingTest class methodsFor:'documentation'!
+!SharedQueueReadingWritingTest class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id$'
+    ^ '$Id: Xtreams__SharedQueueReadingWritingTest.st 72 2012-01-30 22:29:41Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:37 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:39 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
 "{ NameSpace: Xtreams }"
 
-TestCase subclass:#BlockClosureTest
+FiniteReadingWritingTests subclass:#ElasticBufferReadingWritingTest
+	instanceVariableNames:'buffer'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals-Tests'
+!
+
+
+!ElasticBufferReadingWritingTest methodsFor:'initialize-release'!
+
+setUp
+
+	buffer := ElasticBuffer on: ByteArray new.
+	input := buffer reading.
+	output := buffer writing.
+! !
+
+!ElasticBufferReadingWritingTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__ElasticBufferReadingWritingTest.st 72 2012-01-30 22:29:41Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:39 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+TestCase subclass:#BufferedWriteStreamTest
 	instanceVariableNames:''
 	classVariableNames:''
 	poolDictionaries:''
@@ -189,21 +353,34 @@ TestCase subclass:#BlockClosureTest
 !
 
 
-!BlockClosureTest methodsFor:'tests'!
+!BufferedWriteStreamTest methodsFor:'tests'!
 
-testOneArgumentReading
-	self assert:
-		([:out | 1 to: 10 do: [:i | out put: i]] reading
-			contentsSpecies: ByteArray;
-			read: 5) = #[ 1 2 3 4 5 ]
+testBuffered
+	| writing |
+	writing := ByteArray new writing buffering: 10.
+	writing write: #[ 1 2 3 4 5 ].
+	self deny: (writing terminal first: 5) = #[ 1 2 3 4 5 ].
+	writing write: #[ 6 7 8 9 ].
+	self deny: (writing terminal first: 9) = #[ 1 2 3 4 5 6 7 8 9 ].
+	writing put: 0.
+	self deny: (writing terminal first: 10) = #[ 1 2 3 4 5 6 7 8 9 0 ].
+	writing write: #[ 11 12 ].
+	self assert: (writing terminal first: 10) = #[ 1 2 3 4 5 6 7 8 9 0 ].
+	self deny: (writing terminal first: 12) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 ].
+	writing flush.
+	self assert: (writing terminal first: 12) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 ].
+	writing write: #[ 13 14 ].
+	self deny: (writing terminal first: 14) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 13 14 ].
+	writing close.
+	self assert: (writing terminal first: 14) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 13 14 ].
 ! !
 
-!BlockClosureTest class methodsFor:'documentation'!
+!BufferedWriteStreamTest class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id$'
+    ^ '$Id: Xtreams__BufferedWriteStreamTest.st 72 2012-01-30 22:29:41Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:37 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:39 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
@@ -259,120 +436,9 @@ timeout: timeoutDuration server: serverBlock client: clientBlock
 !PipeReadingWritingTest class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id$'
+    ^ '$Id: Xtreams__PipeReadingWritingTest.st 72 2012-01-30 22:29:41Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:37 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-TestCase subclass:#BufferedWriteStreamTest
-	instanceVariableNames:''
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals-Tests'
-!
-
-
-!BufferedWriteStreamTest methodsFor:'tests'!
-
-testBuffered
-	| writing |
-	writing := ByteArray new writing buffering: 10.
-	writing write: #[ 1 2 3 4 5 ].
-	self deny: (writing terminal first: 5) = #[ 1 2 3 4 5 ].
-	writing write: #[ 6 7 8 9 ].
-	self deny: (writing terminal first: 9) = #[ 1 2 3 4 5 6 7 8 9 ].
-	writing put: 0.
-	self deny: (writing terminal first: 10) = #[ 1 2 3 4 5 6 7 8 9 0 ].
-	writing write: #[ 11 12 ].
-	self assert: (writing terminal first: 10) = #[ 1 2 3 4 5 6 7 8 9 0 ].
-	self deny: (writing terminal first: 12) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 ].
-	writing flush.
-	self assert: (writing terminal first: 12) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 ].
-	writing write: #[ 13 14 ].
-	self deny: (writing terminal first: 14) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 13 14 ].
-	writing close.
-	self assert: (writing terminal first: 14) = #[ 1 2 3 4 5 6 7 8 9 0 11 12 13 14 ].
-! !
-
-!BufferedWriteStreamTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:37 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-FiniteReadingWritingTests subclass:#RingBufferReadingWritingTest
-	instanceVariableNames:'buffer'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals-Tests'
-!
-
-
-!RingBufferReadingWritingTest methodsFor:'initialize-release'!
-
-setUp
-
-	buffer := RingBuffer on: (ByteArray new: 8192).
-	input := buffer reading.
-	output := buffer writing.
-! !
-
-!RingBufferReadingWritingTest methodsFor:'tests - core'!
-
-testReadWriteLargeAmount
-	
-	"does not work on limited size ring buffer"
-! !
-
-!RingBufferReadingWritingTest methodsFor:'tests - transforming'!
-
-testWriteCollectingMultipleBufferSize
-
-	"does not work on limited size ring buffer"
-! !
-
-!RingBufferReadingWritingTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:37 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-FiniteReadingWritingTests subclass:#BufferReadingWritingTest
-	instanceVariableNames:'buffer'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals-Tests'
-!
-
-
-!BufferReadingWritingTest methodsFor:'initialize-release'!
-
-setUp
-
-	buffer := Buffer on: ByteArray new.
-	input := buffer reading.
-	output := buffer writing.
-! !
-
-!BufferReadingWritingTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:37 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:39 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
@@ -421,22 +487,18 @@ classNamesAndAttributes
 
     ^ #(
         "<className> or (<className> attributes...) in load order"
+        #'Xtreams::BlockClosureReadingWritingTest'
+        #'Xtreams::BlockClosureTest'
+        #'Xtreams::BufferReadingWritingTest'
+        #'Xtreams::BufferedWriteStreamTest'
+        #'Xtreams::CollectionReadingWritingTest'
+        #'Xtreams::ElasticBufferReadingWritingTest'
+        #'Xtreams::FileReadingWritingTest'
+        #'Xtreams::PipeReadingWritingTest'
+        #'Xtreams::RingBufferReadingWritingTest'
+        #'Xtreams::SharedQueueReadingWritingTest'
+        #'Xtreams::SocketReadingWritingTest'
         #'stx_goodies_xtreams_terminals_tests'
-        (#'Xtreams::BlockClosureReadingWritingTest' autoload)
-        (#'Xtreams::BlockClosureTest' autoload)
-        (#'Xtreams::BufferReadingWritingTest' autoload)
-        (#'Xtreams::BufferedWriteStreamTest' autoload)
-        (#'Xtreams::CollectionReadingWritingTest' autoload)
-        (#'Xtreams::ElasticBufferReadingWritingTest' autoload)
-        (#'Xtreams::FileReadingWritingTest' autoload)
-        (#'Xtreams::PipeReadingWritingTest' autoload)
-        (#'Xtreams::PointerReadStreamTest' autoload)
-        (#'Xtreams::PointerReadingWritingTest' autoload)
-        (#'Xtreams::PointerWriteStreamTest' autoload)
-        (#'Xtreams::RingBufferReadingWritingTest' autoload)
-        (#'Xtreams::SharedQueueReadingWritingTest' autoload)
-        (#'Xtreams::SocketReadingWritingTest' autoload)
-        #'Xtreams::stx_goodies_xtreams_terminals_tests'
     )
 !
 
@@ -503,13 +565,13 @@ svnRevisionNr
 version_SVN
     ^ '$Id: stx_goodies_xtreams_terminals_tests.st 18 2011-11-21 06:03:36Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:37 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:39 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
 "{ NameSpace: Xtreams }"
 
-FiniteReadingWritingTests subclass:#ElasticBufferReadingWritingTest
+FiniteReadingWritingTests subclass:#BufferReadingWritingTest
 	instanceVariableNames:'buffer'
 	classVariableNames:''
 	poolDictionaries:''
@@ -517,74 +579,53 @@ FiniteReadingWritingTests subclass:#ElasticBufferReadingWritingTest
 !
 
 
-!ElasticBufferReadingWritingTest methodsFor:'initialize-release'!
+!BufferReadingWritingTest methodsFor:'initialize-release'!
 
 setUp
 
-	buffer := ElasticBuffer on: ByteArray new.
+	buffer := Buffer on: ByteArray new.
 	input := buffer reading.
 	output := buffer writing.
 ! !
 
-!ElasticBufferReadingWritingTest class methodsFor:'documentation'!
+!BufferReadingWritingTest class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id$'
+    ^ '$Id: Xtreams__BufferReadingWritingTest.st 72 2012-01-30 22:29:41Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:37 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:39 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals/tests' }"
 
 "{ NameSpace: Xtreams }"
 
-FiniteReadingWritingTests subclass:#BlockClosureReadingWritingTest
-	instanceVariableNames:'collection'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals-Tests'
-!
-
-
-!BlockClosureReadingWritingTest methodsFor:'initialize-release'!
-
-setUp
-
-	collection := OrderedCollection new.
-	input := [ collection isEmpty ifTrue: [ Incomplete zero raise ]. collection removeFirst ] reading.
-	input contentsSpecies: ByteArray.
-	output := [ :x | collection addLast: x ] writing.
-	output contentsSpecies: ByteArray.
-! !
-
-!BlockClosureReadingWritingTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:37 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-InfiniteReadingWritingTests subclass:#SharedQueueReadingWritingTest
-	instanceVariableNames:'queue'
+FiniteReadingWritingTests subclass:#SocketReadingWritingTest
+	instanceVariableNames:''
 	classVariableNames:''
 	poolDictionaries:'XtreamsPool'
 	category:'Xtreams-Terminals-Tests'
 !
 
 
-!SharedQueueReadingWritingTest methodsFor:'initialize-release'!
+!SocketReadingWritingTest methodsFor:'initialize-release'!
 
 setUp
 
-        queue := SharedQueue new: 1024.
-        (input := queue reading) contentsSpecies: ByteArray.
-        (output := queue writing) contentsSpecies: ByteArray
+        |listener|
+
+        listener := Socket newTCP: 0.
+        [   [   listener listenFor: 1.
+                input := Socket newTCPclientToHost: #[127 0 0 1] port: listener port.
+                output := listener accept
+            ] ifCurtailed: [
+                input notNil ifTrue: [ input close ].
+                output notNil ifTrue: [ output close ] ].
+        ] ensure: [ listener close ].
+        input := input reading.
+        output := output writing.
 ! !
 
-!SharedQueueReadingWritingTest methodsFor:'utilities'!
+!SocketReadingWritingTest methodsFor:'utilities'!
 
 timeout: timeoutDuration server: serverBlock client: clientBlock
         "For tests that must be able to write and read at the same time, where they may block on each.
@@ -609,53 +650,8 @@ timeout: timeoutDuration server: serverBlock client: clientBlock
         self deny: timeout
 ! !
 
-!SharedQueueReadingWritingTest class methodsFor:'documentation'!
+!SocketReadingWritingTest class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id$'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:37 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-FiniteReadingWritingTests subclass:#FileReadingWritingTest
-	instanceVariableNames:'file'
-	classVariableNames:''
-	poolDictionaries:'XtreamsPool'
-	category:'Xtreams-Terminals-Tests'
-!
-
-
-!FileReadingWritingTest methodsFor:'initialize-release'!
-
-setUp
-
-	file := '<1s>-<2s>' expandMacrosWith: self class name with: testSelector.
-	file :=
-		(OSHandle currentOS = #unix and: [ '/dev/shm' asFilename exists ])
-			ifTrue: [ ('/dev/shm/', file) asFilename ]
-			ifFalse: [ file asFilename ].
-	output := file writing.
-	input := file reading.
-!
-
-tearDown
-
-	input close.
-	output close.
-	file delete
-! !
-
-!FileReadingWritingTest methodsFor:'tests - core'!
-
-testInsert
-	"Do nothing, since files are not expected to implement insert:* "
-! !
-
-!FileReadingWritingTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
+    ^ '$Id: Xtreams__SocketReadingWritingTest.st 72 2012-01-30 22:29:41Z mkobetic $'
 ! !

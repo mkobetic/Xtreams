@@ -1,508 +1,4 @@
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteStream subclass:#BufferWriteStream
-	instanceVariableNames:''
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals'
-!
-
-BufferWriteStream comment:'Write stream on a Buffer. Usually used in tandem with a read stream to access buffer contents conveniently.
-{{{
-	buffer := ElasticBuffer on: String new.
-	bufferIn := buffer writing.
-	bufferOut := buffer reading.
-	100000 timesRepeat: [ bufferIn write: ''Hello World''. bufferOut read: 11 ].
-	buffer cacheSize  
-}}}
-'
-!
-
-
-!BufferWriteStream methodsFor:'accessing'!
-
-insert: anInteger from: aSequenceableCollection at: startIndex
-	^destination insert: anInteger from: aSequenceableCollection at: startIndex
-!
-
-put: anObject
-	^destination put: anObject
-!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-	^destination write: anInteger from: aSequenceableCollection at: startIndex
-! !
-
-!BufferWriteStream methodsFor:'initialize-release'!
-
-close
-	destination close
-!
-
-contentsSpecies
-	^destination contentsSpecies
-!
-
-flush
-! !
-
-!BufferWriteStream methodsFor:'seeking'!
-
-++ anInteger
-	| count |
-	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
-	count := destination writeSkip: anInteger.
-	count < anInteger ifTrue: [(Incomplete count: count) raise].
-	^anInteger
-!
-
--- anInteger
-	| count |
-	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
-	count := (destination writeSkip: anInteger negated) negated.
-	count = anInteger ifTrue: [^anInteger].
-	(Incomplete count: count) raise
-!
-
-available
-	^destination writeSize
-!
-
-length
-	^destination activeSize
-!
-
-position
-	^destination writePosition
-!
-
-position: aPosition
-	| available |
-	aPosition < 0 ifTrue: [ Incomplete zero raise ].
-	available := aPosition min: destination activeSize.
-	destination writePosition: available.
-	available = aPosition ifTrue: [^aPosition ].
-	(Incomplete count: available) raise
-!
-
-skip: anInteger
-	| count |
-	count := destination writeSkip: anInteger.
-	count ~= anInteger ifTrue: [(Incomplete count: count) raise]
-! !
-
-!BufferWriteStream methodsFor:'testing'!
-
-isPositionable
-	^true
-! !
-
-!BufferWriteStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__BufferWriteStream.st 10 2011-08-22 16:04:00Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteStream subclass:#FileWriteStream
-	instanceVariableNames:'position isPositionable contentsSpecies'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals'
-!
-
-FileWriteStream comment:'Writes to a file. File write streams can be created via the usual #writing message or via #appending which opens the file in appending mode. In appending mode, you cannot position the stream before the end of the file contents, so you can never overwrite existing contents. In writing mode, the file will be truncated at stream''s current position when #close is called. To keep the entire contents of the file, use -= 0 to skip to the end before closing. This behavior is different from the classic streams which would erase the contents of the file on opening. The stream is binary and naturally positionable.
-{{{
-	| file |
-	file := ''/dev/shm/xtreams-test'' asFilename.
-	[	file writing write: ''Hello''; close.
-		file appending write: '' World!!''; close.
-		file contentsOfEntireFile.
-	] ensure: [ file delete ]
-}}}
-It is also possible to send #reading or #writing to a pre-opened IOAcccessor if some other opening mode configuration is desirable. For example to emulate the classic write stream opening behavior, you can use the following:
-{{{
-	(IOAccessor openFileNamed: ''/dev/shm/xtreams-test'' 
-		direction: IOAccessor writeOnly
-		creation: IOAccessor truncateOrCreate
-	) writing close
-}}}
-
-Instance Variables
-	position	<Integer> current position of the stream
-	isPositionable	<Boolean> indicates that the file is open in append mode
-	contentsSpecies	<Class> species for collections of elements of this stream
-
-'
-!
-
-
-!FileWriteStream methodsFor:'accessing'!
-
-insert: anInteger from: aSequenceableCollection at: startIndex
-	^self shouldNotImplement.
-
-	"While it might seem desireable to be able to insert in to a file, the reality is you can only do so if you can read and write to the file. if you can read and write to the file, the fileSize becomes indeterminate. The only reasonable way to insert in to a file is to memory map it and access it with a PointerWriteStream instead."
-!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-        | count wrote |
-        anInteger isZero ifTrue: [^0].
-        count := 0.
-        [count < anInteger] whileTrue:
-                [wrote := destination writeBytes: anInteger from: aSequenceableCollection startingAt: startIndex + count.
-                wrote isZero ifTrue: [(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
-                count := count + wrote.
-                position := position + wrote].
-        ^anInteger
-! !
-
-!FileWriteStream methodsFor:'initialize-release'!
-
-close
-        destination isValid ifFalse: [^self].
-        destination close
-!
-
-contentsSpecies
-	^contentsSpecies
-!
-
-contentsSpecies: aClass
-	contentsSpecies := aClass
-!
-
-flush
-!
-
-isPositionable: aBoolean
-	"Only set to false when the file is open in append mode."
-
-	isPositionable := aBoolean
-!
-
-on: anAccessor
-	super on: anAccessor.
-	contentsSpecies := ByteArray.
-	isPositionable := true.
-	position := 0
-! !
-
-!FileWriteStream methodsFor:'seeking'!
-
-++ anInteger
-        | count |
-        self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
-        anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
-        count := self available min: anInteger.
-        position := position + count.
-        destination seekTo: position from: #begin.
-        count < anInteger ifTrue: [(Incomplete count: count) raise].
-        ^anInteger
-!
-
--- anInteger
-        | count |
-        self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
-        anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
-        count := position min: anInteger.
-        position := position - count.
-        destination seekTo: position from: #begin.
-        anInteger = count ifTrue: [^anInteger].
-        (Incomplete count: count) raise
-!
-
-length
-	self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
-	^destination fileSize
-!
-
-position
-	self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
-	^position
-!
-
-position: aPosition
-        | available |
-        self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
-        aPosition < 0 ifTrue: [ Incomplete zero raise ].
-        available := aPosition min: self length.
-        destination seekTo: available from: #begin.
-        position := available.
-        available = aPosition ifTrue: [ ^aPosition ].
-        (Incomplete count: available) raise
-! !
-
-!FileWriteStream methodsFor:'testing'!
-
-isPositionable
-	^isPositionable
-! !
-
-!FileWriteStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__FileWriteStream.st 10 2011-08-22 16:04:00Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals' }"
-
-"{ NameSpace: Xtreams }"
-
-ReadStream subclass:#BlockClosureGenerateStream
-	instanceVariableNames:'process current contentsSpecies writing readingSemaphore
-		writingSemaphore closed'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals'
-!
-
-BlockClosureGenerateStream comment:'Read stream on a one argument block, evaluates the block once for the life time of the stream. Once the block finishes execution, the stream is closed. The block is expected to write to the block argument, which will block exectuion until elements are read from the stream.
-{{{
-	"In this example, we have a -hard- loop, not using collection protocol, which will only run one element at a time."
-	[:out | 1 to: 10 do: [:i | out put: i]] reading read: 5.
-}}}
-{{{
-	"Fibonacci"
-	[:out | | a b x |
-	a := 0. b := 1.
-	[out put: a.
-	x := a.
-	a := b.
-	b := b + x] repeat] reading ++ 500; get.
-}}}
-
-Instance Variables
-	current	<Object>	the current element in the stream
-	closed	<Boolean>	true if the block has finished execution
-	contentsSpecies	<Class>	species for collections of elements of this stream
-	process	<Process>	the process executing the block
-	readingSemaphore	<Semaphore>	attempts to read will wait on this
-	writingSemaphore	<Semaphore>	attempts to write will wait on this, signaled when an attempt to read is performed
-
-'
-!
-
-
-!BlockClosureGenerateStream methodsFor:'accessing'!
-
-get
-	writingSemaphore signal.
-	closed ifTrue: [Incomplete zero raise].
-	readingSemaphore wait.
-	^current
-!
-
-read: anInteger into: aSequenceableCollection at: startIndex
-	| count |
-	count := 0.
-	[[count < anInteger] whileTrue:
-		[aSequenceableCollection at: startIndex + count put: self get.
-		count := count + 1]]
-			on: Incomplete do: [(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
-	^anInteger
-! !
-
-!BlockClosureGenerateStream methodsFor:'initialize-release'!
-
-close
-	closed := true.
-	process terminate.
-	readingSemaphore signal
-!
-
-contentsSpecies
-	^contentsSpecies
-!
-
-contentsSpecies: aClass
-	contentsSpecies := aClass
-!
-
-on: aBlockClosure
-	super on: aBlockClosure.
-	contentsSpecies := Array.
-	readingSemaphore := Semaphore new.
-	writingSemaphore := Semaphore new.
-	closed := false.
-	process :=
-		[aBlockClosure value: [:in |
-			writingSemaphore wait.
-			current := in.
-			readingSemaphore signal] writing.
-		closed := true] fork
-! !
-
-!BlockClosureGenerateStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__BlockClosureGenerateStream.st 10 2011-08-22 16:04:00Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteStream subclass:#SharedQueueWriteStream
-	instanceVariableNames:'contentsSpecies'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals'
-!
-
-SharedQueueWriteStream comment:'Write stream on a SharedQueue. Primarily used for data transfer between processes.
-{{{
-	queue := SharedQueue new.
-	in := queue reading.
-	out := queue writing.
-	received := Array new writing.
-	done := Semaphore new.
-	consumer :=	
-		[ | size |
-			[	(size := in get) isZero
-			] whileFalse: [ | word |
-				word := ByteString new: size.
-				in read: size into: word.
-				received put: word ].
-			done signal.
-		] fork.
-	#(one two three four) do: [ :word | out put: word size; write: word ].
-	out put: 0.
-	done wait.
-	received conclusion
-}}}
-
-Instance Variables
-	contentsSpecies	<Class> species for collections of elements of this stream
-
-'
-!
-
-
-!SharedQueueWriteStream methodsFor:'accessing'!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-	startIndex to: startIndex + anInteger - 1 do: [:index | destination nextPut: (aSequenceableCollection at: index)].
-	^anInteger
-! !
-
-!SharedQueueWriteStream methodsFor:'initialize-release'!
-
-close
-!
-
-contentsSpecies
-	^contentsSpecies
-!
-
-contentsSpecies: aClass
-	contentsSpecies := aClass
-!
-
-flush
-!
-
-on: aDestination
-	super on: aDestination.
-	contentsSpecies := Array
-! !
-
-!SharedQueueWriteStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__SharedQueueWriteStream.st 10 2011-08-22 16:04:00Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteStream subclass:#BufferedWriteStream
-	instanceVariableNames:'buffer'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals'
-!
-
-BufferedWriteStream comment:'Wraps a stream and buffers output to it based on the size of the ring-buffer it has. This is useful for doing "burst" writing, where you know exactly when you can flush the stream. To force the buffer to the underlying stream, use #flush.
-
-Instance Variables
-	buffer  <RingBuffer>    a fixed size RingBuffer to buffer up output, released when it is full or #flush/#close is sent.
-
-'
-!
-
-
-!BufferedWriteStream class methodsFor:'instance creation'!
-
-on: aDestination bufferSize: bufferSize
-	^self new on: aDestination bufferSize: bufferSize
-! !
-
-!BufferedWriteStream methodsFor:'accessing'!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-
-	| count amount |
-	count := 0.
-	[[amount := buffer write: (buffer writeSize min: (anInteger - count)) from: aSequenceableCollection at: startIndex + count.
-	count := count + amount.
-	count < anInteger] whileTrue: [self flush]]
-		on: Incomplete do: [:exception | (Incomplete on: aSequenceableCollection count: count + exception count at: startIndex) raise].
-	^anInteger
-! !
-
-!BufferedWriteStream methodsFor:'initialize-release'!
-
-close
-	super close.
-	buffer recycle.
-	buffer := nil
-!
-
-contentsSpecies
-	^destination contentsSpecies
-!
-
-flush
-	destination write: buffer
-!
-
-on: aDestination bufferSize: bufferSize
-	buffer := RingBuffer new: bufferSize class: aDestination contentsSpecies.
-	super on: aDestination
-! !
-
-!BufferedWriteStream methodsFor:'printing'!
-
-streamingPrintOn: aStream
-	super streamingPrintOn: aStream.
-	aStream
-		write: ' buffered: ';
-		print: buffer writeSize.
-	buffer writeSize isZero ifTrue: [^self].
-	aStream
-		cr; tab;
-		print: buffer contentsPast
-! !
-
-!BufferedWriteStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__BufferedWriteStream.st 10 2011-08-22 16:04:00Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals' }"
 
@@ -575,9 +71,139 @@ on: anAccessor
 !ExternalWriteStream class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id: Xtreams__ExternalWriteStream.st 10 2011-08-22 16:04:00Z mk $'
+    ^ '$Id: Xtreams__ExternalWriteStream.st 79 2012-01-30 23:01:24Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteStream subclass:#NullWriteStream
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals'
+!
+
+
+!NullWriteStream methodsFor:'accessing'!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+	^anInteger
+! !
+
+!NullWriteStream methodsFor:'initialize-release'!
+
+close
+!
+
+contentsSpecies
+	^Array
+!
+
+flush
+! !
+
+!NullWriteStream methodsFor:'private'!
+
+streamingInsert: anInteger from: aReadStream
+	aReadStream ++ anInteger
+!
+
+streamingInsertFrom: aReadStream
+	aReadStream -= 0
+!
+
+streamingWrite: anInteger from: aReadStream
+	aReadStream ++ anInteger
+!
+
+streamingWriteFrom: aReadStream
+	aReadStream -= 0
+! !
+
+!NullWriteStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__NullWriteStream.st 79 2012-01-30 23:01:24Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteStream subclass:#SharedQueueWriteStream
+	instanceVariableNames:'contentsSpecies'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals'
+!
+
+SharedQueueWriteStream comment:'Write stream on a SharedQueue. Primarily used for data transfer between processes.
+{{{
+	queue := SharedQueue new.
+	in := queue reading.
+	out := queue writing.
+	received := Array new writing.
+	done := Semaphore new.
+	consumer :=	
+		[ | size |
+			[	(size := in get) isZero
+			] whileFalse: [ | word |
+				word := ByteString new: size.
+				in read: size into: word.
+				received put: word ].
+			done signal.
+		] fork.
+	#(one two three four) do: [ :word | out put: word size; write: word ].
+	out put: 0.
+	done wait.
+	received conclusion
+}}}
+
+Instance Variables
+	contentsSpecies	<Class> species for collections of elements of this stream
+
+'
+!
+
+
+!SharedQueueWriteStream methodsFor:'accessing'!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+	startIndex to: startIndex + anInteger - 1 do: [:index | destination nextPut: (aSequenceableCollection at: index)].
+	^anInteger
+! !
+
+!SharedQueueWriteStream methodsFor:'initialize-release'!
+
+close
+!
+
+contentsSpecies
+	^contentsSpecies
+!
+
+contentsSpecies: aClass
+	contentsSpecies := aClass
+!
+
+flush
+!
+
+on: aDestination
+	super on: aDestination.
+	contentsSpecies := Array
+! !
+
+!SharedQueueWriteStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__SharedQueueWriteStream.st 79 2012-01-30 23:01:24Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals' }"
 
@@ -690,9 +316,9 @@ readBytes:count into:aByteBuffer startingAt:firstIndex
 !ExternalReadStream class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id: Xtreams__ExternalReadStream.st 10 2011-08-22 16:04:00Z mk $'
+    ^ '$Id: Xtreams__ExternalReadStream.st 79 2012-01-30 23:01:24Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals' }"
 
@@ -703,10 +329,176 @@ LibraryDefinition subclass:#stx_goodies_xtreams_terminals
 	category:'* Projects & Packages *'
 !
 
+stx_goodies_xtreams_terminals comment:'Terminals are the objects at the bottom of stream stacks. These are the ultimate sources of elements produced by read streams or ultimate consumers of elements written into write streams. This package provides support for various kinds of terminals available in VisualWorks. Eventual ports to other dialects may support different set of terminals although there will likely be significant overlap. However, implementations may have subtle differences as well. For example streams in Squeak/Pharo do not use become: when they grow the underlying collection of a collection stream. Therefore code assuming that identity of a collection stream terminal will be preserved may not be portable.
+
+
+        == Collections ==
+
+Collections are traditional stream terminals. Read streams are created by sending #reading to a collection.
+{{{
+        (1 to: 10000) reading ++ 1000; read: 5
+}}}
+Similarly write streams are created by sending #writing to a collection. The collection is grown automatically to accommodate any elements written. Closing a collection write stream will truncate the collection to the current stream position. This behavior is useful as a replacement for the traditional #contents message. The contents can be accessed with the #terminal message after the stream is closed. The advantage is that the sequence #close and #terminal (or the shortcut #conclusion) can be sent to arbitrary stream stack and behaves consistently.
+{{{
+        String new writing write: ''Hello World''; -- 6; conclusion
+}}}
+
+
+        == Block Closures ==
+
+Streaming over block closures is proving to be "xtremely" versatile tool, allowing to stream over result sets of arbitrary computations, modelling infinite streams, etc.
+{{{
+        "inifinite stream of ones"
+        [ 1 ] reading read: 20
+}}}
+{{{
+        "Fibonacci"
+        | a b | a := 0. b := 1.
+        [ | x | x := a. a := b. b := x + a. x ] reading ++ 500; get
+}}}
+{{{
+        "Streaming over ObjectMemory"
+        x := ObjectMemory someObject.
+        [ x := ObjectMemory nextObjectAfter: x ] reading read: 5
+}}}
+
+Single argument blocks can be used as read terminals too, which turn an iterative process in to a stream.
+{{{
+        "In this example, we have a -hard- loop, not using collection protocol, which will only run one element at a time."
+        [:out | 1 to: 10 do: [:i | out put: i]] reading read: 5.
+}}}
+
+Single argument blocks can be used as write terminals.
+{{{
+        "Transcript as an xtream"
+        [ :x | Transcript nextPut: x ] writing write: ''Hello World!!''
+}}}
+{{{
+        "/dev/null"
+        [ :x | ] writing write: ''Hello World!!''
+}}}
+Combined with stream transforms like #doing: and #limiting:, a block closure stream can be used to transform arbitrary loop into a stream and the streaming API can provide fine grained control over the execution of the loop body.
+
+
+        == Files ==
+
+File read streams are created by sending #reading to a Filename. However the actual terminal is an IOAccessor. The original filename is accessible through the IOAccessor.
+{{{
+        | file |
+        file := ObjectMemory imageName asFilename reading.
+        [ file read: 13 ] ensure: [ file close ]
+}}}
+As a convenience, sending #reading to a Filename of a directory will create a stream of all filenames in that directory.
+{{{
+        ''/tmp'' asFilename reading rest
+}}}
+File write streams can be created via the usual #writing message or via #appending which opens the file in appending mode. In appending mode, you cannot position the stream before the end of the file contents, so you can never overwrite existing contents. In writing mode, the file will be truncated at stream''s current position when #close is called. To keep the entire contents of the file, use -= 0 to skip to the end before closing. This behavior is different from the classic streams which would erase the contents of the file on open.
+{{{
+        | file |
+        file := ''/dev/shm/xtreams-test'' asFilename.
+        [       file writing write: ''Hello''; close.
+                file appending write: '' World!!''; close.
+                file contentsOfEntireFile.
+        ] ensure: [ file delete ]
+}}}
+It is also possible to send #reading or #writing to a pre-opened IOAcccessor if some other opening mode configuration is desirable. For example to emulate the classic write stream opening behavior, you can use the following:
+{{{
+        (IOAccessor openFileNamed: ''/dev/shm/xtreams-test'' 
+                direction: IOAccessor writeOnly
+                creation: IOAccessor truncateOrCreate
+        ) writing close
+}}}
+
+Bare file streams are always binary. An encoding transform has to be applied to translate bytes into characters, which is discussed in more detail in [Xtreams-Transforms]. However for some types of encoding it is possible to use ByteStrings instead of ByteArrays to get similar effect. E.g reading from a file into a ByteString is like applying ISO8859-1 encoding on the fly. It can also be quite a bit faster than full blown encoding layer. However it does not do line-end translation and only few single-byte encodings are available (see the ByteString hierarchy). Similarly writing into a bare file stream from a ByteString works as if the characters were automatically encoded with ISO-8859-1. This is again without line end translation, so normally you would end up with CRs (code 13) in your file, which these days does not match any OS convention (Unixes and MacOS use LF, and Windows uses CRLFs).
+{{{
+        | file header |
+        file := ObjectMemory imageName asFilename reading.
+        header := ByteString new writing.
+        [ header write: 20 from: file ] ensure: [ file close ].
+        header conclusion
+}}}
+
+
+        == Sockets and Pipes ==
+
+Sockets and Pipes are very similar, both accessed via IOAccessors again. The examples below show how data can be sent through a TCP or pipe connection by setting up a read stream and a write stream on a pair of connected accessors.
+{{{
+        [ :in :out |
+                [       out writing write: ''Hello''; close.
+                        in reading read: 5
+                ] ensure: [ in close. out close ]
+        ] valueWithArguments: SocketAccessor openPair
+}}}
+{{{
+        [ :in :out |
+                [       out writing write: ''Hello''; close.
+                        in reading read: 5
+                ] ensure: [ in close. out close ]
+        ] valueWithArguments: OSSystemSupport concreteClass pipeAccessorClass openPair
+}}}
+Same rules regarding binary vs text reading/writing applies to socket and pipe streams as was discussed with regards to file streams above.
+
+
+        == Buffers ==
+
+Buffers are used internally by Xtreams, but they could be useful in other circumstances too. There are several kinds and they can be used as both read and write stream terminals at the same time (not concurrently by multiple processes though, process synchronization has to managed explicitly via an external semaphore if necessary). For example writing into ElasticBuffer will grow it as much as necessary, but reading frees the space back up and it is immediately reused for further writes. So with interleaved reads and writes the size of the buffer will only grow to accommodate the maximum size written but not read yet.
+{{{
+        buffer := ElasticBuffer on: String new.
+        bufferIn := buffer writing.
+        bufferOut := buffer reading.
+        100000 timesRepeat: [ bufferIn write: ''Hello World''. bufferOut read: 11 ].
+        buffer cacheSize  
+}}}
+
+
+        == SharedQueues ==
+
+SharedQueues are primarily used for data transfer between processes, their API is rather spartan though. Streams over SharedQueues provide the convenience of full streaming API.
+{{{
+        queue := SharedQueue new.
+        in := queue reading.
+        out := queue writing.
+        received := Array new writing.
+        done := Semaphore new.
+        consumer :=     
+                [ | size |
+                        [       (size := in get) isZero
+                        ] whileFalse: [ | word |
+                                word := ByteString new: size.
+                                in read: size into: word.
+                                received put: word ].
+                        done signal.
+                ] fork.
+        #(one two three four) do: [ :word | out put: word size; write: word ].
+        out put: 0.
+        done wait.
+        received conclusion
+}}}
+
+
+        == CPointers ==
+
+The ability to stream over external heap is useful when there''s a need to communicate larger amounts of objects of the same type with an external library. A common use case would be when there''s a need for a buffer that can be shared between Smalltalk and the external library conveniently. The CPointer stream allows to stream over a buffer allocated on the heap seamlessly as if it is a local smalltalk object. The elements of the stream are instances corresponding to the CType associated with the CPointer.
+{{{
+        | buffer |
+        buffer := CIntegerType unsignedChar malloc: 50.
+        [       buffer writing
+                        length: 50;
+                        write: ''Hello World!!''.
+                buffer reading
+                        length: 12;
+                        contentsSpecies: ByteString;
+                        rest
+        ] ensure: [ buffer free ]
+}}}
+The write streams behave similarly to collection write streams. They know their length and they will automatically attempt to reallocate and grow their heap space if necessary. Similarly closing the write stream will reallocate and shrink the write stream to its position at that time. It is possible to set length of a read stream as well to avoid running past the allocated memory accidentally. The stream will signal Incomplete when it reaches its end.
+'
+!
+
 !stx_goodies_xtreams_terminals class methodsFor:'documentation'!
 
 extensionsVersion_SVN
-    ^ '$Id: extensions.st 17 2011-11-21 06:03:03Z mkobetic $'
+    ^ '$Id: extensions.st 79 2012-01-30 23:01:24Z mkobetic $'
 ! !
 
 !stx_goodies_xtreams_terminals class methodsFor:'description'!
@@ -716,7 +508,9 @@ excludedFromPreRequisites
      preRequisites scan. See #preRequisites for more."
 
     ^ #(
-    )
+         #'stx:libwidg'    "TextView - superclass of extended TextCollector "
+        #'stx:libview'    "DeviceGraphicsContext - superclass of extended View "
+   )
 !
 
 preRequisites
@@ -728,8 +522,8 @@ preRequisites
      exclude individual packages in the #excludedFromPrerequisites method."
 
     ^ #(
-        #'stx:goodies/xtreams/core'    "Xtreams::WriteStream - superclass of Xtreams::NullWriteStream "
-        #'stx:libbasic'    "Object - superclass of Xtreams::NullWriteStream "
+        #'stx:goodies/xtreams/core'    "Xtreams::ReadStream - superclass of Xtreams::PointerReadStream "
+        #'stx:libbasic'    "ExecutableFunction - superclass of extended Block "
         #'stx:libbasic2'    "Queue - superclass of extended SharedQueue "
     )
 ! !
@@ -761,7 +555,7 @@ classNamesAndAttributes
         #'Xtreams::SequenceableCollectionWriteStream'
         #'Xtreams::SharedQueueReadStream'
         #'Xtreams::SharedQueueWriteStream'
-        #'Xtreams::stx_goodies_xtreams_terminals'
+        #'stx_goodies_xtreams_terminals'
         #'Xtreams::FileReadStream'
     )
 !
@@ -791,6 +585,10 @@ extensionMethodNames
         #'Xtreams::Buffer' reading
         #'Xtreams::Buffer' writing
         #'Xtreams::WriteStream' buffering:
+        PipeStream isActive
+        PipeStream reading
+        PipeStream writing
+        TextCollector writing
     )
 ! !
 
@@ -821,6 +619,13 @@ legalCopyright
     ^ 'Copyright Claus Gittinger 1988-2011\nCopyright eXept Software AG 1998-2011'
 !
 
+productInstallDirBaseName
+    "Returns a default installDir which will appear in <app>.nsi.
+     This is usually not the one you want to keep"
+
+    ^ (self package asCollectionOfSubstringsSeparatedByAny:':/') last
+!
+
 productName
     "Return a product name which will appear in <lib>.rc"
 
@@ -841,7 +646,7 @@ svnRevisionNr
     "Return a SVN revision number of myself.
      This number is updated after a commit"
 
-    ^ "$SVN-Revision:"'32'"$"
+    ^ "$SVN-Revision:"'81'"$"
 ! !
 
 !stx_goodies_xtreams_terminals class methodsFor:'documentation'!
@@ -849,7 +654,102 @@ svnRevisionNr
 version_SVN
     ^ '$Id: stx_goodies_xtreams_terminals.st 17 2011-11-21 06:03:03Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals' }"
+
+"{ NameSpace: Xtreams }"
+
+ReadStream subclass:#BlockClosureGenerateStream
+	instanceVariableNames:'process current contentsSpecies writing readingSemaphore
+		writingSemaphore closed'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals'
+!
+
+BlockClosureGenerateStream comment:'Read stream on a one argument block, evaluates the block once for the life time of the stream. Once the block finishes execution, the stream is closed. The block is expected to write to the block argument, which will block exectuion until elements are read from the stream.
+{{{
+	"In this example, we have a -hard- loop, not using collection protocol, which will only run one element at a time."
+	[:out | 1 to: 10 do: [:i | out put: i]] reading read: 5.
+}}}
+{{{
+	"Fibonacci"
+	[:out | | a b x |
+	a := 0. b := 1.
+	[out put: a.
+	x := a.
+	a := b.
+	b := b + x] repeat] reading ++ 500; get.
+}}}
+
+Instance Variables
+	current	<Object>	the current element in the stream
+	closed	<Boolean>	true if the block has finished execution
+	contentsSpecies	<Class>	species for collections of elements of this stream
+	process	<Process>	the process executing the block
+	readingSemaphore	<Semaphore>	attempts to read will wait on this
+	writingSemaphore	<Semaphore>	attempts to write will wait on this, signaled when an attempt to read is performed
+
+'
+!
+
+
+!BlockClosureGenerateStream methodsFor:'accessing'!
+
+get
+	writingSemaphore signal.
+	closed ifTrue: [Incomplete zero raise].
+	readingSemaphore wait.
+	^current
+!
+
+read: anInteger into: aSequenceableCollection at: startIndex
+	| count |
+	count := 0.
+	[[count < anInteger] whileTrue:
+		[aSequenceableCollection at: startIndex + count put: self get.
+		count := count + 1]]
+			on: Incomplete do: [(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
+	^anInteger
+! !
+
+!BlockClosureGenerateStream methodsFor:'initialize-release'!
+
+close
+	closed := true.
+	process terminate.
+	readingSemaphore signal
+!
+
+contentsSpecies
+	^contentsSpecies
+!
+
+contentsSpecies: aClass
+	contentsSpecies := aClass
+!
+
+on: aBlockClosure
+	super on: aBlockClosure.
+	contentsSpecies := Array.
+	readingSemaphore := Semaphore new.
+	writingSemaphore := Semaphore new.
+	closed := false.
+	process :=
+		[aBlockClosure value: [:in |
+			writingSemaphore wait.
+			current := in.
+			readingSemaphore signal] writing.
+		closed := true] fork
+! !
+
+!BlockClosureGenerateStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__BlockClosureGenerateStream.st 79 2012-01-30 23:01:24Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals' }"
 
@@ -902,335 +802,95 @@ flush
 !CollectionWriteStream class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id: Xtreams__CollectionWriteStream.st 10 2011-08-22 16:04:00Z mk $'
+    ^ '$Id: Xtreams__CollectionWriteStream.st 79 2012-01-30 23:01:24Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals' }"
 
 "{ NameSpace: Xtreams }"
 
-ReadStream subclass:#BlockClosureReadStream
-	instanceVariableNames:'contentsSpecies closeBlock'
+ReadStream subclass:#SharedQueueReadStream
+	instanceVariableNames:'contentsSpecies'
 	classVariableNames:''
 	poolDictionaries:''
 	category:'Xtreams-Terminals'
 !
 
-BlockClosureReadStream comment:'Read stream on a zero argument block, evaluates the block once for each requested element, the result of the block evaluation is the element.
+SharedQueueReadStream comment:'Read stream on a SharedQueue. Primarily used for data transfer between processes.
 {{{
-	"inifinite stream of ones"
-	[ 1 ] reading read: 20
-}}}
-{{{
-	"Fibonacci"
-	| a b | a := 0. b := 1.
-	[ | x | x := a. a := b. b := x + a. x ] reading ++ 500; get
-}}}
-{{{
-	"Streaming over ObjectMemory"
-	x := ObjectMemory someObject.
-	[ x := ObjectMemory nextObjectAfter: x ] reading read: 5
+	queue := SharedQueue new.
+	in := queue reading.
+	out := queue writing.
+	received := Array new writing.
+	done := Semaphore new.
+	consumer :=	
+		[ | size |
+			[	(size := in get) isZero
+			] whileFalse: [ | word |
+				word := ByteString new: size.
+				in read: size into: word.
+				received put: word ].
+			done signal.
+		] fork.
+	#(one two three four) do: [ :word | out put: word size; write: word ].
+	out put: 0.
+	done wait.
+	received conclusion
 }}}
 
 Instance Variables
 	contentsSpecies	<Class> species for collections of elements of this stream
-	closeBlock	<BlockClosure> invoked in response to the #close message, allows customizing the close behavior
 
 '
 !
 
 
-!BlockClosureReadStream methodsFor:'accessing'!
+!SharedQueueReadStream methodsFor:'accessing'!
 
 get
-	^source value
+	^source next
 !
 
 read: anInteger into: aSequenceableCollection at: startIndex
-	| count |
-	count := 0.
-	[[count < anInteger] whileTrue:
-		[aSequenceableCollection at: startIndex + count put: source value.
-		count := count + 1]]
-			on: Incomplete do: [(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
+	startIndex to: startIndex + anInteger - 1 do: [:index | aSequenceableCollection at: index put: source next].
 	^anInteger
 ! !
 
-!BlockClosureReadStream methodsFor:'initialize-release'!
+!SharedQueueReadStream methodsFor:'initialize-release'!
 
 close
-	closeBlock cull: self
-!
-
-closeBlock
-	^closeBlock
-!
-
-closeBlock: aBlock
-	closeBlock := aBlock
 !
 
 contentsSpecies
 	^contentsSpecies
 !
 
-contentsSpecies: anObject
-	contentsSpecies := anObject
+contentsSpecies: aClass
+	contentsSpecies := aClass
 !
 
-on: aBlockClosure
-	super on: aBlockClosure.
-	contentsSpecies := Array.
-	closeBlock := []
+on: aSource
+	super on: aSource.
+	contentsSpecies := Array
 ! !
 
-!BlockClosureReadStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__BlockClosureReadStream.st 10 2011-08-22 16:04:00Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteStream subclass:#BlockClosureWriteStream
-	instanceVariableNames:'contentsSpecies closeBlock'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals'
-!
-
-BlockClosureWriteStream comment:'Write stream on a single argument block, the block is evaluated for each element written with the element assigned as the argument of the evaluation.
-{{{
-	"Transcript as an xtream"
-	[ :x | Transcript nextPut: x ] writing write: ''Hello World!!''
-}}}
-{{{
-	"/dev/null"
-	[ :x | ] writing write: ''Hello World!!''
-}}}
-
-Instance Variables
-	contentsSpecies	<Class> species for collections of elements of this stream
-	closeBlock	<BlockClosure> invoked in response to the #close message, allows customizing the close behavior
-
-'
-!
-
-
-!BlockClosureWriteStream methodsFor:'accessing'!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-	| count |
-	count := 0.
-	[[count < anInteger] whileTrue:
-		[destination value: (aSequenceableCollection at: startIndex + count).
-		count := count + 1]]
-			on: Incomplete do: [(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
-	^anInteger
-! !
-
-!BlockClosureWriteStream methodsFor:'initialize-release'!
-
-close
-	closeBlock cull: self
-!
-
-closeBlock
-	^closeBlock
-!
-
-closeBlock: aBlock
-	closeBlock := aBlock
-!
-
-contentsSpecies
-	^contentsSpecies
-!
-
-contentsSpecies: anObject
-	contentsSpecies := anObject
-!
-
-flush
-!
-
-on: aBlockClosure
-	super on: aBlockClosure.
-	contentsSpecies := Array.
-	closeBlock := []
-! !
-
-!BlockClosureWriteStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__BlockClosureWriteStream.st 10 2011-08-22 16:04:00Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals' }"
-
-"{ NameSpace: Xtreams }"
-
-ReadStream subclass:#SequenceableCollectionReadStream
-	instanceVariableNames:'position'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals'
-!
-
-SequenceableCollectionReadStream comment:'Read stream on a sequenceable collection.
-{{{
-	(1 to: 10000) reading ++ 1000; read: 5
-}}}
-
-Instance Variables
-	position	<Integer> current position of the stream
-
-'
-!
-
-
-!SequenceableCollectionReadStream methodsFor:'accessing'!
-
-get
-	position = source size ifTrue: [Incomplete zero raise].
-	position := position + 1.
-	^source at: position
-!
-
-read: anInteger into: aSequenceableCollection at: startIndex
-	| count |
-	count := anInteger min: self available.
-	aSequenceableCollection replaceFrom: startIndex to: startIndex + count - 1 with: source startingAt: position + 1.
-	position := position + count.
-	count < anInteger ifTrue: [(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
-	^anInteger
-! !
-
-!SequenceableCollectionReadStream methodsFor:'initialize-release'!
-
-close
-!
-
-contentsSpecies
-	^source species
-!
-
-on: aSequenceableCollection
-	super on: aSequenceableCollection.
-	position := 0
-! !
-
-!SequenceableCollectionReadStream methodsFor:'printing'!
-
-streamingPrintOn: aStream
-	| tail head |
-	super streamingPrintOn: aStream.
-	tail := position min: 5.
-	head := (source size - position) min: (10 - tail).
-	aStream
-		write: ' position: ';
-		print: position;
-		write: ' size: ';
-		print: source size;
-		cr; tab;
-		write: (position > 5 ifTrue: ['...'] ifFalse: ['']);
-		print: (source copyFrom: position + 1 - tail to: position);
-		write: '  |  ';
-		print: (source copyFrom: position + 1 to: position + head);
-		write: (source size - position > (10 - tail) ifTrue: ['...'] ifFalse: [''])
-! !
-
-!SequenceableCollectionReadStream methodsFor:'private'!
-
-streamingInsert: anInteger into: aWriteStream
-	| count |
-	anInteger isZero ifTrue: [^self].
-	count := anInteger min: self available.
-	aWriteStream insert: count from: source at: position + 1.
-	position := position + count.
-	count >= anInteger ifTrue: [^self].
-	(Incomplete on: source count: count at: position - count + 1) raise
-!
+!SharedQueueReadStream methodsFor:'private'!
 
 streamingInsertInto: aWriteStream
-	| count |
-	(count := self available) isZero ifTrue: [Incomplete zero raise].
-	self streamingInsert: count into: aWriteStream.
-	^count
-!
-
-streamingWrite: anInteger into: aWriteStream
-	| count |
-	anInteger isZero ifTrue: [^0].
-	count := anInteger min: self available.
-	aWriteStream write: count from: source at: position + 1.
-	position := position + count.
-	count = anInteger ifTrue: [^anInteger].
-	(Incomplete on: source count: count at: position - count + 1) raise
+	self shouldNotImplement
 !
 
 streamingWriteInto: aWriteStream
-	| count |
-	(count := self available) isZero ifTrue: [^self].
-	self streamingWrite: count into: aWriteStream.
-	^count
+	self shouldNotImplement
 ! !
 
-!SequenceableCollectionReadStream methodsFor:'seeking'!
-
-++ anInteger
-	| count |
-	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
-	count := self available min: anInteger.
-	position := position + count.
-	count < anInteger ifTrue: [(Incomplete count: count) raise].
-	^anInteger
-!
-
--- anInteger
-	| count |
-	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
-	count := position min: anInteger.
-	position := position - count.
-	count = anInteger ifTrue: [^anInteger].
-	(Incomplete count: count) raise
-!
-
-length
-	^source size
-!
-
-position
-	" Return a bookmark for the current stream state. "
-
-	^position
-!
-
-position: aPosition
-
-	aPosition < 0 ifTrue: [ Incomplete zero raise ].
-	position := aPosition min: self length.
-	position = aPosition ifTrue: [^aPosition ].
-	(Incomplete count: position) raise
-! !
-
-!SequenceableCollectionReadStream methodsFor:'testing'!
-
-isPositionable
-	^true
-! !
-
-!SequenceableCollectionReadStream class methodsFor:'documentation'!
+!SharedQueueReadStream class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id: Xtreams__SequenceableCollectionReadStream.st 10 2011-08-22 16:04:00Z mk $'
+    ^ '$Id: Xtreams__SharedQueueReadStream.st 79 2012-01-30 23:01:24Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals' }"
 
@@ -1378,22 +1038,22 @@ isPositionable
 !PointerReadStream class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id: Xtreams__PointerReadStream.st 10 2011-08-22 16:04:00Z mk $'
+    ^ '$Id: Xtreams__PointerReadStream.st 79 2012-01-30 23:01:24Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals' }"
 
 "{ NameSpace: Xtreams }"
 
-ReadStream subclass:#BufferReadStream
+WriteStream subclass:#BufferWriteStream
 	instanceVariableNames:''
 	classVariableNames:''
 	poolDictionaries:''
 	category:'Xtreams-Terminals'
 !
 
-BufferReadStream comment:'Read stream on a Buffer. Usually used in tandem with a write stream to access buffer contents conveniently.
+BufferWriteStream comment:'Write stream on a Buffer. Usually used in tandem with a read stream to access buffer contents conveniently.
 {{{
 	buffer := ElasticBuffer on: String new.
 	bufferIn := buffer writing.
@@ -1405,32 +1065,39 @@ BufferReadStream comment:'Read stream on a Buffer. Usually used in tandem with a
 !
 
 
-!BufferReadStream methodsFor:'accessing'!
+!BufferWriteStream methodsFor:'accessing'!
 
-get
-	^source get
+insert: anInteger from: aSequenceableCollection at: startIndex
+	^destination insert: anInteger from: aSequenceableCollection at: startIndex
 !
 
-read: anInteger into: aSequenceableCollection at: startIndex
-	source read: anInteger into: aSequenceableCollection at: startIndex.
-	^anInteger
+put: anObject
+	^destination put: anObject
+!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+	^destination write: anInteger from: aSequenceableCollection at: startIndex
 ! !
 
-!BufferReadStream methodsFor:'initialize-release'!
+!BufferWriteStream methodsFor:'initialize-release'!
 
 close
+	destination close
 !
 
 contentsSpecies
-	^source contentsSpecies
+	^destination contentsSpecies
+!
+
+flush
 ! !
 
-!BufferReadStream methodsFor:'seeking'!
+!BufferWriteStream methodsFor:'seeking'!
 
 ++ anInteger
 	| count |
 	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
-	count := source readSkip: anInteger.
+	count := destination writeSkip: anInteger.
 	count < anInteger ifTrue: [(Incomplete count: count) raise].
 	^anInteger
 !
@@ -1438,485 +1105,136 @@ contentsSpecies
 -- anInteger
 	| count |
 	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
-	count := (source readSkip: anInteger negated) negated.
+	count := (destination writeSkip: anInteger negated) negated.
 	count = anInteger ifTrue: [^anInteger].
 	(Incomplete count: count) raise
 !
 
 available
-	^source readSize
+	^destination writeSize
 !
 
 length
-	^source activeSize
+	^destination activeSize
 !
 
 position
-	^source readPosition
+	^destination writePosition
 !
 
 position: aPosition
 	| available |
 	aPosition < 0 ifTrue: [ Incomplete zero raise ].
-	available := aPosition min: source activeSize.
-	source readPosition: available.
+	available := aPosition min: destination activeSize.
+	destination writePosition: available.
 	available = aPosition ifTrue: [^aPosition ].
 	(Incomplete count: available) raise
+!
+
+skip: anInteger
+	| count |
+	count := destination writeSkip: anInteger.
+	count ~= anInteger ifTrue: [(Incomplete count: count) raise]
 ! !
 
-!BufferReadStream methodsFor:'testing'!
+!BufferWriteStream methodsFor:'testing'!
 
 isPositionable
 	^true
 ! !
 
-!BufferReadStream class methodsFor:'documentation'!
+!BufferWriteStream class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id: Xtreams__BufferReadStream.st 10 2011-08-22 16:04:00Z mk $'
+    ^ '$Id: Xtreams__BufferWriteStream.st 79 2012-01-30 23:01:24Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:32 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals' }"
 
 "{ NameSpace: Xtreams }"
 
-WriteStream subclass:#NullWriteStream
-	instanceVariableNames:''
+ReadStream subclass:#BlockClosureReadStream
+	instanceVariableNames:'contentsSpecies closeBlock'
 	classVariableNames:''
 	poolDictionaries:''
 	category:'Xtreams-Terminals'
 !
 
-
-!NullWriteStream methodsFor:'accessing'!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-	^anInteger
-! !
-
-!NullWriteStream methodsFor:'initialize-release'!
-
-close
-!
-
-contentsSpecies
-	^Array
-!
-
-flush
-! !
-
-!NullWriteStream methodsFor:'private'!
-
-streamingInsert: anInteger from: aReadStream
-	aReadStream ++ anInteger
-!
-
-streamingInsertFrom: aReadStream
-	aReadStream -= 0
-!
-
-streamingWrite: anInteger from: aReadStream
-	aReadStream ++ anInteger
-!
-
-streamingWriteFrom: aReadStream
-	aReadStream -= 0
-! !
-
-!NullWriteStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__NullWriteStream.st 10 2011-08-22 16:04:00Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:33 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals' }"
-
-"{ NameSpace: Xtreams }"
-
-ReadStream subclass:#SharedQueueReadStream
-	instanceVariableNames:'contentsSpecies'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals'
-!
-
-SharedQueueReadStream comment:'Read stream on a SharedQueue. Primarily used for data transfer between processes.
+BlockClosureReadStream comment:'Read stream on a zero argument block, evaluates the block once for each requested element, the result of the block evaluation is the element.
 {{{
-	queue := SharedQueue new.
-	in := queue reading.
-	out := queue writing.
-	received := Array new writing.
-	done := Semaphore new.
-	consumer :=	
-		[ | size |
-			[	(size := in get) isZero
-			] whileFalse: [ | word |
-				word := ByteString new: size.
-				in read: size into: word.
-				received put: word ].
-			done signal.
-		] fork.
-	#(one two three four) do: [ :word | out put: word size; write: word ].
-	out put: 0.
-	done wait.
-	received conclusion
+	"inifinite stream of ones"
+	[ 1 ] reading read: 20
+}}}
+{{{
+	"Fibonacci"
+	| a b | a := 0. b := 1.
+	[ | x | x := a. a := b. b := x + a. x ] reading ++ 500; get
+}}}
+{{{
+	"Streaming over ObjectMemory"
+	x := ObjectMemory someObject.
+	[ x := ObjectMemory nextObjectAfter: x ] reading read: 5
 }}}
 
 Instance Variables
 	contentsSpecies	<Class> species for collections of elements of this stream
+	closeBlock	<BlockClosure> invoked in response to the #close message, allows customizing the close behavior
 
 '
 !
 
 
-!SharedQueueReadStream methodsFor:'accessing'!
+!BlockClosureReadStream methodsFor:'accessing'!
 
 get
-	^source next
+	^source value
 !
 
 read: anInteger into: aSequenceableCollection at: startIndex
-	startIndex to: startIndex + anInteger - 1 do: [:index | aSequenceableCollection at: index put: source next].
+	| count |
+	count := 0.
+	[[count < anInteger] whileTrue:
+		[aSequenceableCollection at: startIndex + count put: source value.
+		count := count + 1]]
+			on: Incomplete do: [(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
 	^anInteger
 ! !
 
-!SharedQueueReadStream methodsFor:'initialize-release'!
+!BlockClosureReadStream methodsFor:'initialize-release'!
 
 close
+	closeBlock cull: self
+!
+
+closeBlock
+	^closeBlock
+!
+
+closeBlock: aBlock
+	closeBlock := aBlock
 !
 
 contentsSpecies
 	^contentsSpecies
 !
 
-contentsSpecies: aClass
-	contentsSpecies := aClass
+contentsSpecies: anObject
+	contentsSpecies := anObject
 !
 
-on: aSource
-	super on: aSource.
-	contentsSpecies := Array
-! !
-
-!SharedQueueReadStream methodsFor:'private'!
-
-streamingInsertInto: aWriteStream
-	self shouldNotImplement
-!
-
-streamingWriteInto: aWriteStream
-	self shouldNotImplement
-! !
-
-!SharedQueueReadStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__SharedQueueReadStream.st 10 2011-08-22 16:04:00Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:33 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals' }"
-
-"{ NameSpace: Xtreams }"
-
-ExternalReadStream subclass:#FileReadStream
-	instanceVariableNames:'position'
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Terminals'
-!
-
-FileReadStream comment:'Reads from a file. The stream is usually created by sending #reading to a Filename. However the actual terminal is an IOAccessor. The original filename is accessible through the IOAccessor. The stream is binary and is naturally positionable.
-{{{
-	| file |
-	file := ObjectMemory imageName asFilename reading.
-	[ file read: 13 ] ensure: [ file close ]
-}}}
-As a convenience, sending #reading to a Filename of a directory will create a stream of all filenames in that directory.
-{{{
-	''/tmp'' asFilename reading rest
-}}}
-
-Instance Variables
-	position	<Integer> current position of the stream
-
-'
-!
-
-
-!FileReadStream methodsFor:'accessing'!
-
-get
-
-	| object |
-	object := super get.
-	position := position + 1.
-	^object
-!
-
-read: anInteger into: aSequenceableCollection at: startIndex
-
-	super read: anInteger into: aSequenceableCollection at: startIndex.
-	position := position + anInteger.
-	^anInteger
-! !
-
-!FileReadStream methodsFor:'initialize-release'!
-
-on: anAccessor
-	super on: anAccessor.
-	position := 0
-! !
-
-!FileReadStream methodsFor:'private'!
-
-bytesForRead
-
-	"Ideally we'd ask for the fileSize and subtract that from our position, but calling #fileSize is a slow primitive"
-	^cache size
-!
-
-incompleteRead: incomplete
-
-	position := position + incomplete count.
-	super incompleteRead: incomplete.
-!
-
-readBytes:count into:aByteBuffer startingAt:firstIndex
-
-    ^source readBytes:count into:aByteBuffer startingAt:firstIndex
-! !
-
-!FileReadStream methodsFor:'seeking'!
-
-++ anInteger
-        | count |
-        anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
-        count := self available min: anInteger.
-        position := position + count.
-        source seekTo: position from: #begin.
-        cacheDataSize := cachePosition := 0.
-        count < anInteger ifTrue: [(Incomplete count: count) raise].
-        ^anInteger
-!
-
--- anInteger
-        | count |
-        anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
-        count := position min: anInteger.
-        position := position - count.
-        source seekTo: position from: #begin.
-        cacheDataSize := cachePosition := 0.
-        anInteger = count ifTrue: [^anInteger].
-        (Incomplete count: count) raise
-!
-
-length
-	^source fileSize
-!
-
-position
-	^position
-!
-
-position: aPosition
-
-        | available |
-        aPosition < 0 ifTrue: [ Incomplete zero raise ].
-        available := aPosition min: self length.
-        source seekTo: available from: #begin.
-        position := available.
-        cacheDataSize := cachePosition := 0.
-        available = aPosition ifTrue: [^aPosition].
-        (Incomplete count: available) raise
-! !
-
-!FileReadStream methodsFor:'testing'!
-
-isPositionable
-	^true
-! !
-
-!FileReadStream class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id: Xtreams__FileReadStream.st 10 2011-08-22 16:04:00Z mk $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:33 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/terminals' }"
-
-"{ NameSpace: Xtreams }"
-
-WriteStream subclass:#PointerWriteStream
-	instanceVariableNames:'length position contentsSpecies'
-	classVariableNames:''
-	poolDictionaries:'XtreamsPool'
-	category:'Xtreams-Terminals'
-!
-
-PointerWriteStream comment:'Write stream on external heap, commonly used to marshal input for an external library call. The terminal is a CPointer and its associated CType is used to interpret the bytes on the heap. The length of the stream must be set, to avoid writing past the allocated memory space. If more objects are written than can fit in the pre-allocated space, a new larger heap chunk is automatically allocated to accommodate it (the contents of the old chunk are copied over and the chunk is deallocated). Similarly closing the write stream will reallocate and shrink the write stream to its position at that time.
-{{{
-	| buffer |
-	buffer := CIntegerType unsignedChar malloc: 50.
-	[	buffer writing
-			length: 50;
-			write: ''Hello World!!''.
-		buffer reading
-			length: 12;
-			contentsSpecies: ByteString;
-			rest
-	] ensure: [ buffer free ]
-}}}
-
-Instance Variables
-	length	<Integer> allocated size of the stream as a number of elements of associated CType
-	position	<Integer> current position of the stream
-	contentsSpecies	<Class> species for collections of elements of this stream
-
-'
-!
-
-
-!PointerWriteStream methodsFor:'accessing'!
-
-contents
-	| cache |
-	cache := self contentsSpecies withSize: position.
-	destination copyAt: 0 to: cache size: position startingAt: 1.
-	^cache
-!
-
-insert: anInteger from: aSequenceableCollection at: startIndex
-	| shift |
-	shift := length - position.
-	self resizeTo: length + anInteger.
-	OSSystemSupport concreteClass new copyMemoryTo: destination + position + anInteger from: destination + position size: shift.
-	self copyFrom: aSequenceableCollection size: anInteger startingAt: startIndex.
-	position := position + anInteger.
-	^anInteger
-!
-
-put: anObject
-	| free |
-	free := length - position.
-	free < 1 ifTrue: [self resizeTo: length + 1].
-	destination at: position put: anObject.
-	position := position + 1
-!
-
-write: anInteger from: aSequenceableCollection at: startIndex
-	| available |
-	available := length - position.
-	available < anInteger ifTrue: [self resizeTo: length + anInteger - available].
-	self copyFrom: aSequenceableCollection size: anInteger startingAt: startIndex.
-	position := position + anInteger.
-	^anInteger
-! !
-
-!PointerWriteStream methodsFor:'initialize-release'!
-
-close
-	self resizeTo: position
-!
-
-contentsSpecies
-	^contentsSpecies
-!
-
-contentsSpecies: aClass
-	contentsSpecies := aClass
-!
-
-flush
-!
-
-length: anObject
-	length := anObject
-!
-
-on: aPointer
-	super on: aPointer.
+on: aBlockClosure
+	super on: aBlockClosure.
 	contentsSpecies := Array.
-	length := 1.
-	position := 0
+	closeBlock := []
 ! !
 
-!PointerWriteStream methodsFor:'private'!
-
-copyFrom: aSequenceableCollection size: anInteger startingAt: startIndex
-
-	destination type = UnsignedChar
-		ifTrue: [ 	destination copyAt: position from: aSequenceableCollection size: anInteger startingAt: startIndex. ]
-		ifFalse: [
-			0 to: anInteger - 1 do: [ :i |
-				destination at: position + i put: (aSequenceableCollection at: startIndex + i) ] ]
-!
-
-resizeTo: anInteger
-	| replacement beGC |
-	length = anInteger ifTrue: [^self].
-	replacement := destination type baseReferentType malloc: anInteger.
-	OSSystemSupport concreteClass new copyMemoryTo: replacement from: destination size: (length min: anInteger).
-	beGC := CPointer.GarbageCollectablePointers includes: destination.
-	destination free.
-	destination referentAddress: replacement referentAddress.
-	beGC ifTrue: [destination beGarbageCollectable].
-	length := anInteger
-! !
-
-!PointerWriteStream methodsFor:'seeking'!
-
-++ anInteger
-	| count |
-	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
-	count := self available min: anInteger.
-	position := position + count.
-	count < anInteger ifTrue: [(Incomplete count: count) raise].
-	^anInteger
-!
-
--- anInteger
-	| count |
-	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
-	count := position min: anInteger.
-	position := position - count.
-	count = anInteger ifTrue: [^anInteger].
-	(Incomplete count: count) raise
-!
-
-length
-	^length
-!
-
-position
-	^position
-!
-
-position: aPosition
-	" Return to a bookmarked position on this stream. "
-
-	aPosition < 0 ifTrue: [Incomplete zero raise].
-	aPosition > length ifFalse: [ ^position := aPosition ].
-	position := length.
-	^(Incomplete count: length) raise
-! !
-
-!PointerWriteStream methodsFor:'testing'!
-
-isPositionable
-	^true
-! !
-
-!PointerWriteStream class methodsFor:'documentation'!
+!BlockClosureReadStream class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id: Xtreams__PointerWriteStream.st 10 2011-08-22 16:04:00Z mk $'
+    ^ '$Id: Xtreams__BlockClosureReadStream.st 79 2012-01-30 23:01:24Z mkobetic $'
 ! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:33 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/terminals' }"
 
@@ -2105,7 +1423,868 @@ isPositionable
 !SequenceableCollectionWriteStream class methodsFor:'documentation'!
 
 version_SVN
-    ^ '$Id: Xtreams__SequenceableCollectionWriteStream.st 10 2011-08-22 16:04:00Z mk $'
+    ^ '$Id: Xtreams__SequenceableCollectionWriteStream.st 79 2012-01-30 23:01:24Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals' }"
+
+"{ NameSpace: Xtreams }"
+
+ReadStream subclass:#BufferReadStream
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals'
+!
+
+BufferReadStream comment:'Read stream on a Buffer. Usually used in tandem with a write stream to access buffer contents conveniently.
+{{{
+	buffer := ElasticBuffer on: String new.
+	bufferIn := buffer writing.
+	bufferOut := buffer reading.
+	100000 timesRepeat: [ bufferIn write: ''Hello World''. bufferOut read: 11 ].
+	buffer cacheSize  
+}}}
+'
+!
+
+
+!BufferReadStream methodsFor:'accessing'!
+
+get
+	^source get
+!
+
+read: anInteger into: aSequenceableCollection at: startIndex
+	source read: anInteger into: aSequenceableCollection at: startIndex.
+	^anInteger
+! !
+
+!BufferReadStream methodsFor:'initialize-release'!
+
+close
+!
+
+contentsSpecies
+	^source contentsSpecies
+! !
+
+!BufferReadStream methodsFor:'seeking'!
+
+++ anInteger
+	| count |
+	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
+	count := source readSkip: anInteger.
+	count < anInteger ifTrue: [(Incomplete count: count) raise].
+	^anInteger
+!
+
+-- anInteger
+	| count |
+	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
+	count := (source readSkip: anInteger negated) negated.
+	count = anInteger ifTrue: [^anInteger].
+	(Incomplete count: count) raise
+!
+
+available
+	^source readSize
+!
+
+length
+	^source activeSize
+!
+
+position
+	^source readPosition
+!
+
+position: aPosition
+	| available |
+	aPosition < 0 ifTrue: [ Incomplete zero raise ].
+	available := aPosition min: source activeSize.
+	source readPosition: available.
+	available = aPosition ifTrue: [^aPosition ].
+	(Incomplete count: available) raise
+! !
+
+!BufferReadStream methodsFor:'testing'!
+
+isPositionable
+	^true
+! !
+
+!BufferReadStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__BufferReadStream.st 79 2012-01-30 23:01:24Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteStream subclass:#BufferedWriteStream
+	instanceVariableNames:'buffer'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals'
+!
+
+BufferedWriteStream comment:'Wraps a stream and buffers output to it based on the size of the ring-buffer it has. This is useful for doing "burst" writing, where you know exactly when you can flush the stream. To force the buffer to the underlying stream, use #flush.
+
+Instance Variables
+	buffer  <RingBuffer>    a fixed size RingBuffer to buffer up output, released when it is full or #flush/#close is sent.
+
+'
+!
+
+
+!BufferedWriteStream class methodsFor:'instance creation'!
+
+on: aDestination bufferSize: bufferSize
+	^self new on: aDestination bufferSize: bufferSize
+! !
+
+!BufferedWriteStream methodsFor:'accessing'!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+
+	| count amount |
+	count := 0.
+	[[amount := buffer write: (buffer writeSize min: (anInteger - count)) from: aSequenceableCollection at: startIndex + count.
+	count := count + amount.
+	count < anInteger] whileTrue: [self flush]]
+		on: Incomplete do: [:exception | (Incomplete on: aSequenceableCollection count: count + exception count at: startIndex) raise].
+	^anInteger
+! !
+
+!BufferedWriteStream methodsFor:'initialize-release'!
+
+close
+	super close.
+	buffer recycle.
+	buffer := nil
+!
+
+contentsSpecies
+	^destination contentsSpecies
+!
+
+flush
+	destination write: buffer
+!
+
+on: aDestination bufferSize: bufferSize
+	buffer := RingBuffer new: bufferSize class: aDestination contentsSpecies.
+	super on: aDestination
+! !
+
+!BufferedWriteStream methodsFor:'printing'!
+
+streamingPrintOn: aStream
+	super streamingPrintOn: aStream.
+	aStream
+		write: ' buffered: ';
+		print: buffer writeSize.
+	buffer writeSize isZero ifTrue: [^self].
+	aStream
+		cr; tab;
+		print: buffer contentsPast
+! !
+
+!BufferedWriteStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__BufferedWriteStream.st 79 2012-01-30 23:01:24Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteStream subclass:#FileWriteStream
+	instanceVariableNames:'position isPositionable contentsSpecies'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals'
+!
+
+FileWriteStream comment:'Writes to a file. File write streams can be created via the usual #writing message or via #appending which opens the file in appending mode. In appending mode, you cannot position the stream before the end of the file contents, so you can never overwrite existing contents. In writing mode, the file will be truncated at stream''s current position when #close is called. To keep the entire contents of the file, use -= 0 to skip to the end before closing. This behavior is different from the classic streams which would erase the contents of the file on opening. The stream is binary and naturally positionable.
+{{{
+	| file |
+	file := ''/dev/shm/xtreams-test'' asFilename.
+	[	file writing write: ''Hello''; close.
+		file appending write: '' World!!''; close.
+		file contentsOfEntireFile.
+	] ensure: [ file delete ]
+}}}
+It is also possible to send #reading or #writing to a pre-opened IOAcccessor if some other opening mode configuration is desirable. For example to emulate the classic write stream opening behavior, you can use the following:
+{{{
+	(IOAccessor openFileNamed: ''/dev/shm/xtreams-test'' 
+		direction: IOAccessor writeOnly
+		creation: IOAccessor truncateOrCreate
+	) writing close
+}}}
+
+Instance Variables
+	position	<Integer> current position of the stream
+	isPositionable	<Boolean> indicates that the file is open in append mode
+	contentsSpecies	<Class> species for collections of elements of this stream
+
+'
+!
+
+
+!FileWriteStream methodsFor:'accessing'!
+
+insert: anInteger from: aSequenceableCollection at: startIndex
+	^self shouldNotImplement.
+
+	"While it might seem desireable to be able to insert in to a file, the reality is you can only do so if you can read and write to the file. if you can read and write to the file, the fileSize becomes indeterminate. The only reasonable way to insert in to a file is to memory map it and access it with a PointerWriteStream instead."
+!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+        | count wrote |
+        anInteger isZero ifTrue: [^0].
+        count := 0.
+        [count < anInteger] whileTrue:
+                [wrote := destination writeBytes: anInteger from: aSequenceableCollection startingAt: startIndex + count.
+                wrote isZero ifTrue: [(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
+                count := count + wrote.
+                position := position + wrote].
+        ^anInteger
+! !
+
+!FileWriteStream methodsFor:'initialize-release'!
+
+close
+        destination isValid ifFalse: [^self].
+        destination close
+!
+
+contentsSpecies
+	^contentsSpecies
+!
+
+contentsSpecies: aClass
+	contentsSpecies := aClass
+!
+
+flush
+!
+
+isPositionable: aBoolean
+	"Only set to false when the file is open in append mode."
+
+	isPositionable := aBoolean
+!
+
+on: anAccessor
+	super on: anAccessor.
+	contentsSpecies := ByteArray.
+	isPositionable := true.
+	position := 0
+! !
+
+!FileWriteStream methodsFor:'seeking'!
+
+++ anInteger
+        | count |
+        self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
+        anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
+        count := self available min: anInteger.
+        position := position + count.
+        destination seekTo: position from: #begin.
+        count < anInteger ifTrue: [(Incomplete count: count) raise].
+        ^anInteger
+!
+
+-- anInteger
+        | count |
+        self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
+        anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
+        count := position min: anInteger.
+        position := position - count.
+        destination seekTo: position from: #begin.
+        anInteger = count ifTrue: [^anInteger].
+        (Incomplete count: count) raise
+!
+
+length
+	self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
+	^destination fileSize
+!
+
+position
+	self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
+	^position
+!
+
+position: aPosition
+        | available |
+        self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
+        aPosition < 0 ifTrue: [ Incomplete zero raise ].
+        available := aPosition min: self length.
+        destination seekTo: available from: #begin.
+        position := available.
+        available = aPosition ifTrue: [ ^aPosition ].
+        (Incomplete count: available) raise
+! !
+
+!FileWriteStream methodsFor:'testing'!
+
+isPositionable
+	^isPositionable
+! !
+
+!FileWriteStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__FileWriteStream.st 79 2012-01-30 23:01:24Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals' }"
+
+"{ NameSpace: Xtreams }"
+
+ExternalReadStream subclass:#FileReadStream
+	instanceVariableNames:'position'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals'
+!
+
+FileReadStream comment:'Reads from a file. The stream is usually created by sending #reading to a Filename. However the actual terminal is an IOAccessor. The original filename is accessible through the IOAccessor. The stream is binary and is naturally positionable.
+{{{
+	| file |
+	file := ObjectMemory imageName asFilename reading.
+	[ file read: 13 ] ensure: [ file close ]
+}}}
+As a convenience, sending #reading to a Filename of a directory will create a stream of all filenames in that directory.
+{{{
+	''/tmp'' asFilename reading rest
+}}}
+
+Instance Variables
+	position	<Integer> current position of the stream
+
+'
+!
+
+
+!FileReadStream methodsFor:'accessing'!
+
+get
+
+	| object |
+	object := super get.
+	position := position + 1.
+	^object
+!
+
+read: anInteger into: aSequenceableCollection at: startIndex
+
+	super read: anInteger into: aSequenceableCollection at: startIndex.
+	position := position + anInteger.
+	^anInteger
+! !
+
+!FileReadStream methodsFor:'initialize-release'!
+
+on: anAccessor
+	super on: anAccessor.
+	position := 0
+! !
+
+!FileReadStream methodsFor:'private'!
+
+bytesForRead
+
+	"Ideally we'd ask for the fileSize and subtract that from our position, but calling #fileSize is a slow primitive"
+	^cache size
+!
+
+incompleteRead: incomplete
+
+	position := position + incomplete count.
+	super incompleteRead: incomplete.
+!
+
+readBytes:count into:aByteBuffer startingAt:firstIndex
+
+    ^source readBytes:count into:aByteBuffer startingAt:firstIndex
+! !
+
+!FileReadStream methodsFor:'seeking'!
+
+++ anInteger
+        | count |
+        anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
+        count := self available min: anInteger.
+        position := position + count.
+        source seekTo: position from: #begin.
+        cacheDataSize := cachePosition := 0.
+        count < anInteger ifTrue: [(Incomplete count: count) raise].
+        ^anInteger
+!
+
+-- anInteger
+        | count |
+        anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
+        count := position min: anInteger.
+        position := position - count.
+        source seekTo: position from: #begin.
+        cacheDataSize := cachePosition := 0.
+        anInteger = count ifTrue: [^anInteger].
+        (Incomplete count: count) raise
+!
+
+length
+	^source fileSize
+!
+
+position
+	^position
+!
+
+position: aPosition
+
+        | available |
+        aPosition < 0 ifTrue: [ Incomplete zero raise ].
+        available := aPosition min: self length.
+        source seekTo: available from: #begin.
+        position := available.
+        cacheDataSize := cachePosition := 0.
+        available = aPosition ifTrue: [^aPosition].
+        (Incomplete count: available) raise
+! !
+
+!FileReadStream methodsFor:'testing'!
+
+isPositionable
+	^true
+! !
+
+!FileReadStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__FileReadStream.st 79 2012-01-30 23:01:24Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals' }"
+
+"{ NameSpace: Xtreams }"
+
+ReadStream subclass:#SequenceableCollectionReadStream
+	instanceVariableNames:'position'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals'
+!
+
+SequenceableCollectionReadStream comment:'Read stream on a sequenceable collection.
+{{{
+	(1 to: 10000) reading ++ 1000; read: 5
+}}}
+
+Instance Variables
+	position	<Integer> current position of the stream
+
+'
+!
+
+
+!SequenceableCollectionReadStream methodsFor:'accessing'!
+
+get
+	position = source size ifTrue: [Incomplete zero raise].
+	position := position + 1.
+	^source at: position
+!
+
+read: anInteger into: aSequenceableCollection at: startIndex
+	| count |
+	count := anInteger min: self available.
+	aSequenceableCollection replaceFrom: startIndex to: startIndex + count - 1 with: source startingAt: position + 1.
+	position := position + count.
+	count < anInteger ifTrue: [(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
+	^anInteger
+! !
+
+!SequenceableCollectionReadStream methodsFor:'initialize-release'!
+
+close
+!
+
+contentsSpecies
+	^source species
+!
+
+on: aSequenceableCollection
+	super on: aSequenceableCollection.
+	position := 0
+! !
+
+!SequenceableCollectionReadStream methodsFor:'printing'!
+
+streamingPrintOn: aStream
+	| tail head |
+	super streamingPrintOn: aStream.
+	tail := position min: 5.
+	head := (source size - position) min: (10 - tail).
+	aStream
+		write: ' position: ';
+		print: position;
+		write: ' size: ';
+		print: source size;
+		cr; tab;
+		write: (position > 5 ifTrue: ['...'] ifFalse: ['']);
+		print: (source copyFrom: position + 1 - tail to: position);
+		write: '  |  ';
+		print: (source copyFrom: position + 1 to: position + head);
+		write: (source size - position > (10 - tail) ifTrue: ['...'] ifFalse: [''])
+! !
+
+!SequenceableCollectionReadStream methodsFor:'private'!
+
+streamingInsert: anInteger into: aWriteStream
+	| count |
+	anInteger isZero ifTrue: [^self].
+	count := anInteger min: self available.
+	aWriteStream insert: count from: source at: position + 1.
+	position := position + count.
+	count >= anInteger ifTrue: [^self].
+	(Incomplete on: source count: count at: position - count + 1) raise
+!
+
+streamingInsertInto: aWriteStream
+	| count |
+	(count := self available) isZero ifTrue: [Incomplete zero raise].
+	self streamingInsert: count into: aWriteStream.
+	^count
+!
+
+streamingWrite: anInteger into: aWriteStream
+	| count |
+	anInteger isZero ifTrue: [^0].
+	count := anInteger min: self available.
+	aWriteStream write: count from: source at: position + 1.
+	position := position + count.
+	count = anInteger ifTrue: [^anInteger].
+	(Incomplete on: source count: count at: position - count + 1) raise
+!
+
+streamingWriteInto: aWriteStream
+	| count |
+	(count := self available) isZero ifTrue: [^self].
+	self streamingWrite: count into: aWriteStream.
+	^count
+! !
+
+!SequenceableCollectionReadStream methodsFor:'seeking'!
+
+++ anInteger
+	| count |
+	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
+	count := self available min: anInteger.
+	position := position + count.
+	count < anInteger ifTrue: [(Incomplete count: count) raise].
+	^anInteger
+!
+
+-- anInteger
+	| count |
+	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
+	count := position min: anInteger.
+	position := position - count.
+	count = anInteger ifTrue: [^anInteger].
+	(Incomplete count: count) raise
+!
+
+length
+	^source size
+!
+
+position
+	" Return a bookmark for the current stream state. "
+
+	^position
+!
+
+position: aPosition
+
+	aPosition < 0 ifTrue: [ Incomplete zero raise ].
+	position := aPosition min: self length.
+	position = aPosition ifTrue: [^aPosition ].
+	(Incomplete count: position) raise
+! !
+
+!SequenceableCollectionReadStream methodsFor:'testing'!
+
+isPositionable
+	^true
+! !
+
+!SequenceableCollectionReadStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__SequenceableCollectionReadStream.st 79 2012-01-30 23:01:24Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteStream subclass:#PointerWriteStream
+	instanceVariableNames:'length position contentsSpecies'
+	classVariableNames:''
+	poolDictionaries:'XtreamsPool'
+	category:'Xtreams-Terminals'
+!
+
+PointerWriteStream comment:'Write stream on external heap, commonly used to marshal input for an external library call. The terminal is a CPointer and its associated CType is used to interpret the bytes on the heap. The length of the stream must be set, to avoid writing past the allocated memory space. If more objects are written than can fit in the pre-allocated space, a new larger heap chunk is automatically allocated to accommodate it (the contents of the old chunk are copied over and the chunk is deallocated). Similarly closing the write stream will reallocate and shrink the write stream to its position at that time.
+{{{
+	| buffer |
+	buffer := CIntegerType unsignedChar malloc: 50.
+	[	buffer writing
+			length: 50;
+			write: ''Hello World!!''.
+		buffer reading
+			length: 12;
+			contentsSpecies: ByteString;
+			rest
+	] ensure: [ buffer free ]
+}}}
+
+Instance Variables
+	length	<Integer> allocated size of the stream as a number of elements of associated CType
+	position	<Integer> current position of the stream
+	contentsSpecies	<Class> species for collections of elements of this stream
+
+'
+!
+
+
+!PointerWriteStream methodsFor:'accessing'!
+
+contents
+	| cache |
+	cache := self contentsSpecies withSize: position.
+	destination copyAt: 0 to: cache size: position startingAt: 1.
+	^cache
+!
+
+insert: anInteger from: aSequenceableCollection at: startIndex
+	| shift |
+	shift := length - position.
+	self resizeTo: length + anInteger.
+	OSSystemSupport concreteClass new copyMemoryTo: destination + position + anInteger from: destination + position size: shift.
+	self copyFrom: aSequenceableCollection size: anInteger startingAt: startIndex.
+	position := position + anInteger.
+	^anInteger
+!
+
+put: anObject
+	| free |
+	free := length - position.
+	free < 1 ifTrue: [self resizeTo: length + 1].
+	destination at: position put: anObject.
+	position := position + 1
+!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+	| available |
+	available := length - position.
+	available < anInteger ifTrue: [self resizeTo: length + anInteger - available].
+	self copyFrom: aSequenceableCollection size: anInteger startingAt: startIndex.
+	position := position + anInteger.
+	^anInteger
+! !
+
+!PointerWriteStream methodsFor:'initialize-release'!
+
+close
+	self resizeTo: position
+!
+
+contentsSpecies
+	^contentsSpecies
+!
+
+contentsSpecies: aClass
+	contentsSpecies := aClass
+!
+
+flush
+!
+
+length: anObject
+	length := anObject
+!
+
+on: aPointer
+	super on: aPointer.
+	contentsSpecies := Array.
+	length := 1.
+	position := 0
+! !
+
+!PointerWriteStream methodsFor:'private'!
+
+copyFrom: aSequenceableCollection size: anInteger startingAt: startIndex
+
+	destination type = UnsignedChar
+		ifTrue: [ 	destination copyAt: position from: aSequenceableCollection size: anInteger startingAt: startIndex. ]
+		ifFalse: [
+			0 to: anInteger - 1 do: [ :i |
+				destination at: position + i put: (aSequenceableCollection at: startIndex + i) ] ]
+!
+
+resizeTo: anInteger
+	| replacement beGC |
+	length = anInteger ifTrue: [^self].
+	replacement := destination type baseReferentType malloc: anInteger.
+	OSSystemSupport concreteClass new copyMemoryTo: replacement from: destination size: (length min: anInteger).
+	beGC := CPointer.GarbageCollectablePointers includes: destination.
+	destination free.
+	destination referentAddress: replacement referentAddress.
+	beGC ifTrue: [destination beGarbageCollectable].
+	length := anInteger
+! !
+
+!PointerWriteStream methodsFor:'seeking'!
+
+++ anInteger
+	| count |
+	anInteger < 0 ifTrue: [ ^self -- anInteger negated ].
+	count := self available min: anInteger.
+	position := position + count.
+	count < anInteger ifTrue: [(Incomplete count: count) raise].
+	^anInteger
+!
+
+-- anInteger
+	| count |
+	anInteger < 0 ifTrue: [ ^self ++ anInteger negated ].
+	count := position min: anInteger.
+	position := position - count.
+	count = anInteger ifTrue: [^anInteger].
+	(Incomplete count: count) raise
+!
+
+length
+	^length
+!
+
+position
+	^position
+!
+
+position: aPosition
+	" Return to a bookmarked position on this stream. "
+
+	aPosition < 0 ifTrue: [Incomplete zero raise].
+	aPosition > length ifFalse: [ ^position := aPosition ].
+	position := length.
+	^(Incomplete count: length) raise
+! !
+
+!PointerWriteStream methodsFor:'testing'!
+
+isPositionable
+	^true
+! !
+
+!PointerWriteStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__PointerWriteStream.st 79 2012-01-30 23:01:24Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:28 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/terminals' }"
+
+"{ NameSpace: Xtreams }"
+
+WriteStream subclass:#BlockClosureWriteStream
+	instanceVariableNames:'contentsSpecies closeBlock'
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Terminals'
+!
+
+BlockClosureWriteStream comment:'Write stream on a single argument block, the block is evaluated for each element written with the element assigned as the argument of the evaluation.
+{{{
+	"Transcript as an xtream"
+	[ :x | Transcript nextPut: x ] writing write: ''Hello World!!''
+}}}
+{{{
+	"/dev/null"
+	[ :x | ] writing write: ''Hello World!!''
+}}}
+
+Instance Variables
+	contentsSpecies	<Class> species for collections of elements of this stream
+	closeBlock	<BlockClosure> invoked in response to the #close message, allows customizing the close behavior
+
+'
+!
+
+
+!BlockClosureWriteStream methodsFor:'accessing'!
+
+write: anInteger from: aSequenceableCollection at: startIndex
+	| count |
+	count := 0.
+	[[count < anInteger] whileTrue:
+		[destination value: (aSequenceableCollection at: startIndex + count).
+		count := count + 1]]
+			on: Incomplete do: [(Incomplete on: aSequenceableCollection count: count at: startIndex) raise].
+	^anInteger
+! !
+
+!BlockClosureWriteStream methodsFor:'initialize-release'!
+
+close
+	closeBlock cull: self
+!
+
+closeBlock
+	^closeBlock
+!
+
+closeBlock: aBlock
+	closeBlock := aBlock
+!
+
+contentsSpecies
+	^contentsSpecies
+!
+
+contentsSpecies: anObject
+	contentsSpecies := anObject
+!
+
+flush
+!
+
+on: aBlockClosure
+	super on: aBlockClosure.
+	contentsSpecies := Array.
+	closeBlock := []
+! !
+
+!BlockClosureWriteStream class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__BlockClosureWriteStream.st 79 2012-01-30 23:01:24Z mkobetic $'
 ! !
 !UndefinedObject methodsFor:'converting'!
 
@@ -2113,18 +2292,11 @@ writing
         ^Xtreams::NullWriteStream new
 ! !
 
-!WriteStream methodsFor:'transforming'!
+!PipeStream methodsFor:'testing'!
 
-buffering: bufferSize
-	"Delays committing its content to its underlying stream until it has reached a certain size ,#flush is sent, or the stream is closed."
-	"       bufferSize      <Integer> The size of the buffer to start with.
-		^<PositionWriteStream>"
-	"
-		(ByteArray new writing buffering: 5)
-			write: (ByteArray withAll: (1 to: 11));
-			conclusion
-	"
-	^BufferedWriteStream on: self bufferSize: bufferSize
+isActive
+
+    ^self isOpen
 ! !
 
 !PipeStream methodsFor:'converting'!
@@ -2141,14 +2313,7 @@ writing
     ^Xtreams::ExternalWriteStream on: self
 ! !
 
-!PipeStream methodsFor:'testing'!
-
-isActive
-
-    ^self isOpen
-! !
-
-!Block methodsFor:'xtreams'!
+!Block methodsFor:'converting'!
 
 reading
         self numArgs = 0 ifTrue: [^Xtreams::BlockClosureReadStream on: self].
@@ -2156,7 +2321,7 @@ reading
         self error: 'More arguments than we can poke a stick at!!'
 ! !
 
-!Block methodsFor:'xtreams'!
+!Block methodsFor:'converting'!
 
 writing
         self numArgs = 1 ifTrue: [^Xtreams::BlockClosureWriteStream on: self].
@@ -2207,6 +2372,24 @@ writing
         ^Xtreams::SharedQueueWriteStream on: self
 ! !
 
+!Buffer methodsFor:'converting'!
+
+reading
+	^BufferReadStream on: self
+! !
+
+!Buffer methodsFor:'converting'!
+
+writing
+	^BufferWriteStream on: self
+! !
+
+!TextCollector methodsFor:'converting'!
+
+writing
+	^[:object | self nextPut: object] writing
+! !
+
 !Filename methodsFor:'converting'!
 
 appending
@@ -2248,34 +2431,22 @@ writing
 
 !UnixOperatingSystem::FileDescriptorHandle methodsFor:'xtreams'!
 
-writing
+reading
 
-    ^Xtreams::FileWriteStream on: self
+    ^Xtreams::FileReadStream on: self
 ! !
 
 !UnixOperatingSystem::FileDescriptorHandle methodsFor:'xtreams'!
 
-reading
+writing
 
-    ^Xtreams::FileReadStream on: self
+    ^Xtreams::FileWriteStream on: self
 ! !
 
 !Collection methodsFor:'converting'!
 
 writing
         ^Xtreams::CollectionWriteStream on: self
-! !
-
-!Buffer methodsFor:'converting'!
-
-reading
-	^BufferReadStream on: self
-! !
-
-!Buffer methodsFor:'converting'!
-
-writing
-	^BufferWriteStream on: self
 ! !
 
 !Random methodsFor:'converting'!

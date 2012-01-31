@@ -4,6 +4,7 @@
 !
 "It seems class side extensions are ignored when filing out a package."
 Smalltalk fileIn: 'xtreams/SequenceableCollection class-newRecycled:.st'.
+Smalltalk fileIn: 'xtreams/FileDescriptorHandle-fixes.st'.
 "Pool initialization doesn't run on fileIn either."
 Xtreams::XtreamsPool initialize
 !

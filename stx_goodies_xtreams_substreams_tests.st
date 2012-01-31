@@ -1,4 +1,49 @@
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:19 AM'                  !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:19 PM'                  !
+
+"{ Package: 'stx:goodies/xtreams/substreams/tests' }"
+
+"{ NameSpace: Xtreams }"
+
+TestCase subclass:#StitchingTest
+	instanceVariableNames:''
+	classVariableNames:''
+	poolDictionaries:''
+	category:'Xtreams-Substreams-Tests'
+!
+
+
+!StitchingTest methodsFor:'tests'!
+
+test2SimpleReadStreams
+
+	| stream contents |
+	stream := (1 to: 5) reading, (6 to: 7) reading.
+	contents := stream rest.
+	self assert: contents = (1 to: 7)
+!
+
+test3SimpleReadStreams
+
+	| stream contents |
+	stream := (1 to: 5) reading, (6 to: 7) reading, (8 to: 10) reading.
+	contents := stream rest.
+	self assert: contents = (1 to: 10)
+!
+
+test3SimpleReadStreamsPrepending
+
+	| stream contents |
+	stream := (1 to: 5) reading, ((6 to: 7) reading, (8 to: 10) reading).
+	contents := stream rest.
+	self assert: contents = (1 to: 10)
+! !
+
+!StitchingTest class methodsFor:'documentation'!
+
+version_SVN
+    ^ '$Id: Xtreams__StitchingTest.st 69 2012-01-30 22:21:28Z mkobetic $'
+! !
+'From Smalltalk/X, Version:6.2.1 on 30-01-2012 at 10:58:19 PM'                  !
 
 "{ Package: 'stx:goodies/xtreams/substreams/tests' }"
 
@@ -12,7 +57,7 @@ LibraryDefinition subclass:#stx_goodies_xtreams_substreams_tests
 !stx_goodies_xtreams_substreams_tests class methodsFor:'documentation'!
 
 extensionsVersion_SVN
-    ^ '$Id: extensions.st 15 2011-11-21 06:02:13Z mkobetic $'
+    ^ '$Id: extensions.st 69 2012-01-30 22:21:28Z mkobetic $'
 ! !
 
 !stx_goodies_xtreams_substreams_tests class methodsFor:'description'!
@@ -52,7 +97,7 @@ classNamesAndAttributes
 
     ^ #(
         "<className> or (<className> attributes...) in load order"
-        (#'Xtreams::StitchingTest' autoload)
+        (#'Xtreams::StitchingTest')
         #'stx_goodies_xtreams_substreams_tests'
     )
 !
@@ -145,51 +190,6 @@ svnRevisionNr
 
 version_SVN
     ^ '$Id: stx_goodies_xtreams_substreams_tests.st 15 2011-11-21 06:02:13Z mkobetic $'
-! !
-'From Smalltalk/X, Version:6.2.1 on 16-01-2012 at 01:02:19 AM'                  !
-
-"{ Package: 'stx:goodies/xtreams/substreams/tests' }"
-
-"{ NameSpace: Xtreams }"
-
-TestCase subclass:#StitchingTest
-	instanceVariableNames:''
-	classVariableNames:''
-	poolDictionaries:''
-	category:'Xtreams-Substreams-Tests'
-!
-
-
-!StitchingTest methodsFor:'tests'!
-
-test2SimpleReadStreams
-
-	| stream contents |
-	stream := (1 to: 5) reading, (6 to: 7) reading.
-	contents := stream rest.
-	self assert: contents = (1 to: 7)
-!
-
-test3SimpleReadStreams
-
-	| stream contents |
-	stream := (1 to: 5) reading, (6 to: 7) reading, (8 to: 10) reading.
-	contents := stream rest.
-	self assert: contents = (1 to: 10)
-!
-
-test3SimpleReadStreamsPrepending
-
-	| stream contents |
-	stream := (1 to: 5) reading, ((6 to: 7) reading, (8 to: 10) reading).
-	contents := stream rest.
-	self assert: contents = (1 to: 10)
-! !
-
-!StitchingTest class methodsFor:'documentation'!
-
-version_SVN
-    ^ '$Id$'
 ! !
 !FiniteReadingWritingTests methodsFor:'tests - substream slicing'!
 
@@ -402,6 +402,37 @@ testReadLimitingPositioning
 	self should: [limiter get] raise: Incomplete
 ! !
 
+!FiniteReadingWritingTests methodsFor:'tests - substream stitching'!
+
+testReadStitchLimiting
+"Note that a plain [ self input limiting: 3 ] reading stitching stream would never end because it keeps generating empty limiting: streams at the end of the input.
+That's why additional measure is necessary to make sure the slice source eventually generates Incomplete.
+" 
+	| limiter wasEmpty |
+	self output write: #[ 1 1 1 2 2 2 ]; close.
+	wasEmpty := false.
+	limiter := [
+			wasEmpty ifTrue: [ Incomplete zero raise ]. wasEmpty := true.
+			(self input doing: [ :e | wasEmpty := false ]) limiting: 3
+		] reading stitching.
+
+	self assert: limiter rest = #[ 1 1 1 2 2 2].
+	self should: [limiter get] raise: Incomplete
+! !
+
+!FiniteReadingWritingTests methodsFor:'tests - substream stitching'!
+
+testReadStitchingChunks
+"Chunks are prefixed with size in the first byte. Below we have 3 chunks of size 1, 3 and 7, and terminating 0 chunk."
+
+	| chunks contents stitched |
+	chunks := (ByteArray withAll: (1 to: 14)), #[0].
+	self output write: chunks; close.
+	stitched := [ self input limiting: self input get ] reading stitching.
+	contents := stitched rest.
+	self assert: contents = #[2 4 5 6 8 9 10 11 12 13 14]
+! !
+
 !FiniteReadingWritingTests methodsFor:'tests - substream slicing'!
 
 testWriteClosing
@@ -578,37 +609,6 @@ testWriteLimitingPositioning
 
 	limiting close.
 	self assert: (self input read: 6) = #[ 1 1 1 2 2 2 ]
-! !
-
-!FiniteReadingWritingTests methodsFor:'tests - substream stitching'!
-
-testReadStitchLimiting
-"Note that a plain [ self input limiting: 3 ] reading stitching stream would never end because it keeps generating empty limiting: streams at the end of the input.
-That's why additional measure is necessary to make sure the slice source eventually generates Incomplete.
-" 
-	| limiter wasEmpty |
-	self output write: #[ 1 1 1 2 2 2 ]; close.
-	wasEmpty := false.
-	limiter := [
-			wasEmpty ifTrue: [ Incomplete zero raise ]. wasEmpty := true.
-			(self input doing: [ :e | wasEmpty := false ]) limiting: 3
-		] reading stitching.
-
-	self assert: limiter rest = #[ 1 1 1 2 2 2].
-	self should: [limiter get] raise: Incomplete
-! !
-
-!FiniteReadingWritingTests methodsFor:'tests - substream stitching'!
-
-testReadStitchingChunks
-"Chunks are prefixed with size in the first byte. Below we have 3 chunks of size 1, 3 and 7, and terminating 0 chunk."
-
-	| chunks contents stitched |
-	chunks := (ByteArray withAll: (1 to: 14)), #[0].
-	self output write: chunks; close.
-	stitched := [ self input limiting: self input get ] reading stitching.
-	contents := stitched rest.
-	self assert: contents = #[2 4 5 6 8 9 10 11 12 13 14]
 ! !
 
 !FiniteReadingWritingTests methodsFor:'tests - substream stitching'!
