@@ -1,8 +1,0 @@
-* pool variable references behave unreliably
-* the CR value in strings is LF ?
-* Interval species is OrderedCollection, not Array
-* String doesn't automorph to TwoByteString
-* TwoByteString literals ?
-* No UTF16 (UTF8 peeks :-()
-* ifNotNil: doesn't accept an argument
-* SharedQueues don't grow (default to size: 50)
