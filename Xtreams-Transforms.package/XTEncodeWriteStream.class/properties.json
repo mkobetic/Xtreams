@@ -1,0 +1,21 @@
+{
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"encoder",
+		"buffer",
+		"bufferReading",
+		"bufferWriting",
+		"decodedLineEnd",
+		"encodedLineEnd" ],
+	"name" : "XTEncodeWriteStream",
+	"pools" : [
+		"XTPools" ],
+	"super" : "XTWriteStream",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

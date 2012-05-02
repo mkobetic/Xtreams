@@ -1,0 +1,17 @@
+{
+	"category" : "Xtreams-Terminals",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "nice 7/9/2011 01:07",
+	"instvars" : [
+		"contentsSpecies",
+		"closeBlock" ],
+	"name" : "XTBlockClosureReadStream",
+	"pools" : [
+		 ],
+	"super" : "XTReadStream",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Support",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "dtl 11/28/2002 22:55",
+	"instvars" : [
+		"writable" ],
+	"name" : "XTIOFileHandle",
+	"pools" : [
+		 ],
+	"super" : "XTIOHandle",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

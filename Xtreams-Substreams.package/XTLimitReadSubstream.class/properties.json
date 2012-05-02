@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Substreams",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "nice 10/10/2010 20:33",
+	"instvars" : [
+		"limit" ],
+	"name" : "XTLimitReadSubstream",
+	"pools" : [
+		 ],
+	"super" : "XTPositionReadSubstream",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

@@ -1,0 +1,4 @@
+accessing
+digestSize
+	
+	^hash digestSize

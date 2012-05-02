@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Terminals",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"position" ],
+	"name" : "XTSequenceableCollectionReadStream",
+	"pools" : [
+		 ],
+	"super" : "XTReadStream",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

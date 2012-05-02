@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Support",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		"Registry" ],
+	"commentStamp" : "nice 12/1/2009 20:09",
+	"instvars" : [
+		"handle" ],
+	"name" : "XTExternalResourceHandle",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

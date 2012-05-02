@@ -1,0 +1,3 @@
+testing
+hasDataToRead
+	^readPosition < dataLength

@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Terminals",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"contentsSpecies" ],
+	"name" : "XTSharedQueueWriteStream",
+	"pools" : [
+		 ],
+	"super" : "XTWriteStream",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

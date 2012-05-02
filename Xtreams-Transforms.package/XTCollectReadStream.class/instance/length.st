@@ -1,0 +1,3 @@
+seeking
+length
+	^source length

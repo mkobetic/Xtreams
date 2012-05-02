@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "nice 10/9/2010 21:44",
+	"instvars" : [
+		"buffer" ],
+	"name" : "XTPositionWriteStream",
+	"pools" : [
+		 ],
+	"super" : "XTWriteStream",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

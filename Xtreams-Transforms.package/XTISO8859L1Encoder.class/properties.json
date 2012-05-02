@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		 ],
+	"name" : "XTISO8859L1Encoder",
+	"pools" : [
+		 ],
+	"super" : "XTEncoder",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

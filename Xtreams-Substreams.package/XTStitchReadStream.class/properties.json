@@ -1,0 +1,17 @@
+{
+	"category" : "Xtreams-Substreams",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"active",
+		"contentsSpecies" ],
+	"name" : "XTStitchReadStream",
+	"pools" : [
+		 ],
+	"super" : "XTReadStream",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

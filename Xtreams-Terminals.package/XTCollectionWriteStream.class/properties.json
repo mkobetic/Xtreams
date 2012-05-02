@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Terminals",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "nice 3/3/2012 21:30",
+	"instvars" : [
+		 ],
+	"name" : "XTCollectionWriteStream",
+	"pools" : [
+		 ],
+	"super" : "XTWriteStream",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

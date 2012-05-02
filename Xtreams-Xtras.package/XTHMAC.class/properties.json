@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Xtras",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		 ],
+	"name" : "XTHMAC",
+	"pools" : [
+		 ],
+	"super" : "XTHash",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

@@ -1,0 +1,18 @@
+{
+	"category" : "Xtreams-Xtras",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"input",
+		"digest",
+		"hash" ],
+	"name" : "XTDigestWriteStream",
+	"pools" : [
+		 ],
+	"super" : "XTWriteStream",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

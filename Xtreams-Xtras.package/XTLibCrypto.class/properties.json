@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Xtras",
+	"classinstvars" : [
+		"digestsLoaded" ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "MartinKobetic 2/13/2011 23:20",
+	"instvars" : [
+		 ],
+	"name" : "XTLibCrypto",
+	"pools" : [
+		 ],
+	"super" : "ExternalLibrary",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

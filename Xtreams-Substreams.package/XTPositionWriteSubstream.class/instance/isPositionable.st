@@ -1,0 +1,3 @@
+testing
+isPositionable
+	^destination isPositionable

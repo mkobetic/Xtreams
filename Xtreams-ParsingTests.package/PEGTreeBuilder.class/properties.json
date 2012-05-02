@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-ParsingTests",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "PEGTreeBuilder",
+	"pools" : [
+		 ],
+	"super" : "PEGActor",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

@@ -1,0 +1,23 @@
+{
+	"category" : "Xtreams-Substreams",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"substreamAtEnd",
+		"pattern",
+		"patternStart",
+		"inclusive",
+		"hasReread",
+		"reread",
+		"buffer",
+		"backtrack" ],
+	"name" : "XTMatchReadSubstream",
+	"pools" : [
+		 ],
+	"super" : "XTReadSubstream",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

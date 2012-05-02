@@ -1,0 +1,23 @@
+{
+	"category" : "Xtreams-Parsing",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"base",
+		"width",
+		"padding",
+		"sign",
+		"whole",
+		"fraction",
+		"number",
+		"decimalPlaces" ],
+	"name" : "XTNumberPrinter",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

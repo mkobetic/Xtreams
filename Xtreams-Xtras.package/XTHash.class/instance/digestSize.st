@@ -1,0 +1,4 @@
+accessing
+digestSize
+	
+	^self subclassResponsibility

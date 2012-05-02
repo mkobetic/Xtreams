@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-TerminalsTests",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"buffer" ],
+	"name" : "XTElasticBufferReadingWritingTest",
+	"pools" : [
+		 ],
+	"super" : "XTFiniteReadingWritingTests",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

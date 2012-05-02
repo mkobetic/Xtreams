@@ -1,0 +1,20 @@
+{
+	"category" : "Xtreams-Parsing",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		"Failure" ],
+	"commentStamp" : "",
+	"instvars" : [
+		"grammar",
+		"stream",
+		"actor",
+		"cache",
+		"caches" ],
+	"name" : "PEGParser",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

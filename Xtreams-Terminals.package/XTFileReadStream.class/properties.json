@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Terminals",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"position" ],
+	"name" : "XTFileReadStream",
+	"pools" : [
+		 ],
+	"super" : "XTExternalReadStream",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

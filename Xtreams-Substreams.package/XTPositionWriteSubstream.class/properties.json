@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Substreams",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"position" ],
+	"name" : "XTPositionWriteSubstream",
+	"pools" : [
+		 ],
+	"super" : "XTWriteSubstream",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

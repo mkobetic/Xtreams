@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "nice 10/9/2010 21:45",
+	"instvars" : [
+		"dataPosition" ],
+	"name" : "XTRingBuffer",
+	"pools" : [
+		"XTPools" ],
+	"super" : "XTBuffer",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

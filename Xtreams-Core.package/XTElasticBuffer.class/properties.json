@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		 ],
+	"name" : "XTElasticBuffer",
+	"pools" : [
+		 ],
+	"super" : "XTRingBuffer",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

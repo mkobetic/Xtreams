@@ -1,0 +1,21 @@
+{
+	"category" : "Xtreams-Parsing",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"in",
+		"ch",
+		"base",
+		"sign",
+		"absolute",
+		"failBlock" ],
+	"name" : "XTNumberParser",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

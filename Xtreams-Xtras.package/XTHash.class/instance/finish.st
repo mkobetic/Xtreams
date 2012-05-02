@@ -1,0 +1,4 @@
+accessing
+finish
+	
+	^self subclassResponsibility

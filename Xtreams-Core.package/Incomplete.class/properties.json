@@ -1,0 +1,18 @@
+{
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "nice 10/9/2010 21:44",
+	"instvars" : [
+		"collection",
+		"count",
+		"start" ],
+	"name" : "Incomplete",
+	"pools" : [
+		 ],
+	"super" : "Error",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

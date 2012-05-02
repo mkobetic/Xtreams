@@ -1,0 +1,17 @@
+{
+	"category" : "Xtreams-Support",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		"DialectEncoder",
+		"Encoders" ],
+	"commentStamp" : "nice 10/11/2010 21:57",
+	"instvars" : [
+		 ],
+	"name" : "XTEncoder",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

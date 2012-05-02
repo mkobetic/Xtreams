@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"source" ],
+	"name" : "XTReadStream",
+	"pools" : [
+		"XTPools" ],
+	"super" : "Object",
+	"traitcomposition" : "{}",
+	"type" : "normal" }

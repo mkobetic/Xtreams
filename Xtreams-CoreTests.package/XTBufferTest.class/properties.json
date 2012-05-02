@@ -1,0 +1,17 @@
+{
+	"category" : "Xtreams-CoreTests",
+	"classinstvars" : [
+		 ],
+	"classtraitcomposition" : "{}",
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"output",
+		"buffer" ],
+	"name" : "XTBufferTest",
+	"pools" : [
+		 ],
+	"super" : "TestCase",
+	"traitcomposition" : "{}",
+	"type" : "normal" }
