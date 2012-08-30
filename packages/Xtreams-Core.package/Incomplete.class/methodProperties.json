@@ -1,0 +1,16 @@
+{
+	"class" : {
+		"count:" : "nice 10/9/2010 18:57",
+		"on:count:at:" : "nice 10/9/2010 18:57",
+		"zero" : "nice 10/9/2010 18:57" },
+	"instance" : {
+		"collection" : "nice 10/9/2010 18:58",
+		"collection:" : "nice 10/9/2010 18:58",
+		"contents" : "MartinKobetic 12/22/2010 16:42",
+		"count" : "nice 10/9/2010 19:03",
+		"count:" : "nice 10/9/2010 19:03",
+		"on:count:at:" : "nice 10/9/2010 19:10",
+		"streamingInsert:into:" : "MartinKobetic 1/11/2011 17:53",
+		"streamingInsertInto:" : "nice 10/9/2010 19:11",
+		"streamingWrite:into:" : "MartinKobetic 1/11/2011 17:53",
+		"streamingWriteInto:" : "nice 10/9/2010 19:11" } }

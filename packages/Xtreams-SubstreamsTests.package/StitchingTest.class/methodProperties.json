@@ -1,0 +1,8 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"test2SimpleReadStreams" : "DaleHenrichs 03/11/2011 20:35",
+		"test3SimpleReadStreams" : "DaleHenrichs 03/11/2011 20:35",
+		"test3SimpleReadStreamsPrepending" : "DaleHenrichs 03/11/2011 20:34",
+		"testIncompleteOnClose" : "nice 3/3/2012 21:55" } }

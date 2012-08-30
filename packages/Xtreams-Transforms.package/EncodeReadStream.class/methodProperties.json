@@ -1,0 +1,12 @@
+{
+	"class" : {
+		"on:encoding:" : "nice 10/11/2010 21:47" },
+	"instance" : {
+		"close" : "MartinKobetic 12/31/2010 00:00",
+		"contentsSpecies" : "nice 10/11/2010 22:00",
+		"encoder" : "MartinKobetic 1/6/2011 22:11",
+		"get" : "ul 10/12/2010 01:18",
+		"on:encoding:" : "nice 10/11/2010 22:01",
+		"read:into:at:" : "MartinKobetic 1/11/2011 17:53",
+		"setLineEndAuto" : "nice 10/11/2010 22:01",
+		"setLineEndTransparent" : "nice 10/11/2010 22:01" } }

@@ -1,0 +1,18 @@
+{
+	"category" : "Xtreams-Xtras",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"library",
+		"context",
+		"algorithm" ],
+	"name" : "LibCryptoHash",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "Hash",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

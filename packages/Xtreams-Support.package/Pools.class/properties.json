@@ -1,0 +1,17 @@
+{
+	"category" : "Xtreams-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		"CR",
+		"DefaultBufferSize",
+		"LF" ],
+	"commentStamp" : "nice 10/9/2010 19:21",
+	"instvars" : [
+		"buffer" ],
+	"name" : "Pools",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "SharedPool",
+	"type" : "normal" }

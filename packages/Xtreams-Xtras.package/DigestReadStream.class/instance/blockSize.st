@@ -1,0 +1,4 @@
+accessing
+blockSize
+	
+	^hash blockSize

@@ -1,0 +1,17 @@
+{
+	"category" : "Xtreams-Terminals",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"contentsSpecies",
+		"closeBlock" ],
+	"name" : "BlockClosureWriteStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "WriteStream",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

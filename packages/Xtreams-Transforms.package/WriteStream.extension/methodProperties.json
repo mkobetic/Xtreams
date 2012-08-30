@@ -1,0 +1,21 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"basicNextPut:" : "nice 10/12/2010 00:44",
+		"basicNextPutAll:" : "nice 7/9/2011 11:45",
+		"collecting:" : "nice 10/10/2010 14:43",
+		"depairing" : "nice 7/8/2011 23:30",
+		"doing:" : "nice 10/10/2010 14:43",
+		"duplicating:" : "nice 7/8/2011 23:48",
+		"encoding:" : "nice 10/11/2010 22:05",
+		"encodingBase64" : "MartinKobetic 1/11/2011 17:53",
+		"encodingHex" : "MartinKobetic 1/17/2011 10:21",
+		"injecting:into:" : "nice 10/10/2010 14:44",
+		"isBinary" : "nice 10/12/2010 00:39",
+		"nextPut:" : "nice 7/9/2011 11:43",
+		"nextPutAll:" : "nice 10/12/2010 00:44",
+		"pairing" : "nice 7/8/2011 23:30",
+		"rejecting:" : "nice 10/10/2010 14:44",
+		"selecting:" : "nice 10/10/2010 14:44",
+		"transforming:" : "nice 10/10/2010 14:44" } }

@@ -1,0 +1,12 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"close" : "nice 7/9/2011 00:54",
+		"contentsSpecies" : "nice 7/9/2011 00:45",
+		"flush" : "nice 7/9/2011 00:54",
+		"streamingInsert:from:" : "nice 7/9/2011 00:46",
+		"streamingInsertFrom:" : "nice 7/9/2011 00:47",
+		"streamingWrite:from:" : "nice 7/9/2011 00:47",
+		"streamingWriteFrom:" : "nice 7/9/2011 00:47",
+		"write:from:at:" : "nice 7/9/2011 01:01" } }

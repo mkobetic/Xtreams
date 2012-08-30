@@ -1,0 +1,8 @@
+{
+	"class" : {
+		"for:" : "nice 10/12/2010 00:11",
+		"initialize" : "MartinKobetic 1/14/2011 01:21" },
+	"instance" : {
+		"decodeFrom:" : "nice 10/12/2010 00:21",
+		"encode:on:" : "nice 10/12/2010 00:21",
+		"encoding:" : "nice 10/13/2010 20:19" } }

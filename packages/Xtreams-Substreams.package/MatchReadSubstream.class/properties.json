@@ -1,0 +1,23 @@
+{
+	"category" : "Xtreams-Substreams",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"substreamAtEnd",
+		"pattern",
+		"patternStart",
+		"inclusive",
+		"hasReread",
+		"reread",
+		"buffer",
+		"backtrack" ],
+	"name" : "MatchReadSubstream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "ReadSubstream",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

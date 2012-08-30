@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Terminals",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "NullWriteStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "WriteStream",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

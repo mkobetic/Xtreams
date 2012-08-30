@@ -1,0 +1,22 @@
+{
+	"class" : {
+		"moduleName" : "MartinKobetic 2/13/2011 14:50" },
+	"instance" : {
+		"BCryptCloseAlgorithmProvider:with:" : "MartinKobetic 2/13/2011 18:33",
+		"BCryptCreateHash:with:with:with:with:with:with:" : "MartinKobetic 2/13/2011 19:18",
+		"BCryptDestroyHash:" : "MartinKobetic 2/13/2011 18:33",
+		"BCryptFinishHash:with:with:with:" : "MartinKobetic 2/13/2011 18:33",
+		"BCryptGetProperty:with:with:with:with:with:" : "MartinKobetic 2/13/2011 18:33",
+		"BCryptHashData:with:with:with:" : "MartinKobetic 2/13/2011 18:33",
+		"BCryptOpenAlgorithmProvider:with:with:with:" : "MartinKobetic 2/13/2011 18:33",
+		"closeAlgorithmProvider:" : "MartinKobetic 2/13/2011 15:06",
+		"createHashProvider:object:length:key:" : "MartinKobetic 2/13/2011 18:56",
+		"destroyHash:" : " 13/2/11 15:01",
+		"errorStatus:" : " 13/2/11 15:01",
+		"finishHash:into:" : " 13/2/11 15:01",
+		"getPropertyDWORD:provider:" : "MartinKobetic 2/13/2011 19:07",
+		"initialize" : "MartinKobetic 2/13/2011 18:53",
+		"openAlgorithmProviderFor:flags:" : "MartinKobetic 2/13/2011 18:57",
+		"release" : "MartinKobetic 2/13/2011 18:26",
+		"updateHash:data:size:" : " 13/2/11 15:01",
+		"utf16CStringFrom:" : "MartinKobetic 2/13/2011 17:30" } }

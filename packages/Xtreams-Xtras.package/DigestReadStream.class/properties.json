@@ -1,0 +1,18 @@
+{
+	"category" : "Xtreams-Xtras",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"input",
+		"digest",
+		"hash" ],
+	"name" : "DigestReadStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "ReadStream",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

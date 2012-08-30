@@ -1,0 +1,15 @@
+{
+	"category" : "Xtreams-Xtras",
+	"classinstvars" : [
+		"digestsLoaded" ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "MartinKobetic 2/13/2011 23:20",
+	"instvars" : [
+		 ],
+	"name" : "LibCrypto",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "ExternalLibrary",
+	"type" : "normal" }

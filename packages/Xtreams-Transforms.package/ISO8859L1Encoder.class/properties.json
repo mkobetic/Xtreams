@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		 ],
+	"name" : "ISO8859L1Encoder",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "Encoder",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

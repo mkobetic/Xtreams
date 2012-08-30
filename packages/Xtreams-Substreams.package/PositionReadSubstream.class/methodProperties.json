@@ -1,0 +1,14 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"++" : "MartinKobetic 1/11/2011 17:53",
+		"--" : "MartinKobetic 1/11/2011 17:53",
+		"-=" : "MartinKobetic 1/7/2011 09:46",
+		"get" : "nice 10/10/2010 18:09",
+		"isPositionable" : "nice 10/10/2010 18:09",
+		"length" : "nice 10/10/2010 18:10",
+		"on:" : "nice 10/10/2010 18:09",
+		"position" : "nice 10/10/2010 18:10",
+		"position:" : "MartinKobetic 1/11/2011 17:53",
+		"read:into:at:" : "MartinKobetic 1/11/2011 17:53" } }

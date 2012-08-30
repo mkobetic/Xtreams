@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-CoreTests",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"output",
+		"buffer" ],
+	"name" : "BufferTest",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "TestCase",
+	"type" : "normal" }

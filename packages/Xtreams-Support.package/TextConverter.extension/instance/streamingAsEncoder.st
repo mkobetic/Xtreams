@@ -1,0 +1,4 @@
+*Xtreams-Support
+streamingAsEncoder
+
+	^self

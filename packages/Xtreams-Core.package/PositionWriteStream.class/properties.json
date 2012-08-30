@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "nice 10/9/2010 21:44",
+	"instvars" : [
+		"buffer" ],
+	"name" : "PositionWriteStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "WriteStream",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

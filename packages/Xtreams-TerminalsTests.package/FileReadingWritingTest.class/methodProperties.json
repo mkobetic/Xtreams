@@ -1,0 +1,8 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"input" : "nice 10/15/2010 11:43",
+		"setUp" : "nice 10/15/2010 20:43",
+		"tearDown" : "nice 10/15/2010 14:49",
+		"testInsert" : "nice 10/14/2010 23:02" } }

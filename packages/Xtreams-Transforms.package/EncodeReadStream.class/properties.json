@@ -1,0 +1,21 @@
+{
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"transparent",
+		"crPreceeding",
+		"encoder",
+		"buffer",
+		"bufferWriting",
+		"bufferReading" ],
+	"name" : "EncodeReadStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		"XTPools" ],
+	"super" : "ReadStream",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

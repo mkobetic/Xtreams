@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-CoreTests",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"output",
+		"buffer" ],
+	"name" : "RingBufferTest",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "TestCase",
+	"type" : "normal" }

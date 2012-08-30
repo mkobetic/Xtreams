@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Terminals",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"position" ],
+	"name" : "FileReadStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "ExternalReadStream",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

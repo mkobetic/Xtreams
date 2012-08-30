@@ -1,0 +1,3 @@
+private
+streamingInsertInto: aWriteStream
+	self shouldNotImplement

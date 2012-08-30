@@ -1,0 +1,3 @@
+seeking
+-- anInteger
+	^destination -- anInteger

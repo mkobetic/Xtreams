@@ -1,0 +1,3 @@
+seeking
+position
+	^buffer readPosition

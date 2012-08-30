@@ -1,0 +1,10 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"clearCache" : "nice 10/9/2010 18:51",
+		"growBy:" : "nice 10/9/2010 18:56",
+		"hasFixedWriteSpace" : "nice 10/9/2010 18:56",
+		"hasSpaceToWrite" : "nice 10/9/2010 18:57",
+		"put:" : "nice 10/9/2010 18:47",
+		"write:from:at:" : "MartinKobetic 12/22/2010 16:41" } }

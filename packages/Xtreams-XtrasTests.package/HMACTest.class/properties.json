@@ -1,0 +1,15 @@
+{
+	"category" : "Xtreams-XtrasTests",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "HMACTest",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "TestCase",
+	"type" : "normal" }

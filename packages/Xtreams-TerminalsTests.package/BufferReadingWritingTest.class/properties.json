@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-TerminalsTests",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"buffer" ],
+	"name" : "BufferReadingWritingTest",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "FiniteReadingWritingTests",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

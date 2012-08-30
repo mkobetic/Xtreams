@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Parsing",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"parser",
+		"references",
+		"useCache" ],
+	"name" : "PEGParserParser",
+	"pools" : [
+		 ],
+	"super" : "PEGActor",
+	"type" : "normal" }

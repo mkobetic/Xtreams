@@ -1,0 +1,18 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"++" : "nice 3/3/2012 22:06",
+		"--" : "MartinKobetic 1/11/2011 17:53",
+		"close" : "nice 10/15/2010 20:39",
+		"contentsSpecies" : "nice 3/4/2012 00:14",
+		"contentsSpecies:" : "nice 3/4/2012 00:14",
+		"flush" : "nice 3/4/2012 00:13",
+		"insert:from:at:" : "nice 7/9/2011 01:00",
+		"isPositionable" : "nice 10/12/2010 02:39",
+		"isPositionable:" : "nice 10/12/2010 02:38",
+		"length" : "nice 10/12/2010 02:39",
+		"on:" : "nice 3/3/2012 23:33",
+		"position" : "nice 10/12/2010 02:39",
+		"position:" : "nice 3/3/2012 22:07",
+		"write:from:at:" : "nice 7/9/2011 01:00" } }

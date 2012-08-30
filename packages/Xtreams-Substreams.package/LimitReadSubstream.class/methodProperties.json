@@ -1,0 +1,10 @@
+{
+	"class" : {
+		"on:limit:" : "nice 10/10/2010 18:01" },
+	"instance" : {
+		"-=" : "MartinKobetic 1/11/2011 17:53",
+		"get" : "MartinKobetic 1/11/2011 17:53",
+		"length" : "nice 10/10/2010 18:12",
+		"on:limit:" : "nice 10/10/2010 18:11",
+		"read:into:at:" : "MartinKobetic 1/11/2011 17:53",
+		"subseekend" : "nice 10/10/2010 18:11" } }

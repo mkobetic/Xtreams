@@ -1,0 +1,26 @@
+{
+	"category" : "Xtreams-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		"Connected",
+		"InvalidSocket",
+		"OtherEndClosed",
+		"TCPSocketType",
+		"ThisEndClosed",
+		"UDPSocketType",
+		"Unconnected",
+		"WaitingForConnection" ],
+	"commentStamp" : "dtl 11/28/2002 22:55",
+	"instvars" : [
+		"socketType",
+		"writeSemaphore",
+		"readSemaphore",
+		"primitiveOnlySupportsOneSemaphore" ],
+	"name" : "IOSocketHandle",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "IOHandle",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

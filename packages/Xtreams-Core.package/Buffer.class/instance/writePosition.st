@@ -1,0 +1,3 @@
+accessing - writing
+writePosition
+	^writePosition

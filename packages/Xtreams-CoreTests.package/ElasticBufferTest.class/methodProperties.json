@@ -1,0 +1,16 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"setUp" : "nice 10/9/2010 20:38",
+		"testClear" : "nice 10/9/2010 20:39",
+		"testRead" : "nice 10/9/2010 20:39",
+		"testReadOverflow" : "MartinKobetic 1/11/2011 17:53",
+		"testReadWrap" : "nice 10/9/2010 20:39",
+		"testTrim" : "nice 10/9/2010 20:39",
+		"testTrimInsideOut" : "nice 10/9/2010 20:39",
+		"testWrite" : "nice 10/9/2010 20:39",
+		"testWriteGrow" : "nice 10/9/2010 20:39",
+		"testWriteObject" : "nice 10/9/2010 20:40",
+		"testWriteWrap" : "nice 10/9/2010 20:40",
+		"testWriteWrapOverflow" : "nice 10/9/2010 20:40" } }

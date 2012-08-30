@@ -1,0 +1,13 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"algorithm:" : "MartinKobetic 2/13/2011 19:13",
+		"algorithm:key:" : "MartinKobetic 2/13/2011 15:46",
+		"blockSize" : " 18/1/11 17:36",
+		"digestSize" : " 18/1/11 17:36",
+		"finish" : " 18/1/11 17:36",
+		"initialize" : "MartinKobetic 2/13/2011 14:56",
+		"release" : "MartinKobetic 2/13/2011 18:26",
+		"reset" : "MartinKobetic 1/18/2011 18:30",
+		"update:from:" : " 18/1/11 17:36" } }

@@ -1,0 +1,7 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"defaultTimeout" : "nice 10/14/2010 22:41",
+		"setUp" : "MartinKobetic 7/31/2011 17:14",
+		"timeout:server:client:" : "nice 10/14/2010 22:17" } }

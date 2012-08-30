@@ -1,0 +1,22 @@
+{
+	"category" : "Xtreams-Terminals",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "nice 7/9/2011 01:04",
+	"instvars" : [
+		"process",
+		"current",
+		"contentsSpecies",
+		"writing",
+		"readingSemaphore",
+		"writingSemaphore",
+		"closed" ],
+	"name" : "BlockClosureGenerateStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "ReadStream",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

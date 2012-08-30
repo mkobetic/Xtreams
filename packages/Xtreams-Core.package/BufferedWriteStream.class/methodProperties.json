@@ -1,0 +1,10 @@
+{
+	"class" : {
+		"on:bufferSize:" : "nice 7/8/2011 22:53" },
+	"instance" : {
+		"close" : "nice 7/8/2011 22:54",
+		"contentsSpecies" : "nice 7/8/2011 22:54",
+		"flush" : "nice 7/8/2011 22:55",
+		"on:bufferSize:" : "nice 7/8/2011 22:55",
+		"streamingPrintOn:" : "nice 7/8/2011 22:56",
+		"write:from:at:" : "nice 7/8/2011 22:57" } }

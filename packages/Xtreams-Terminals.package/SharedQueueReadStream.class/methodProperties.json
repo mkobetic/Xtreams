@@ -1,0 +1,12 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"close" : "nice 10/9/2010 22:24",
+		"contentsSpecies" : "nice 10/9/2010 22:24",
+		"contentsSpecies:" : "nice 10/9/2010 22:24",
+		"get" : "nice 10/9/2010 22:24",
+		"on:" : "nice 10/9/2010 22:25",
+		"read:into:at:" : "MartinKobetic 12/30/2010 23:42",
+		"streamingInsertInto:" : "nice 10/9/2010 22:25",
+		"streamingWriteInto:" : "nice 10/9/2010 22:25" } }

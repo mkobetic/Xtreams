@@ -1,0 +1,5 @@
+{
+	"namespaceRule" : [
+		"Xtreams",
+		"XT" ],
+	"packageExtension" : ".package" }

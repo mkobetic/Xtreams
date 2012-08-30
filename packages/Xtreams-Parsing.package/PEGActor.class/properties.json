@@ -1,0 +1,14 @@
+{
+	"category" : "Xtreams-Parsing",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"actions" ],
+	"name" : "PEGActor",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

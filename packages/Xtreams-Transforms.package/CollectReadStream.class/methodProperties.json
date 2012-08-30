@@ -1,0 +1,19 @@
+{
+	"class" : {
+		"on:block:" : "nice 10/10/2010 14:01" },
+	"instance" : {
+		"++" : "MartinKobetic 12/30/2010 23:50",
+		"--" : "MartinKobetic 12/30/2010 23:50",
+		"block" : "nice 10/10/2010 13:58",
+		"bufferRead:into:at:" : "MartinKobetic 1/11/2011 17:53",
+		"close" : "nice 3/3/2012 21:31",
+		"contentsSpecies" : "MartinKobetic 12/30/2010 23:54",
+		"contentsSpecies:" : "MartinKobetic 12/30/2010 23:52",
+		"directRead:into:at:" : "MartinKobetic 1/11/2011 17:53",
+		"get" : "nice 10/10/2010 13:58",
+		"isPositionable" : "nice 10/10/2010 14:01",
+		"length" : "nice 10/10/2010 14:00",
+		"on:block:" : "nice 10/10/2010 13:59",
+		"position" : "nice 10/10/2010 14:00",
+		"position:" : "MartinKobetic 12/30/2010 23:52",
+		"read:into:at:" : "MartinKobetic 12/30/2010 23:52" } }

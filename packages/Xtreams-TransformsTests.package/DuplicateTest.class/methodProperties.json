@@ -1,0 +1,8 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"testDuplicateReading" : "nice 7/9/2011 11:51",
+		"testDuplicateReadingIncomplete" : "nice 7/9/2011 11:52",
+		"testDuplicateWriting" : "nice 7/9/2011 11:52",
+		"testDuplicateWritingIncomplete" : "nice 7/9/2011 11:52" } }

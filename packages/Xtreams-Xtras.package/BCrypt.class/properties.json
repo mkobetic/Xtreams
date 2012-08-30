@@ -1,0 +1,15 @@
+{
+	"category" : "Xtreams-Xtras",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "MartinKobetic 2/13/2011 23:20",
+	"instvars" : [
+		"outputLength" ],
+	"name" : "BCrypt",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "ExternalLibrary",
+	"type" : "normal" }

@@ -1,0 +1,15 @@
+{
+	"category" : "Xtreams-Xtras",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		 ],
+	"name" : "Hash",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

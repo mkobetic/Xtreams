@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "nice 10/9/2010 21:45",
+	"instvars" : [
+		"dataPosition" ],
+	"name" : "RingBuffer",
+	"namespace" : "Xtreams",
+	"pools" : [
+		"XTPools" ],
+	"super" : "Buffer",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

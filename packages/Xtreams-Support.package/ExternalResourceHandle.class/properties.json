@@ -1,0 +1,15 @@
+{
+	"category" : "Xtreams-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		"Registry" ],
+	"commentStamp" : "nice 12/1/2009 20:09",
+	"instvars" : [
+		"handle" ],
+	"name" : "ExternalResourceHandle",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

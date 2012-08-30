@@ -1,0 +1,16 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"algorithm:" : "MartinKobetic 1/16/2011 19:31",
+		"algorithm:key:" : "MartinKobetic 1/16/2011 19:31",
+		"blockSize" : " 15/1/11 19:52",
+		"close" : " 15/1/11 19:52",
+		"contentsSpecies" : " 15/1/11 19:52",
+		"digest" : " 15/1/11 19:52",
+		"digestSize" : " 15/1/11 19:52",
+		"hash:algorithm:" : " 15/1/11 19:52",
+		"on:" : "MartinKobetic 1/16/2011 19:30",
+		"read:into:at:" : " 15/1/11 19:52",
+		"reset" : " 15/1/11 19:52",
+		"update:from:at:" : " 15/1/11 19:52" } }

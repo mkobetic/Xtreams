@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Substreams",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "nice 10/10/2010 20:33",
+	"instvars" : [
+		"limit" ],
+	"name" : "LimitWriteSubstream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "PositionWriteSubstream",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-ParsingTests",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"parser",
+		"result",
+		"rule" ],
+	"name" : "PEGParserBootstrapTest",
+	"pools" : [
+		 ],
+	"super" : "TestCase",
+	"type" : "normal" }

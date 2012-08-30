@@ -1,0 +1,16 @@
+{
+	"class" : {
+		"on:pattern:backtrack:inclusive:" : "nice 10/10/2010 18:02" },
+	"instance" : {
+		"close" : "nice 3/3/2012 21:36",
+		"get" : "MartinKobetic 1/11/2011 17:53",
+		"gobble" : "MartinKobetic 1/11/2011 17:53",
+		"isPositionable" : "nice 10/10/2010 18:21",
+		"on:pattern:backtrack:inclusive:" : "nice 10/10/2010 18:20",
+		"postCopy" : "nice 3/3/2012 21:37",
+		"read:into:at:" : "MartinKobetic 1/11/2011 17:53",
+		"streamingInsert:into:" : "MartinKobetic 1/11/2011 17:53",
+		"streamingInsertInto:" : "nice 10/10/2010 18:21",
+		"streamingWrite:into:" : "MartinKobetic 1/11/2011 17:53",
+		"streamingWriteInto:" : "MartinKobetic 12/31/2010 00:44",
+		"subseekend" : "nice 10/10/2010 18:20" } }

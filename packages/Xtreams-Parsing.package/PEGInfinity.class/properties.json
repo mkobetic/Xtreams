@@ -1,0 +1,14 @@
+{
+	"category" : "Xtreams-Parsing",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "PEGInfinity",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

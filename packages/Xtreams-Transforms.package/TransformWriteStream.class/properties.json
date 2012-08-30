@@ -1,0 +1,23 @@
+{
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"buffer",
+		"block",
+		"closeBlock",
+		"process",
+		"incompleteCount",
+		"readReady",
+		"writeReady",
+		"closeReady" ],
+	"name" : "TransformWriteStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "WriteStream",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

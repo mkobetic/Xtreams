@@ -1,0 +1,4 @@
+accessing
+defaultBufferSize
+
+	^DefaultBufferSize

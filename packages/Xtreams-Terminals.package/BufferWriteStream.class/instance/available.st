@@ -1,0 +1,3 @@
+seeking
+available
+	^destination writeSize

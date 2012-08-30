@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-TerminalsTests",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"queue" ],
+	"name" : "SharedQueueReadingWritingTest",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "InfiniteReadingWritingTests",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

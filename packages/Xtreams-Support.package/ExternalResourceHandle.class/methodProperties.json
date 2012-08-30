@@ -1,0 +1,12 @@
+{
+	"class" : {
+		"register:" : "nice 11/28/2009 14:56",
+		"registry" : "nice 9/25/2010 00:15",
+		"retryWithGC:until:forFileNamed:" : "nice 11/28/2009 14:55",
+		"unregister:" : "nice 11/28/2009 14:54" },
+	"instance" : {
+		"finalize" : "nice 11/28/2009 15:06",
+		"handle" : "nice 11/28/2009 20:24",
+		"handle:" : "nice 11/28/2009 20:24",
+		"register" : "nice 11/28/2009 14:57",
+		"unregister" : "nice 11/28/2009 14:57" } }

@@ -1,0 +1,10 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"testReadDigest" : "MartinKobetic 1/16/2011 19:41",
+		"testReadDigestLong" : "MartinKobetic 1/16/2011 19:41",
+		"testReadHMACDigest" : "MartinKobetic 1/16/2011 22:57",
+		"testWriteDigest" : "MartinKobetic 1/16/2011 19:41",
+		"testWriteDigestLong" : "MartinKobetic 1/16/2011 19:42",
+		"testWriteHMACDigest" : "MartinKobetic 1/16/2011 22:57" } }

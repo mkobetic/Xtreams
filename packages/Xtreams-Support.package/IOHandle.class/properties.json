@@ -1,0 +1,18 @@
+{
+	"category" : "Xtreams-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		"ConcreteFileClass",
+		"ConcreteSocketClass",
+		"RegistryThreshold" ],
+	"commentStamp" : "dtl 11/28/2002 23:01",
+	"instvars" : [
+		"semaphore" ],
+	"name" : "IOHandle",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "ExternalResourceHandle",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

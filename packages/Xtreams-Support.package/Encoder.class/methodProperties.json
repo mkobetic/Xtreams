@@ -1,0 +1,10 @@
+{
+	"class" : {
+		"encoders" : "nice 10/13/2010 20:42",
+		"for:" : "nice 10/13/2010 20:46" },
+	"instance" : {
+		"backupState" : "nice 10/11/2010 21:57",
+		"decodeFrom:" : "nice 10/11/2010 21:57",
+		"encode:on:" : "nice 10/11/2010 21:57",
+		"restoreState" : "nice 10/11/2010 21:57",
+		"streamingAsEncoder" : "nice 10/11/2010 21:57" } }

@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Substreams",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"position" ],
+	"name" : "PositionReadSubstream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "ReadSubstream",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

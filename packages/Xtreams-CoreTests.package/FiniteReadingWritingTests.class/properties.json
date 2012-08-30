@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-CoreTests",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "nice 10/9/2010 21:19",
+	"instvars" : [
+		 ],
+	"name" : "FiniteReadingWritingTests",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "ReadingWritingTest",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

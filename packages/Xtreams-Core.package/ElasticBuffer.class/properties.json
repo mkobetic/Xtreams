@@ -1,0 +1,16 @@
+{
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		 ],
+	"name" : "ElasticBuffer",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "RingBuffer",
+	"superNamespace" : "Xtreams",
+	"type" : "normal" }

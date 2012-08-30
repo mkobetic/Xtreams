@@ -1,0 +1,23 @@
+{
+	"class" : {
+		 },
+	"instance" : {
+		"++" : "nice 3/3/2012 21:51",
+		"--" : "MartinKobetic 1/11/2011 17:53",
+		"close" : "nice 3/3/2012 21:53",
+		"contents" : "nice 10/9/2010 22:07",
+		"contentsSpecies" : "nice 10/9/2010 22:14",
+		"flush" : "nice 10/9/2010 22:14",
+		"insert:from:at:" : "nice 7/8/2011 23:54",
+		"isPositionable" : "nice 10/9/2010 22:17",
+		"length" : "nice 10/9/2010 22:17",
+		"on:" : "MartinKobetic 12/30/2010 23:25",
+		"position" : "nice 10/9/2010 22:17",
+		"position:" : "nice 3/3/2012 21:53",
+		"put:" : "nice 3/4/2012 00:22",
+		"streamingInsert:from:" : "MartinKobetic 1/11/2011 17:53",
+		"streamingInsertFrom:" : "nice 10/9/2010 22:15",
+		"streamingPrintOn:" : "nice 10/9/2010 22:14",
+		"streamingWrite:from:" : "MartinKobetic 1/11/2011 17:53",
+		"streamingWriteFrom:" : "MartinKobetic 1/11/2011 17:53",
+		"write:from:at:" : "nice 3/3/2012 23:28" } }

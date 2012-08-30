@@ -1,0 +1,26 @@
+{
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		"Backspace",
+		"Bell",
+		"CarriageReturn",
+		"Delete",
+		"DoubleQuote",
+		"Escape",
+		"FormFeed",
+		"LineFeed",
+		"Quote",
+		"Space",
+		"Tab",
+		"VerticalTab" ],
+	"commentStamp" : "<historical>",
+	"instvars" : [
+		"destination" ],
+	"name" : "WriteStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		"XTPools" ],
+	"super" : "Object",
+	"type" : "normal" }
