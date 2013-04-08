@@ -1,0 +1,2 @@
+Marshaler stand-in that creates JSON (http://www.ietf.org/rfc/rfc4627.txt) streams when passed as argument of #marshaling:. Also a utility class for JSON processing.
+

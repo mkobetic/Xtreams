@@ -1,0 +1,12 @@
+{	"_cypress_copyright" : "Copyright (c) 2011 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_private" : true,
+	"instvars" : [	"waitingLock",
+		"id",
+		"quota",
+		"multiplexer",
+		"substreamClosed",
+		"stateLock" ],
+	"name" : "MultiplexWriteSubstream",
+	"namespace" : "Xtreams",
+	"super" : "WriteStream",
+	"superNamespace" : "Xtreams" }

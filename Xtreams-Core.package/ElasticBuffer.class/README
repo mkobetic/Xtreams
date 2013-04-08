@@ -1,0 +1,2 @@
+ElasticBuffer is a variation on a ring buffer that will grow if it has no room to write the data in to its cache. It will split the cache and insert new elements if necessary, otherwise it will wrap around like a regular ring buffer. You have a slightly more liberal 'rewind' policy than the RingBuffer such that if you read data, then write data, it will only overwrite the read data if the write data can fit in to that space, otherwise it will grow the cache.
+

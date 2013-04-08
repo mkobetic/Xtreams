@@ -1,0 +1,2 @@
+{	"imports" : "private Core.*\\private Xtreams.*",
+	"name" : "PEG" }

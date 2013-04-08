@@ -1,0 +1,11 @@
+{	"_cypress_copyright" : "Copyright (c) 2012 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"dialectVersion" : "VisualWorks 7.9",
+	"explicitPrerequisites" : [	],
+	"prerequisiteParcels" : [	[	"Xtreams-Core",
+			"" ],
+		[	"Xtreams-Xtras",
+			"" ],
+		[	"SUnitToo",
+			"" ],
+		[	"Xtreams-Core-Tests",
+			"" ] ] }

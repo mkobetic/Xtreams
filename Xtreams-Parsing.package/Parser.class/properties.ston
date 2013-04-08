@@ -1,0 +1,10 @@
+{	"_cypress_copyright" : "Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"classvars" : [	"Failure" ],
+	"instvars" : [	"grammar",
+		"stream",
+		"actor",
+		"cache",
+		"caches" ],
+	"name" : "Parser",
+	"namespace" : "PEG",
+	"super" : "Object" }

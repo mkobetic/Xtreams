@@ -1,0 +1,10 @@
+{	"_cypress_copyright" : "Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_imports" : "private Tools.Pragma",
+	"_vw_private" : true,
+	"classvars" : [	"ActionMap",
+		"MaxObjectDepth" ],
+	"instvars" : [	"depth" ],
+	"name" : "JSONWriteStream",
+	"namespace" : "Xtreams",
+	"super" : "WriteStream",
+	"superNamespace" : "Xtreams" }

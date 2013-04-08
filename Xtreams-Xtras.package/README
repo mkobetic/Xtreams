@@ -1,0 +1,21 @@
+This package contains various specialized streams that are not considered part of the core framework.
+
+
+	== CPointers ==
+
+The ability to stream over external heap is useful when there's a need to communicate larger amounts of objects of the same type with an external library. A common use case would be when there's a need for a buffer that can be shared between Smalltalk and the external library conveniently. The CPointer stream allows to stream over a buffer allocated on the heap seamlessly as if it is a local smalltalk object. The elements of the stream are instances corresponding to the CType associated with the CPointer.
+{{{
+	| buffer |
+	buffer := CIntegerType unsignedChar malloc: 50.
+	[	buffer writing
+			length: 50;
+			write: 'Hello World!'.
+		buffer reading
+			length: 12;
+			contentsSpecies: ByteString;
+			rest
+	] ensure: [ buffer free ]
+}}}
+The write streams behave similarly to collection write streams. They know their length and they will automatically attempt to reallocate and grow their heap space if necessary. Similarly closing the write stream will reallocate and shrink the write stream to its position at that time. It is possible to set length of a read stream as well to avoid running past the allocated memory accidentally. The stream will signal Incomplete when it reaches its end.
+
+

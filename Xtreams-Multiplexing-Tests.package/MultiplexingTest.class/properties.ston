@@ -1,0 +1,9 @@
+{	"_cypress_copyright" : "Copyright (c) 2011 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"instvars" : [	"sockets",
+		"server",
+		"client",
+		"timeoutDuration" ],
+	"name" : "MultiplexingTest",
+	"namespace" : "Xtreams",
+	"super" : "TestCase",
+	"superNamespace" : "SUnit" }

@@ -1,0 +1,7 @@
+"
+notice: Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith
+category: initialize-release
+"
+close
+	active == nil ifFalse: [active close].
+	super close

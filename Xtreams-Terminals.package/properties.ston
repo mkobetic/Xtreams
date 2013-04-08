@@ -1,0 +1,11 @@
+{	"_cypress_copyright" : "Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"dialectVersion" : "VisualWorks 7.9",
+	"monticelloPrefix" : "XT",
+	"namespace" : "Smalltalk.Xtreams",
+	"prerequisiteParcels" : [	[	"Xtreams-Core",
+			"" ],
+		[	"Xtreams-Support",
+			"" ],
+		[	"Xtreams-Transforms",
+			"" ] ],
+	"url" : "http://www.squeaksource.com/Xtreams/Xtreams-Terminals-nice.13.mcz" }

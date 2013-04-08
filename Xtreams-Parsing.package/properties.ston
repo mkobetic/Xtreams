@@ -1,0 +1,12 @@
+{	"_cypress_copyright" : "Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"dialectVersion" : "VisualWorks 7.9",
+	"explicitPrerequisites" : [	],
+	"namespace" : "Smalltalk.XtreamsParsing",
+	"prerequisiteParcels" : [	[	"AT MetaNumerics",
+			"" ],
+		[	"Xtreams-Core",
+			"" ],
+		[	"Xtreams-Transforms",
+			"" ],
+		[	"Xtreams-Terminals",
+			"" ] ] }

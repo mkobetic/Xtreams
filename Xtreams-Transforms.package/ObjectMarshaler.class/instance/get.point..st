@@ -1,0 +1,10 @@
+"
+notice: Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith
+category: reading - complex
+"
+get: reading point: aClass
+	<reads: 'Core.Point'>
+
+	^Point
+		x: (self unmarshal: reading) 
+		y: (self unmarshal: reading)

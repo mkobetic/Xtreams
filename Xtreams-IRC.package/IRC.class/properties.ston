@@ -1,0 +1,7 @@
+{	"_cypress_copyright" : "Copyright (c) 2012 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"classvars" : [	"Replies" ],
+	"instvars" : [	"output",
+		"mutex" ],
+	"name" : "IRC",
+	"namespace" : "Xtreams",
+	"super" : "Object" }

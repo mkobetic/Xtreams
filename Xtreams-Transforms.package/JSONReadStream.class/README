@@ -1,0 +1,3 @@
+Instance Variables
+	next	<Character> look-ahead cache
+

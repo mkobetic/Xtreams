@@ -1,0 +1,4 @@
+{	"category" : "constants",
+	"initializer" : "String with: Character tab with: Character space with: Character cr with: Character lf",
+	"name" : "Whitespace",
+	"namespace" : "Xtreams.JSONReadStream" }

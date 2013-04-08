@@ -1,0 +1,4 @@
+{	"category" : "configuration",
+	"initializer" : "50",
+	"name" : "MaxObjectDepth",
+	"namespace" : "Xtreams.JSONWriteStream" }

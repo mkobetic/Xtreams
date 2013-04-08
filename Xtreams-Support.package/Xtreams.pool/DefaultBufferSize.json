@@ -1,0 +1,4 @@
+{	"category" : "accessing",
+	"initializer" : "32768",
+	"name" : "DefaultBufferSize",
+	"namespace" : "Xtreams" }

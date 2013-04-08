@@ -1,0 +1,3 @@
+{	"category" : "protocol - commands",
+	"name" : "ChannelOpen",
+	"namespace" : "Xtreams.Multiplexer" }

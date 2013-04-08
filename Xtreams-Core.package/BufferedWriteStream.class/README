@@ -1,0 +1,4 @@
+Caches written output in a fixed size buffer. Buffer content is flushed into the underlying destination when the buffer fills up and new room is needed. The buffer can also be flushed explicitly via #flush or #close.
+
+Instance Variables
+	buffer	<Buffer>	a fixed size output buffer

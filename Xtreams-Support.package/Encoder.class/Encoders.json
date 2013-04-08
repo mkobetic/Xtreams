@@ -1,0 +1,4 @@
+{	"category" : "As yet unclassified",
+	"initializer" : "IdentityDictionary new",
+	"name" : "Encoders",
+	"namespace" : "Xtreams.Encoder" }

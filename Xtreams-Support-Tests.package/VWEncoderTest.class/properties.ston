@@ -1,0 +1,5 @@
+{	"_cypress_copyright" : "Copyright (c) 2011 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"name" : "VWEncoderTest",
+	"namespace" : "Xtreams",
+	"super" : "TestCase",
+	"superNamespace" : "SUnit" }

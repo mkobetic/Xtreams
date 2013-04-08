@@ -1,0 +1,10 @@
+{	"_cypress_copyright" : "Copyright (c) 2012 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_imports" : "private External.CIntegerType.UnsignedChar\\private OS.*",
+	"_vw_private" : true,
+	"instvars" : [	"length",
+		"position",
+		"contentsSpecies" ],
+	"name" : "PointerWriteStream",
+	"namespace" : "Xtreams",
+	"super" : "WriteStream",
+	"superNamespace" : "Xtreams" }

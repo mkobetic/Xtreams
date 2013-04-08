@@ -1,0 +1,7 @@
+"
+notice: Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith
+category: seeking
+"
+length
+	self isPositionable ifFalse: [self error: 'This stream is not positionable.'].
+	^destination fileSize

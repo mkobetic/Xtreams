@@ -1,0 +1,9 @@
+{	"_cypress_copyright" : "Copyright (c) 2012 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_imports" : "private External.*",
+	"_vw_private" : true,
+	"instvars" : [	"pointer",
+		"values" ],
+	"name" : "PointerReadStreamTest",
+	"namespace" : "Xtreams",
+	"super" : "TestCase",
+	"superNamespace" : "SUnit" }

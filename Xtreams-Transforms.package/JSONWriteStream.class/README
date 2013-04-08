@@ -1,0 +1,3 @@
+Shared Variables
+	ActionMap	<IdentityDictionary key: Class value: BlockClosure> maps classes to corresponding marshaling actions
+

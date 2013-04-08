@@ -1,0 +1,4 @@
+{	"category" : "xhtml tags",
+	"initializer" : "XML.NodeTag new qualifier: '' ns: 'http://www.w3.org/1999/xhtml' type: 'h2'",
+	"name" : "Heading2",
+	"namespace" : "PEG.WikiGenerator" }

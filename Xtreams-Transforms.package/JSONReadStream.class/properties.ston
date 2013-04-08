@@ -1,0 +1,8 @@
+{	"_cypress_copyright" : "Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_private" : true,
+	"classvars" : [	"Whitespace" ],
+	"instvars" : [	"next" ],
+	"name" : "JSONReadStream",
+	"namespace" : "Xtreams",
+	"super" : "ReadStream",
+	"superNamespace" : "Xtreams" }

@@ -1,0 +1,12 @@
+{	"_cypress_copyright" : "Copyright (c) 2011 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_private" : true,
+	"classinstvars" : [	"objectspace1",
+		"fixedspace1",
+		"objectspaceN",
+		"fixedspaceN",
+		"cacheSize" ],
+	"instvars" : [	"recycled",
+		"mutex" ],
+	"name" : "RecyclingCenter",
+	"namespace" : "Xtreams",
+	"super" : "Object" }

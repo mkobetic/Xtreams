@@ -1,0 +1,9 @@
+{	"_cypress_copyright" : "Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_private" : true,
+	"instvars" : [	"position",
+		"isPositionable",
+		"contentsSpecies" ],
+	"name" : "FileWriteStream",
+	"namespace" : "Xtreams",
+	"super" : "WriteStream",
+	"superNamespace" : "Xtreams" }

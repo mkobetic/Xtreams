@@ -1,0 +1,11 @@
+{	"_cypress_copyright" : "Copyright (c) 2012 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_imports" : "private OS.ZLib.*",
+	"_vw_private" : true,
+	"instvars" : [	"zlib",
+		"input",
+		"output",
+		"compression" ],
+	"name" : "CompressWriteStream",
+	"namespace" : "Xtreams",
+	"super" : "WriteStream",
+	"superNamespace" : "Xtreams" }

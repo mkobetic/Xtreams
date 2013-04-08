@@ -1,0 +1,10 @@
+{	"_cypress_copyright" : "Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"dialectVersion" : "VisualWorks 7.9",
+	"monticelloPrefix" : "XT",
+	"prerequisiteParcels" : [	[	"Xtreams-Support",
+			"" ],
+		[	"Xtreams-Core",
+			"" ],
+		[	"Xtreams-Substreams",
+			"" ] ],
+	"url" : "http://www.squeaksource.com/Xtreams/Xtreams-Transforms-nice.7.mcz" }

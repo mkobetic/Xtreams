@@ -1,0 +1,13 @@
+{	"_cypress_copyright" : "Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_imports" : "private Tools.Pragma",
+	"instvars" : [	"classes",
+		"read",
+		"write",
+		"version",
+		"rehash",
+		"analyse",
+		"immediate",
+		"classesMutex" ],
+	"name" : "ObjectMarshaler",
+	"namespace" : "Xtreams",
+	"super" : "Object" }

@@ -1,0 +1,4 @@
+{	"category" : "accessing",
+	"initializer" : "Object new",
+	"name" : "Failure",
+	"namespace" : "PEG.Parser" }

@@ -1,0 +1,1 @@
+This package gathers various VW extensions and support classes for Xtreams that aren't portable. A port of Xtreams will need to reimplement these and potentially add other compatibility bits.

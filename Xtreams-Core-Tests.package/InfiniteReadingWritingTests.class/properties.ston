@@ -1,0 +1,7 @@
+{	"_cypress_copyright" : "Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_imports" : "private Kernel.*",
+	"_vw_private" : true,
+	"name" : "InfiniteReadingWritingTests",
+	"namespace" : "Xtreams",
+	"super" : "ReadingWritingTest",
+	"superNamespace" : "Xtreams" }

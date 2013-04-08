@@ -1,0 +1,2 @@
+Implements ASCII encoding.
+

@@ -1,0 +1,8 @@
+{	"_cypress_copyright" : "Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_imports" : "private Tools.Pragma",
+	"instvars" : [	"unmarshaling",
+		"marshaling",
+		"analysing" ],
+	"name" : "MessagePackMarshaler",
+	"namespace" : "Xtreams",
+	"super" : "Object" }

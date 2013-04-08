@@ -1,0 +1,12 @@
+Compression streams allow to compress/decompress bytes passing through the stream using ZLib deflate algorithm.
+
+CompressionWriteStream compresses bytes being written and writes the compressed content into the destination stream. The destination stream must be binary. The compression algorithm buffers the content being compressed, consequently the stream must be closed to sure that the entire compressed content is written into the destination stream.
+{{{
+	compressed := (ByteArray new writing compressing encoding: #ascii) write: 'Hello World!'; conclusion
+}}}
+CompressionReadStream treats the bytes produced by the source stream as compressed content and decompresses (inflates) it.
+{{{
+	(compressed reading compressing encoding: #ascii) rest
+}}}
+Since the read stream cannot estimate how much compressed content it needs to read in order to provide requested amount of bytes, some amount of read-ahead is likely to occur. This doesn't change the behavior of the API, but may need to be considered when reconfiguring a complex stream stack.
+

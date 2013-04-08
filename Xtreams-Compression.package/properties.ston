@@ -1,0 +1,5 @@
+{	"_cypress_copyright" : "Copyright (c) 2012 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"prerequisiteParcels" : [	[	"Xtreams-Core",
+			"" ],
+		[	"Compression-ZLib",
+			"" ] ] }

@@ -1,0 +1,13 @@
+{	"_cypress_copyright" : "Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_imports" : "private OS.IOConstants.*\\private OS.*",
+	"_vw_private" : true,
+	"instvars" : [	"encoder",
+		"buffer",
+		"bufferReading",
+		"bufferWriting",
+		"decodedLineEnd",
+		"encodedLineEnd" ],
+	"name" : "EncodeWriteStream",
+	"namespace" : "Xtreams",
+	"super" : "WriteStream",
+	"superNamespace" : "Xtreams" }

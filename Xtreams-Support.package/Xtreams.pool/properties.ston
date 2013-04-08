@@ -1,0 +1,2 @@
+{	"imports" : "private OS.IOAccessor\\private Core.*",
+	"name" : "Xtreams" }

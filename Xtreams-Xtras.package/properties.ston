@@ -1,0 +1,13 @@
+{	"_cypress_copyright" : "Copyright (c) 2012 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"dialectVersion" : "VisualWorks 7.9",
+	"namespace" : "Smalltalk.Xtreams",
+	"prerequisiteParcels" : [	[	"Xtreams-Support",
+			"" ],
+		[	"Xtreams-Core",
+			"" ],
+		[	"Xtreams-Transforms",
+			"" ],
+		[	"Xtreams-Substreams",
+			"" ],
+		[	"Compression-ZLib",
+			"" ] ] }

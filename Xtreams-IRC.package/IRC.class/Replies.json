@@ -1,0 +1,4 @@
+{	"category" : "accessing",
+	"initializer" : "Xtreams.IRC initializeReplies",
+	"name" : "Replies",
+	"namespace" : "Xtreams.IRC" }

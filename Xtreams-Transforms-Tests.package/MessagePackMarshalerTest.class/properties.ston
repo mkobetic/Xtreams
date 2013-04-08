@@ -1,0 +1,11 @@
+{	"_cypress_copyright" : "Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_private" : true,
+	"instvars" : [	"stream",
+		"marshaling",
+		"log",
+		"bytes",
+		"marshaler" ],
+	"name" : "MessagePackMarshalerTest",
+	"namespace" : "Xtreams",
+	"super" : "TestCase",
+	"superNamespace" : "SUnit" }

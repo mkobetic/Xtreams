@@ -1,0 +1,9 @@
+{	"_cypress_copyright" : "Copyright (c) 2011 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"_vw_private" : true,
+	"instvars" : [	"encoder",
+		"skipRecord",
+		"backupRecord" ],
+	"name" : "VWEncoder",
+	"namespace" : "Xtreams",
+	"super" : "Encoder",
+	"superNamespace" : "Xtreams" }
