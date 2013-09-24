@@ -1,4 +1,4 @@
-{	"_cypress_copyright" : "Copyright (c) 2012 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+{	"_cypress_copyright" : "Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
 	"_vw_imports" : "private OS.ZLib.*",
 	"_vw_private" : true,
 	"instvars" : [	"input",
