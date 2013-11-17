@@ -1,6 +1,6 @@
 Treats the bytes (0..255) produced by the source stream as ZLib compressed content and decompresses (inflates) them.
 
-Since the stream cannot estimate how much compressed content it needs to read in order to provide requested amount of bytes, some amount of read-ahead is likely to occur. This doesn't change the behavior of the API, but affects the overall state of the stream stack.
+Since the stream cannot estimate how much compressed content it needs to read in order to provide requested amount of bytes, some amount of read-ahead is likely to occur. This doesn't change the behavior of the API, but affects the overall state of the stream stack. Specifically, if the underlying byte stream contains more than just the compressed data, the compressing stream will likely read past the end of the compressed data, before it detects the end of the compressed data. Therefore, if possible, the underlying byte stream should end where the compressed data ends.
 
 Instance Variables
 	input	<ByteArray> fixed-space input buffer shared with zlib

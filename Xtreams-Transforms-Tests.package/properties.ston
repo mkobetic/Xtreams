@@ -1,5 +1,4 @@
-{	"_cypress_copyright" : "Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
-	"dialectVersion" : "VisualWorks 7.9",
+{	"_cypress_copyright" : "Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
 	"monticelloPrefix" : "XT",
 	"prerequisiteParcels" : [	[	"SUnitToo",
 			"" ],

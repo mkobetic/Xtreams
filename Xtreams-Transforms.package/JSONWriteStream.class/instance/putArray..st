@@ -1,5 +1,5 @@
 "
-notice: Copyright (c) 2010 Cincom Systems, Martin Kobetic and Michael Lucas-Smith
+notice: Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith
 category: actions
 "
 putArray: aCollection
@@ -8,6 +8,8 @@ putArray: aCollection
 	<action: #{Core.WordArray}>
 	<action: #{Core.DwordArray}>
 	<action: #{Core.OrderedCollection}>
+	<action: #{SortedCollection}>
+	<action: #{SortedCollectionWithPolicy}>
 	<action: #{Core.Set}>
 	<action: #{Core.IdentitySet}>
 
