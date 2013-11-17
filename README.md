@@ -11,6 +11,6 @@ There may be some use for the master branch eventually as we figure things out, 
 
 TODO:
 
- [ ] get all the ports to use the same file naming convention so that the corresponding things match at the file level
- [ ] clean up any discrepancies in terms of formatting, attribute naming/handling etc.
- [ ] figure out the best way to move code
+  * [ ] get all the ports to use the same file naming convention so that the corresponding things match at the file level
+  * [ ] clean up any discrepancies in terms of formatting, attribute naming/handling etc.
+  * [ ] figure out the best way to move code
