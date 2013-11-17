@@ -4,14 +4,16 @@ All the available ports are treated as equal and therefore none of them is the m
 
 | Branch | Dialect      | Cypress implementation             | Development Repository    
 |--------|:------------:|:----------------------------------:|:-----------------------------------
-| vw     | VisualWorks  | [STIG](CampSmalltalk/STIG)         | [Cincom Public Store Repository][1]
-| pharo  | Pharo/Squeak | [Filetree](CampSmalltalk/filetree) | [Squeaksource][2]
-| stx    | Smalltalk/X  | [Cypress][4]                       | [CVUT][3]
+| vw     | VisualWorks  | [STIG][6]         | [Cincom Public Store Repository][1]
+| pharo  | Pharo/Squeak | [Filetree][5] | [Squeaksource][2]
+| stx    | Smalltalk/X  | [Cypress][4]                       | [cvut.cz][3]
 
 [1]: http://www.cinomsmalltalk.com/publicRepository
 [2]: http://squeaksource.com/Xtreams.html
 [3]: https://swing.fit.cvut.cz/hg/stx.goodies.xtreams
 [4]: https://bitbucket.org/janvrany/stx-goodies-cypress
+[5]: https://github.com/CampSmalltalk/filetree 
+[6]: https://github.com/CampSmalltalk/STIG
 
 There may be some use for the master branch eventually as we figure things out, but currently it will be kept empty.
 
