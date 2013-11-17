@@ -1,0 +1,26 @@
+{
+	"_cypress_copyright" : "Copyright Claus Gittinger 1988-2013\nCopyright eXept Software AG 1998-2013",
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		"Backspace",
+		"Bell",
+		"CarriageReturn",
+		"Delete",
+		"DoubleQuote",
+		"Escape",
+		"FormFeed",
+		"LineFeed",
+		"Quote",
+		"Space",
+		"Tab",
+		"VerticalTab" ],
+	"instvars" : [
+		"destination" ],
+	"name" : "WriteStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		"XtreamsPool" ],
+	"super" : "Object",
+	"superNamespace" : "Smalltalk" }

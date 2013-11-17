@@ -1,0 +1,16 @@
+{
+	"_cypress_copyright" : "Copyright Claus Gittinger 1988-2013\nCopyright eXept Software AG 1998-2013",
+	"_stx_type" : "variableByteSubclass:instanceVariableNames:classVariableNames:poolDictionaries:category:",
+	"category" : "Xtreams-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"instvars" : [
+		 ],
+	"name" : "InterpretedBytes",
+	"namespace" : "Xtreams",
+	"pools" : [
+		"XtreamsPool" ],
+	"super" : "ByteArray",
+	"superNamespace" : "Smalltalk" }

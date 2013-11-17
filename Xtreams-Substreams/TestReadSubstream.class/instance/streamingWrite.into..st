@@ -1,0 +1,17 @@
+"
+notice: Copyright Claus Gittinger 1988-2013\nCopyright eXept Software AG 1998-2013
+category: private
+"
+streamingWrite: anInteger into: aWriteStream
+	| object count |
+
+	substreamAtEnd ifTrue: [Incomplete zero raise].
+	count := 0.
+	[[count = anInteger or: [substreamAtEnd]] whileFalse:
+		[object := source get.
+		((substreamAtEnd := test value: object) not or: [inclusive]) ifTrue:
+			[aWriteStream put: object.
+			count := count + 1]]]
+				on: Incomplete do: [sourceAtEnd := substreamAtEnd := true. (Incomplete count: count) raise].
+	count < anInteger ifTrue: [(Incomplete count: count) raise].
+	^anInteger

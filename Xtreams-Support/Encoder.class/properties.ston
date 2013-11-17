@@ -1,0 +1,16 @@
+{
+	"_cypress_copyright" : "Copyright Claus Gittinger 1988-2013\nCopyright eXept Software AG 1998-2013",
+	"category" : "Xtreams-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		"DialectEncoder",
+		"Encoders" ],
+	"instvars" : [
+		 ],
+	"name" : "Encoder",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"superNamespace" : "Smalltalk" }

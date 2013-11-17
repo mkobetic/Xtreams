@@ -1,0 +1,16 @@
+{
+	"_cypress_copyright" : "Copyright Claus Gittinger 1988-2013\nCopyright eXept Software AG 1998-2013",
+	"category" : "Xtreams-Terminals",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"instvars" : [
+		"position",
+		"length" ],
+	"name" : "SequenceableCollectionWriteStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		"XtreamsPool" ],
+	"super" : "WriteStream",
+	"superNamespace" : "Smalltalk" }

@@ -1,7 +1,0 @@
-"Main load script"
-#(support core 'core/tests' terminals 'terminals/tests' transforms 'transforms/tests' substreams 'substreams/tests')
-    do: [ :each | Smalltalk loadPackage: 'stx:goodies/xtreams/', each ]
-!
-"It seems class side extensions are ignored when filing out a package."
-Smalltalk fileIn: 'xtreams/FileDescriptorHandle-fixes.st'.
-!

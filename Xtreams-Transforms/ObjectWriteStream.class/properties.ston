@@ -1,0 +1,26 @@
+{
+	"_cypress_copyright" : "Copyright Claus Gittinger 1988-2011\nCopyright eXept Software AG 1998-2011",
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"instvars" : [
+		"marshaler",
+		"objects",
+		"nothing",
+		"int8",
+		"int_16",
+		"int_32",
+		"int_64",
+		"uint_16",
+		"uint_32",
+		"uint_64",
+		"float_",
+		"double_" ],
+	"name" : "ObjectWriteStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "WriteStream",
+	"superNamespace" : "Smalltalk" }

@@ -1,0 +1,16 @@
+{
+	"_cypress_copyright" : "Copyright Claus Gittinger 1988-2013\nCopyright eXept Software AG 1998-2013",
+	"category" : "Xtreams-Core-Tests",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"instvars" : [
+		"output",
+		"buffer" ],
+	"name" : "RingBufferTest",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "TestCase",
+	"superNamespace" : "Smalltalk" }

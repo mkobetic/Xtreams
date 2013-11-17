@@ -1,0 +1,18 @@
+{
+	"_cypress_copyright" : "Copyright Claus Gittinger 1988-2013\nCopyright eXept Software AG 1998-2013",
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"instvars" : [
+		"cache",
+		"readPosition",
+		"writePosition",
+		"dataLength" ],
+	"name" : "Buffer",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"superNamespace" : "Smalltalk" }
