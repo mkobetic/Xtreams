@@ -2,11 +2,11 @@ This repository is an attempt to use git to maintain multiple parallel ports of 
 
 All the available ports are treated as equal and therefore none of them is the master. Instead each port has its own branch:
 
-| Branch | Dialect      | Cypress implementation             | Development Repository    
-|--------|:------------:|:----------------------------------:|:-----------------------------------
-| vw     | VisualWorks  | [STIG][6]         | [Cincom Public Store Repository][1]
-| pharo  | Pharo/Squeak | [Filetree][5] | [Squeaksource][2]
-| stx    | Smalltalk/X  | [Cypress][4]                       | [cvut.cz][3]
+| Branch | Dialect      | Cypress implementation    | Development Repository    
+|--------|:------------:|:-------------------------:|:-----------------------------------
+| vw     | VisualWorks  | [STIG][6]                 | [Cincom Public Store Repository][1]
+| pharo  | Pharo/Squeak | [Filetree][5]             | [Squeaksource][2]
+| stx    | Smalltalk/X  | [stx-goodies-cypress][4]  | [cvut.cz][3]
 
 [1]: http://www.cinomsmalltalk.com/publicRepository
 [2]: http://squeaksource.com/Xtreams.html
