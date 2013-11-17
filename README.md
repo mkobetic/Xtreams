@@ -2,10 +2,11 @@ This repository is an attempt to use git to maintain multiple parallel ports of 
 
 All the available ports are treated as equal and therefore none of them is the master. Instead each port has its own branch:
 
-|| branch || dialect || Cypress implementation || development repository
-|| vw || VisualWorks || STIG || Cincom Public Store Repository
-|| pharo ||  Pharo/Squeak || Filetree || SqueakMap
-|| stx || Smalltalk/X || Cypress || CVUT 
+| Branch | Dialect | Cypress implementation | Development Repository    
+|--------|:-------:|:----------------------:|:-----------------------:|
+| vw     | VisualWorks  | STIG     | Cincom Public Store Repository
+| pharo  | Pharo/Squeak | Filetree | SqueakMap
+| stx    | Smalltalk/X  | Cypress  | CVUT 
 
 There may be some use for the master branch eventually as we figure things out, but currently it will be kept empty.
 
