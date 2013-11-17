@@ -1,0 +1,22 @@
+{
+	"_cypress_copyright" : "Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"instvars" : [
+		"buffer",
+		"block",
+		"closeBlock",
+		"process",
+		"incompleteCount",
+		"readReady",
+		"writeReady",
+		"closeReady" ],
+	"name" : "TransformWriteStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		"XtreamsPool" ],
+	"super" : "WriteStream",
+	"superNamespace" : "Smalltalk" }

@@ -1,0 +1,6 @@
+"
+notice: Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith
+category: private
+"
+streamingInsert: anInteger from: aReadStream
+	self streamingWrite: anInteger from: aReadStream

@@ -1,0 +1,16 @@
+{
+	"_cypress_copyright" : "Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"category" : "Xtreams-Support",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		"DialectEncoder",
+		"Encoders" ],
+	"instvars" : [
+		 ],
+	"name" : "Encoder",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"superNamespace" : "Smalltalk" }

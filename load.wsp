@@ -1,0 +1,3 @@
+#(  support core terminals transforms substreams
+    'support/tests' 'core/tests' 'terminals/tests' 'transforms/tests' 'substreams/tests')
+    do: [ :each | Smalltalk loadPackage: 'stx:goodies/xtreams/', each ]

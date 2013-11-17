@@ -1,0 +1,15 @@
+{
+	"_cypress_copyright" : "Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"category" : "* Projects & Packages *",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"instvars" : [
+		 ],
+	"name" : "stx_goodies_xtreams_core_tests",
+	"namespace" : "Smalltalk",
+	"pools" : [
+		 ],
+	"super" : "LibraryDefinition",
+	"superNamespace" : "Smalltalk" }

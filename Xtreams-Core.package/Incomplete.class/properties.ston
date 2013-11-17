@@ -1,0 +1,17 @@
+{
+	"_cypress_copyright" : "Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"instvars" : [
+		"collection",
+		"count",
+		"start" ],
+	"name" : "Incomplete",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "Error",
+	"superNamespace" : "Smalltalk" }

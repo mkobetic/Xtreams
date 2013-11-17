@@ -1,9 +1,14 @@
 | repository |
-repository := (CypressRepository on: '~/stx/xtreams') writerClass: STIGWriter.
-((LibraryDefinition allSubclasses collect: #package) select: [ :id | id beginsWith: 'stx:goodies/xtreams/' ]) do: [ :id |
+repository := (CypressRepository on: '~/stx/Xtreams') writerClass: STIGWriter.
+((LibraryDefinition allSubclasses collect: #package) select: [ :id | id beginsWith: 'stx:goodies/xtreams/' ]) do: [ :id || cypressId |
     cypressId := ((id copyFrom: (id indexOf: $/) + 1 to: id size) tokensBasedOn: $/) collect: #capitalized.
     cypressId := cypressId fold: [ :a :b | a, '-', b ].
+    cypressId := cypressId, '.package'.
     repository write: id as: cypressId ]
+
+
+
+
 
 
 

@@ -1,0 +1,18 @@
+{
+	"_cypress_copyright" : "Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"instvars" : [
+		"block",
+		"cache",
+		"contentsSpecies",
+		"direct" ],
+	"name" : "CollectReadStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		"XtreamsPool" ],
+	"super" : "ReadStream",
+	"superNamespace" : "Smalltalk" }

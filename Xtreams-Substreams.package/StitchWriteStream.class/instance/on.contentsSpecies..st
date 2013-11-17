@@ -1,0 +1,7 @@
+"
+notice: Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith
+category: initialize-release
+"
+on: aDestination contentsSpecies: aClass
+	super on: aDestination.
+	contentsSpecies := aClass

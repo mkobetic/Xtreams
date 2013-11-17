@@ -1,0 +1,26 @@
+{
+	"_cypress_copyright" : "Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		"Backspace",
+		"Bell",
+		"CarriageReturn",
+		"Delete",
+		"DoubleQuote",
+		"Escape",
+		"FormFeed",
+		"LineFeed",
+		"Quote",
+		"Space",
+		"Tab",
+		"VerticalTab" ],
+	"instvars" : [
+		"destination" ],
+	"name" : "WriteStream",
+	"namespace" : "Xtreams",
+	"pools" : [
+		"XtreamsPool" ],
+	"super" : "Object",
+	"superNamespace" : "Smalltalk" }

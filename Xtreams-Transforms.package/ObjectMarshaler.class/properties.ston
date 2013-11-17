@@ -1,0 +1,22 @@
+{
+	"_cypress_copyright" : "Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"instvars" : [
+		"classes",
+		"read",
+		"write",
+		"version",
+		"rehash",
+		"analyse",
+		"immediate",
+		"classesMutex" ],
+	"name" : "ObjectMarshaler",
+	"namespace" : "Xtreams",
+	"pools" : [
+		"XtreamsPool" ],
+	"super" : "Object",
+	"superNamespace" : "Smalltalk" }

@@ -1,0 +1,15 @@
+{
+	"_cypress_copyright" : "Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"category" : "Xtreams-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"instvars" : [
+		 ],
+	"name" : "ElasticBuffer",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "RingBuffer",
+	"superNamespace" : "Smalltalk" }

@@ -1,0 +1,15 @@
+{
+	"_cypress_copyright" : "Copyright 2010-2013 Cincom Systems, Martin Kobetic and Michael Lucas-Smith",
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"instvars" : [
+		 ],
+	"name" : "ISO8859L1Encoder",
+	"namespace" : "Xtreams",
+	"pools" : [
+		 ],
+	"super" : "Encoder",
+	"superNamespace" : "Smalltalk" }
