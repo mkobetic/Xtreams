@@ -1,4 +1,4 @@
-This repository is an attempt to use git to maintain multiple parallel ports of Xtreams across multiple smalltalk dialects. All ports follow the structure laid out by the [Cypress](https://github.com/CampSmalltalk/Cypress) project. The goal is to come up with an arrangement that will help move changes between the ports easily. Whether that will mean some clever scheme alowing to merge things across or whether it will be some form of commit cherry-picking remains to be seen.
+This repository is an attempt to use git to maintain multiple parallel ports of [Xtreams](https://code.google.com/p/xtreams/) across multiple smalltalk dialects. All ports follow the structure laid out by the [Cypress](https://github.com/CampSmalltalk/Cypress) project. The goal is to come up with an arrangement that will help move changes between the ports easily. Whether that will mean some clever scheme alowing to merge things across or whether it will be some form of commit cherry-picking remains to be seen.
 
 All the available ports are treated as equal and therefore none of them is the master. Instead each port has its own branch:
 
