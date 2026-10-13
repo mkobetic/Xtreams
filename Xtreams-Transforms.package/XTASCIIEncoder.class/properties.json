@@ -1,16 +1,11 @@
 {
-	"category" : "Xtreams-Transforms",
-	"classinstvars" : [
-		 ],
-	"classtraitcomposition" : "{}",
-	"classvars" : [
-		 ],
 	"commentStamp" : "nice 10/13/2010 20:40",
-	"instvars" : [
-		 ],
-	"name" : "XTASCIIEncoder",
-	"pools" : [
-		 ],
 	"super" : "XTEncoder",
-	"traitcomposition" : "{}",
-	"type" : "normal" }
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [ ],
+	"pools" : [ ],
+	"classvars" : [ ],
+	"instvars" : [ ],
+	"name" : "XTASCIIEncoder",
+	"type" : "normal"
+}

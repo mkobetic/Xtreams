@@ -1,21 +1,22 @@
 {
+	"commentStamp" : "nice 3/3/2012 21:45",
+	"super" : "Object",
 	"category" : "Xtreams-Support",
 	"classinstvars" : [
 		"objectspace1",
 		"fixedspace1",
 		"objectspaceN",
 		"fixedspaceN",
-		"cacheSize" ],
-	"classtraitcomposition" : "{}",
-	"classvars" : [
-		 ],
-	"commentStamp" : "nice 3/3/2012 21:45",
+		"cacheSize"
+	],
+	"pools" : [
+		"XTPools"
+	],
+	"classvars" : [ ],
 	"instvars" : [
 		"recycled",
-		"mutex" ],
+		"mutex"
+	],
 	"name" : "XTRecyclingCenter",
-	"pools" : [
-		"XTPools" ],
-	"super" : "Object",
-	"traitcomposition" : "{}",
-	"type" : "normal" }
+	"type" : "normal"
+}

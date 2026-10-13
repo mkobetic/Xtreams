@@ -1,1 +1,1 @@
-SystemOrganization addCategory: #'Xtreams-TransformsTests'!
+self packageOrganizer ensurePackage: #'Xtreams-TransformsTests' withTags: #()!

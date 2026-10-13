@@ -1,16 +1,13 @@
 {
-	"category" : "Xtreams-Transforms",
-	"classinstvars" : [
-		 ],
-	"classtraitcomposition" : "{}",
-	"classvars" : [
-		 ],
 	"commentStamp" : "nice 7/8/2011 23:41",
-	"instvars" : [
-		"duplicate" ],
-	"name" : "XTDuplicateWriteStream",
-	"pools" : [
-		 ],
 	"super" : "XTWriteStream",
-	"traitcomposition" : "{}",
-	"type" : "normal" }
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [ ],
+	"pools" : [ ],
+	"classvars" : [ ],
+	"instvars" : [
+		"duplicate"
+	],
+	"name" : "XTDuplicateWriteStream",
+	"type" : "normal"
+}

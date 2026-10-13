@@ -1,16 +1,11 @@
 {
-	"category" : "Xtreams-CoreTests",
-	"classinstvars" : [
-		 ],
-	"classtraitcomposition" : "{}",
-	"classvars" : [
-		 ],
 	"commentStamp" : "",
-	"instvars" : [
-		 ],
-	"name" : "XTPositionWriteStreamTest",
-	"pools" : [
-		 ],
 	"super" : "TestCase",
-	"traitcomposition" : "{}",
-	"type" : "normal" }
+	"category" : "Xtreams-CoreTests",
+	"classinstvars" : [ ],
+	"pools" : [ ],
+	"classvars" : [ ],
+	"instvars" : [ ],
+	"name" : "XTPositionWriteStreamTest",
+	"type" : "normal"
+}

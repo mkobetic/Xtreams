@@ -1,6 +1,6 @@
 line-end
 setLineEndAuto
 
-	(Smalltalk os platformName beginsWith: 'Win')
-		ifTrue:	[self setLineEndCRLF]
-		ifFalse:	[self setLineEndLF]
+	(OSPlatform current platformName beginsWith: 'Win')
+		ifTrue: [ self setLineEndCRLF ]
+		ifFalse: [ self setLineEndLF ]

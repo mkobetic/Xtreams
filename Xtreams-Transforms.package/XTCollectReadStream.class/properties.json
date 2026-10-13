@@ -1,19 +1,16 @@
 {
-	"category" : "Xtreams-Transforms",
-	"classinstvars" : [
-		 ],
-	"classtraitcomposition" : "{}",
-	"classvars" : [
-		 ],
 	"commentStamp" : "<historical>",
+	"super" : "XTReadStream",
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [ ],
+	"pools" : [ ],
+	"classvars" : [ ],
 	"instvars" : [
 		"block",
 		"cache",
 		"contentsSpecies",
-		"direct" ],
+		"direct"
+	],
 	"name" : "XTCollectReadStream",
-	"pools" : [
-		 ],
-	"super" : "XTReadStream",
-	"traitcomposition" : "{}",
-	"type" : "normal" }
+	"type" : "normal"
+}

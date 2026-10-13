@@ -1,21 +1,20 @@
 {
-	"category" : "Xtreams-Transforms",
-	"classinstvars" : [
-		 ],
-	"classtraitcomposition" : "{}",
-	"classvars" : [
-		 ],
 	"commentStamp" : "<historical>",
+	"super" : "XTReadStream",
+	"category" : "Xtreams-Transforms",
+	"classinstvars" : [ ],
+	"pools" : [
+		"XTPools"
+	],
+	"classvars" : [ ],
 	"instvars" : [
 		"transparent",
 		"crPreceeding",
 		"encoder",
 		"buffer",
 		"bufferWriting",
-		"bufferReading" ],
+		"bufferReading"
+	],
 	"name" : "XTEncodeReadStream",
-	"pools" : [
-		"XTPools" ],
-	"super" : "XTReadStream",
-	"traitcomposition" : "{}",
-	"type" : "normal" }
+	"type" : "normal"
+}

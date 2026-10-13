@@ -1,4 +1,6 @@
 instance creation
 for: anEncoding
 
-	^self new encoding: anEncoding
+	| encoder |
+	encoder := ZnCharacterEncoder newForEncoding: anEncoding.
+	^self new encoder: encoder

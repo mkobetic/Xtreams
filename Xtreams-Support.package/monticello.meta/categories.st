@@ -1,1 +1,1 @@
-SystemOrganization addCategory: #'Xtreams-Support'!
+self packageOrganizer ensurePackage: #'Xtreams-Support' withTags: #()!

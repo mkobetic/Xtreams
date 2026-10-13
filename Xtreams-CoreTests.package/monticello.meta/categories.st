@@ -1,1 +1,1 @@
-SystemOrganization addCategory: #'Xtreams-CoreTests'!
+self packageOrganizer ensurePackage: #'Xtreams-CoreTests' withTags: #()!

@@ -1,18 +1,17 @@
 {
+	"commentStamp" : "nice 10/9/2010 19:21",
+	"super" : "SharedPool",
 	"category" : "Xtreams-Support",
-	"classinstvars" : [
-		 ],
-	"classtraitcomposition" : "{}",
+	"classinstvars" : [ ],
+	"pools" : [ ],
 	"classvars" : [
 		"CR",
 		"DefaultBufferSize",
-		"LF" ],
-	"commentStamp" : "nice 10/9/2010 19:21",
+		"LF"
+	],
 	"instvars" : [
-		"buffer" ],
+		"buffer"
+	],
 	"name" : "XTPools",
-	"pools" : [
-		 ],
-	"super" : "SharedPool",
-	"traitcomposition" : "{}",
-	"type" : "normal" }
+	"type" : "normal"
+}

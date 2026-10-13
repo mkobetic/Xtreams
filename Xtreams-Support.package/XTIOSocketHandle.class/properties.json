@@ -1,8 +1,9 @@
 {
+	"commentStamp" : "dtl 11/28/2002 22:55",
+	"super" : "XTIOHandle",
 	"category" : "Xtreams-Support",
-	"classinstvars" : [
-		 ],
-	"classtraitcomposition" : "{}",
+	"classinstvars" : [ ],
+	"pools" : [ ],
 	"classvars" : [
 		"Connected",
 		"InvalidSocket",
@@ -11,16 +12,14 @@
 		"ThisEndClosed",
 		"UDPSocketType",
 		"Unconnected",
-		"WaitingForConnection" ],
-	"commentStamp" : "dtl 11/28/2002 22:55",
+		"WaitingForConnection"
+	],
 	"instvars" : [
 		"socketType",
 		"writeSemaphore",
 		"readSemaphore",
-		"primitiveOnlySupportsOneSemaphore" ],
+		"primitiveOnlySupportsOneSemaphore"
+	],
 	"name" : "XTIOSocketHandle",
-	"pools" : [
-		 ],
-	"super" : "XTIOHandle",
-	"traitcomposition" : "{}",
-	"type" : "normal" }
+	"type" : "normal"
+}
